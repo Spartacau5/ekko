@@ -211,7 +211,7 @@ export function DonorsListPage() {
               className={`w-[18px] h-[18px] rounded-sm border flex items-center justify-center
                 ${allOnPageSelected ? 'bg-accent border-border-default' : 'bg-surface border-border-subtle'}`}
             >
-              {allOnPageSelected && <span className="text-[11px] font-bold text-primary leading-none">\u2713</span>}
+              {allOnPageSelected && <span className="text-[11px] font-bold text-primary leading-none">✓</span>}
             </button>
           </div>
           <SortHeader label="Donor" field="name" sortField={sortField} sortDir={sortDir} onSort={handleSort} className="col-span-3" />
@@ -328,7 +328,7 @@ function DonorRow({ donor, selected, onToggleSelect }: { donor: Donor; selected:
           className={`w-[18px] h-[18px] rounded-sm border flex items-center justify-center
             ${selected ? 'bg-accent border-border-default' : 'bg-surface border-border-subtle'}`}
         >
-          {selected && <span className="text-[11px] font-bold text-primary leading-none">\u2713</span>}
+          {selected && <span className="text-[11px] font-bold text-primary leading-none">✓</span>}
         </button>
       </div>
       <Link to={`/people/donors/${donor.id}`} className="col-span-3 no-underline">

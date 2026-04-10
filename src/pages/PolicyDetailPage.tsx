@@ -173,7 +173,7 @@ export function PolicyDetailPage() {
               <ImpactRow label="Opportunity / risk" value={policy.impactLevel} variant={impactVariant} />
               <ImpactRow label="Urgency" value={policy.effectiveDate === 'Immediate' ? 'Immediate' : 'Near-term'} />
               <ImpactRow label="Stakeholder alignment" value={`${alignmentPct}% (${supportive}/${total})`} />
-              <ImpactRow label="Mission relevance" value="High \u2014 directly affects core programs" />
+              <ImpactRow label="Mission relevance" value="High — directly affects core programs" />
             </div>
           </div>
 

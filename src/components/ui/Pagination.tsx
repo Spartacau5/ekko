@@ -30,7 +30,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, totalItems, 
     <div className="flex items-center justify-between gap-4">
       {totalItems !== undefined && start !== null && end !== null && (
         <p className="text-[13px] text-muted">
-          Showing <span className="text-primary font-medium">{start}</span>\u2013<span className="text-primary font-medium">{end}</span> of <span className="text-primary font-medium">{totalItems}</span>
+          Showing <span className="text-primary font-medium">{start}</span>–<span className="text-primary font-medium">{end}</span> of <span className="text-primary font-medium">{totalItems}</span>
         </p>
       )}
       <div className="flex items-center gap-1">

@@ -197,7 +197,7 @@ function BenchmarkingTab() {
       <div className="space-y-4">
         <FieldRow label="Cohort type" value="Mission-aligned mid-size nonprofits in NYC metro area" />
         <FieldRow label="Geographic scope" value="New York City, Brooklyn, Queens, Bronx" />
-        <FieldRow label="Revenue range" value="$3M\u2013$15M" />
+        <FieldRow label="Revenue range" value="$3M–$15M" />
         <FieldRow label="Cohort size" value="8 organizations" />
         <FieldRow
           label="Refresh frequency"

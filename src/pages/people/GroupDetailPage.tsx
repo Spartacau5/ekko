@@ -53,12 +53,11 @@ export function GroupDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-6 pt-5 border-t border-border-subtle">
+        <div className="grid grid-cols-4 gap-6 pt-5 border-t border-border-subtle">
           <Stat label="Members" value={group.memberCount.toLocaleString()} />
           <Stat label="Lifetime giving" value={`$${(group.totalLifetime / 1000).toFixed(0)}K`} />
           <Stat label="Average gift" value={`$${group.avgGift.toLocaleString()}`} />
           <Stat label="Engagement" value={`${group.engagementScore}/100`} />
-          <Stat label="Created by" value={group.createdBy} small />
         </div>
       </div>
 

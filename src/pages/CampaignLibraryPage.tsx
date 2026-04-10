@@ -71,7 +71,7 @@ export function CampaignLibraryPage() {
 
       <PageHeader
         title="Campaign intelligence"
-        subtitle="What\u2019s working in your sector \u2014 anonymized peer campaigns"
+        subtitle="What’s working in your sector — anonymized peer campaigns"
         serif
       />
 
