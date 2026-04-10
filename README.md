@@ -161,12 +161,20 @@ The app opens on `/onboarding` by default. Walk through the 6-step flow, then la
 
 ## Companion Figma file
 
-A complete Figma design system with all 13 screens, color variables, text styles, and reusable components was built in parallel using the Figma MCP server. It mirrors the React app one-to-one.
+A complete Figma design system was built in parallel using the Figma MCP server. It mirrors the React app one-to-one and is updated alongside each phase.
+
+**File:** [Ekko-MVP on Figma](https://www.figma.com/design/i1TGASxRLzCopGTdquPitA)
 
 The Figma file contains three pages:
-1. **Design Tokens** — color swatches and type specimen
-2. **Components** — Buttons, Chips, Inputs, Tabs, Cards, etc. (real Figma components)
-3. **Screens** — all 13 desktop screens at 1440px width
+
+### 01 — Design Tokens
+Color variables (bg / text / border / accent / success / warning / danger / info) bound to a single Ekko / Colors collection, plus text styles (Display 1/2, Heading 1/2, Body, Body small, Label, Stat) and a type specimen.
+
+### 02 — Components
+Real Figma components, instanced across every screen. Phase 1 includes Buttons, Chips, TextInput, SelectInput, Checkbox, Toggle, Tab, Avatar, IconButton, StatCard, StepperItem, IntegrationCard, ProgressBar, Banner, DonorCard, PolicyCard, PeerOrgCard. Phase 2 added KPI Card, SubNavItem (active/inactive), SavedViewsBar, WatchlistToggle (watching/not), SegmentedControl, SortableHeader (asc/desc/inactive), TaskRow, ActivityRow, PolicyAlertRow, StakeholderAlignment bar, BarComparison, CampaignCard, MetaItem, GlanceRow.
+
+### 03 — Screens
+All 21 desktop screens at 1440px width. Phase 1 brought the original 13 (Onboarding × 6, Dashboard, People list, Donor detail, Policy list, Policy detail, Peers, Settings). Phase 2 added 5 new screens (Groups list, Group detail, Accounts list, Account detail, Policy watchlist, Peer detail, Campaign library) and replaced Dashboard, Donors list, Donor detail, Policy list, and Policy detail in place with their polished versions.
 
 ---
 
