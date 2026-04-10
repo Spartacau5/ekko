@@ -1,10 +1,12 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { PageHeader, SubNav } from '../../components/ui';
 import { Users, UserCircle, Building } from 'lucide-react';
 import { donors } from '../../data/donors';
 import { donorGroups } from '../../data/groups';
 import { accounts } from '../../data/accounts';
+import { motionDurations, motionEasings } from '../../lib/motion';
 
 export function PeopleLayout() {
   const location = useLocation();
@@ -31,7 +33,17 @@ export function PeopleLayout() {
           { label: 'Accounts', path: '/people/accounts', count: accounts.length, icon: <Building size={14} /> },
         ]}
       />
-      <Outlet />
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -2 }}
+          transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+        >
+          <Outlet />
+        </motion.div>
+      </AnimatePresence>
     </>
   );
 }

@@ -1,8 +1,10 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AppLayout } from './components/layout/AppLayout';
 import { ToastProvider } from './components/ui';
 import { TourProvider } from './lib/TourContext';
+import { motionDurations, motionEasings } from './lib/motion';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PeopleLayout } from './pages/people/PeopleLayout';
@@ -20,10 +22,42 @@ import { PeerDetailPage } from './pages/PeerDetailPage';
 import { CampaignLibraryPage } from './pages/CampaignLibraryPage';
 import { SettingsPage } from './pages/SettingsPage';
 
+// Resets scroll on route change. Lives inside Router.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [pathname]);
+  return null;
+}
+
+// Compute a transition key from the pathname. People list pages share a single
+// key so the sub-nav stays mounted while the inner content fades — that fade
+// is handled inside PeopleLayout itself.
+function getTransitionKey(pathname: string): string {
+  const parts = pathname.split('/').filter(Boolean);
+  if (parts[0] === 'people' && parts.length === 2) {
+    return '/people/list';
+  }
+  return pathname;
+}
+
 function LayoutWrapper() {
+  const location = useLocation();
+  const key = getTransitionKey(location.pathname);
   return (
     <AppLayout>
-      <Outlet />
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={key}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -2 }}
+          transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+        >
+          <Outlet />
+        </motion.div>
+      </AnimatePresence>
     </AppLayout>
   );
 }
@@ -33,6 +67,7 @@ function App() {
     <BrowserRouter>
       <ToastProvider>
         <TourProvider>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Navigate to="/onboarding" replace />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
