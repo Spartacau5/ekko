@@ -10,7 +10,14 @@ The product is designed to feel **institution-grade, editorial, trustworthy, inf
 
 ## Status
 
-**Phase 1 — Static prototype.** Frontend only, no backend. All data is mock data wired through TypeScript modules. The goal is polished UX, believable UI, and a clear design system that future phases can build on.
+**Phase 2 — Expanded prototype.** Frontend only, no backend. All data is mock data wired through TypeScript modules. Phase 2 deepens every surface to feel like a more complete and believable SaaS workspace while staying inside the same visual system.
+
+What Phase 2 adds on top of Phase 1:
+
+- **People** is now a workspace, not a single list. New sub-routes for Donors / Groups / Accounts, with a saved-views bar, sortable columns, multi-select bulk actions, and a richer donor detail page (filterable timeline, persona insight, group memberships).
+- **Policy** has a watchlist + alerts page, a topic-organized browse mode, watchlist toggles on every card, and a richer policy detail with stakeholder alignment bars and internal team discussion.
+- **Peers** has full peer organization detail pages with you-vs-them benchmark comparisons and a separate Campaign intelligence library page with theme/channel filtering.
+- **Dashboard** is now a mission-control surface with KPI sparklines, a priority tasks panel, fundraising trend chart, and a cross-feature recent activity feed.
 
 ---
 
@@ -29,20 +36,22 @@ The product is designed to feel **institution-grade, editorial, trustworthy, inf
 
 | # | Screen | Route |
 |---|---|---|
-| 1 | Welcome / sign up | `/onboarding` (step 1) |
-| 2 | Complete profile | `/onboarding` (step 2) |
-| 3 | Organization search + manual entry | `/onboarding` (step 3) |
-| 4 | Purpose and goals | `/onboarding` (step 4) |
-| 5 | Connect integrations | `/onboarding` (step 5) |
-| 6 | Define team and roles | `/onboarding` (step 6) |
-| 7 | Personalized dashboard | `/dashboard` |
-| 8 | Spotlight tour (4 steps) | overlays dashboard |
-| 9 | People / donors list | `/people` |
-| 10 | Donor detail | `/people/:id` |
-| 11 | Policy list | `/policy` |
-| 12 | Policy detail | `/policy/:id` |
-| 13 | Peers / benchmark | `/peers` |
-| 14 | Settings overview | `/settings` |
+| 1 | 6-step onboarding | `/onboarding` |
+| 2 | Mission-control dashboard | `/dashboard` |
+| 3 | Spotlight tour (4 steps) | overlays dashboard |
+| 4 | Donors list (saved views, sort, multi-select) | `/people/donors` |
+| 5 | Donor detail (filterable timeline, persona insight) | `/people/donors/:id` |
+| 6 | Groups list | `/people/groups` |
+| 7 | Group detail | `/people/groups/:id` |
+| 8 | Accounts list | `/people/accounts` |
+| 9 | Account detail (gift history chart) | `/people/accounts/:id` |
+| 10 | Policy list (List + By topic views) | `/policy` |
+| 11 | Policy watchlist + alerts | `/policy/watchlist` |
+| 12 | Policy detail (stakeholder alignment, discussion) | `/policy/:id` |
+| 13 | Peers / benchmark overview | `/peers` |
+| 14 | Peer organization detail | `/peers/:id` |
+| 15 | Campaign intelligence library | `/peers/campaigns` |
+| 16 | Settings overview | `/settings` |
 
 ---
 

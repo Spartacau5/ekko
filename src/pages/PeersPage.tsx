@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { peerOrgs, benchmarkData, PeerOrg } from '../data/peers';
 import { Button, Chip, SearchBar, Modal, Checkbox, PageHeader, Tabs } from '../components/ui';
-import { Filter, TrendingUp, TrendingDown, Lock, Building, BarChart3 } from 'lucide-react';
+import { Filter, TrendingUp, TrendingDown, Lock, Building, BarChart3, BookOpen, ArrowUpRight } from 'lucide-react';
 
 const filterOptions = {
   missionArea: ['Tenant rights', 'Affordable housing', 'Family services', 'Homelessness', 'Community organizing', 'Housing research', 'Disaster preparedness'],
@@ -52,6 +53,15 @@ export function PeersPage() {
         title="Peers"
         subtitle="Benchmark, learn from, and share intelligence with similar organizations"
         serif
+        actions={
+          <Link
+            to="/peers/campaigns"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border-default rounded-sm text-sm font-medium text-primary no-underline hover:bg-surface-muted transition-colors"
+          >
+            <BookOpen size={14} />
+            Campaign library
+          </Link>
+        }
       />
 
       {/* Consent banner */}
@@ -237,7 +247,10 @@ function BenchmarkBar({ label, value, pct, suffix, highlighted }: { label: strin
 function PeerOrgCard({ peer }: { peer: PeerOrg }) {
   const optInVariant = peer.optInStatus === 'Opted in' ? 'success' : peer.optInStatus === 'Pending' ? 'warning' : 'default';
   return (
-    <div className="bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors">
+    <Link
+      to={`/peers/${peer.id}`}
+      className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors no-underline"
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className="w-10 h-10 rounded-sm bg-surface-muted border border-border-subtle flex items-center justify-center flex-shrink-0">
@@ -283,11 +296,9 @@ function PeerOrgCard({ peer }: { peer: PeerOrg }) {
           <p className="text-[12px] text-muted">{peer.benchmarkStat.label}</p>
           <p className="text-sm font-semibold text-primary">{peer.benchmarkStat.value}</p>
         </div>
-        {peer.optInStatus === 'Opted in' && (
-          <Button variant="secondary" size="sm">View profile</Button>
-        )}
+        <ArrowUpRight size={14} className="text-muted" />
       </div>
-    </div>
+    </Link>
   );
 }
 

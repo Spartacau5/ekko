@@ -16,7 +16,7 @@ export const dashboardAlerts: Alert[] = [
     description: 'Recurring donor showing signs of disengagement. Consider a re-engagement outreach.',
     category: 'people',
     actionLabel: 'View donor',
-    actionLink: '/people/jordan-rivera',
+    actionLink: '/people/donors/jordan-rivera',
   },
   {
     id: 'alert-2',

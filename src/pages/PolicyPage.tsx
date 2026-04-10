@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { policies, Policy } from '../data/policies';
-import { Button, Chip, SearchBar, Modal, Checkbox, PageHeader } from '../components/ui';
-import { Filter, ArrowUpRight, Clock, AlertCircle } from 'lucide-react';
+import { policyTopics, watchlist } from '../data/watchlist';
+import {
+  Button, Chip, SearchBar, Modal, Checkbox, PageHeader, SegmentedControl, WatchlistToggle,
+} from '../components/ui';
+import { Filter, Clock, AlertCircle, Bell, FolderOpen } from 'lucide-react';
 
 const filterOptions = {
   jurisdiction: ['City', 'State', 'Federal', 'Regional'],
@@ -11,9 +14,18 @@ const filterOptions = {
   impactLevel: ['High opportunity', 'Medium opportunity', 'High risk', 'Medium risk', 'Mixed impact'],
 };
 
+const viewOptions = [
+  { value: 'list', label: 'List' },
+  { value: 'topics', label: 'By topic' },
+];
+
 export function PolicyPage() {
   const [search, setSearch] = useState('');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [view, setView] = useState('list');
+  const [watchedIds, setWatchedIds] = useState<Set<string>>(
+    new Set(watchlist.map(w => w.policyId))
+  );
   const [filters, setFilters] = useState<Record<string, string[]>>({
     jurisdiction: [],
     status: [],
@@ -29,6 +41,15 @@ export function PolicyPage() {
   };
   const clearFilters = () => setFilters({ jurisdiction: [], status: [], topic: [], impactLevel: [] });
   const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+
+  const toggleWatch = (id: string) => {
+    setWatchedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const filtered = useMemo(() => {
     return policies.filter((p) => {
@@ -47,6 +68,16 @@ export function PolicyPage() {
         title="Policy"
         subtitle="Track legislative and regulatory changes that affect your mission"
         serif
+        actions={
+          <Link
+            to="/policy/watchlist"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border-default rounded-sm text-sm font-medium text-primary no-underline hover:bg-surface-muted transition-colors"
+          >
+            <Bell size={14} />
+            Watchlist
+            <span className="text-[12px] text-muted">{watchlist.length}</span>
+          </Link>
+        }
       />
 
       {/* Stats */}
@@ -57,18 +88,23 @@ export function PolicyPage() {
         <PolicyStatCard label="Active updates this week" value="4" />
       </div>
 
-      {/* Filters bar */}
+      {/* View toggle + filters bar */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1 max-w-md">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search policies..." />
-        </div>
-        <Button variant="secondary" onClick={() => setFilterModalOpen(true)}>
-          <Filter size={14} className="mr-2" />
-          Filters {activeFilterCount > 0 && <span className="ml-1.5 text-[12px] bg-accent text-primary px-1.5 rounded-sm">{activeFilterCount}</span>}
-        </Button>
+        <SegmentedControl options={viewOptions} value={view} onChange={setView} />
+        {view === 'list' && (
+          <>
+            <div className="flex-1 max-w-md">
+              <SearchBar value={search} onChange={setSearch} placeholder="Search policies..." />
+            </div>
+            <Button variant="secondary" onClick={() => setFilterModalOpen(true)}>
+              <Filter size={14} className="mr-2" />
+              Filters {activeFilterCount > 0 && <span className="ml-1.5 text-[12px] bg-accent text-primary px-1.5 rounded-sm">{activeFilterCount}</span>}
+            </Button>
+          </>
+        )}
       </div>
 
-      {activeFilterCount > 0 && (
+      {view === 'list' && activeFilterCount > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           {Object.entries(filters).map(([key, values]) =>
             values.map((v) => (
@@ -81,16 +117,48 @@ export function PolicyPage() {
         </div>
       )}
 
-      {/* Policy cards */}
-      <div className="flex flex-col gap-4">
-        {filtered.length === 0 ? (
-          <div className="bg-surface border border-border-subtle rounded-md p-12 text-center text-sm text-muted">
-            No policies match your filters.
-          </div>
-        ) : (
-          filtered.map((policy) => <PolicyCard key={policy.id} policy={policy} />)
-        )}
-      </div>
+      {/* List view */}
+      {view === 'list' && (
+        <div className="flex flex-col gap-4">
+          {filtered.length === 0 ? (
+            <div className="bg-surface border border-border-subtle rounded-md p-12 text-center text-sm text-muted">
+              No policies match your filters.
+            </div>
+          ) : (
+            filtered.map((policy) => (
+              <PolicyCard
+                key={policy.id}
+                policy={policy}
+                isWatching={watchedIds.has(policy.id)}
+                onToggleWatch={() => toggleWatch(policy.id)}
+              />
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Topics view */}
+      {view === 'topics' && (
+        <div className="grid grid-cols-2 gap-4">
+          {policyTopics.map(topic => {
+            const topicPolicies = policies.filter(p => {
+              // map data topic strings to topic ids loosely
+              const map: Record<string, string> = {
+                'Tenant protection': 'tenant-protection',
+                'Affordable housing finance': 'affordable-housing',
+                'Compliance': 'compliance',
+                'Emergency aid': 'emergency-aid',
+                'Privacy': 'privacy',
+                'Land use': 'land-use',
+              };
+              return map[p.topic] === topic.id;
+            });
+            return (
+              <TopicCard key={topic.id} topic={topic} policies={topicPolicies} watchedIds={watchedIds} />
+            );
+          })}
+        </div>
+      )}
 
       <Modal
         open={filterModalOpen}
@@ -115,18 +183,15 @@ export function PolicyPage() {
   );
 }
 
-function PolicyCard({ policy }: { policy: Policy }) {
+function PolicyCard({ policy, isWatching, onToggleWatch }: { policy: Policy; isWatching: boolean; onToggleWatch: () => void }) {
   const isOpportunity = policy.impactLevel.toLowerCase().includes('opportunity');
   const isRisk = policy.impactLevel.toLowerCase().includes('risk');
   const impactVariant = isOpportunity ? 'success' : isRisk ? 'danger' : 'warning';
 
   return (
-    <Link
-      to={`/policy/${policy.id}`}
-      className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors no-underline"
-    >
+    <div className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
+        <Link to={`/policy/${policy.id}`} className="flex-1 min-w-0 no-underline">
           <div className="flex items-center gap-2 mb-1">
             <Chip label={policy.jurisdiction} variant="info" />
             <Chip label={policy.topic} variant="default" />
@@ -144,13 +209,54 @@ function PolicyCard({ policy }: { policy: Policy }) {
               <AlertCircle size={12} /> {policy.teams.length} teams affected
             </span>
           </div>
-        </div>
+        </Link>
         <div className="flex flex-col items-end gap-3">
           <Chip label={policy.impactLevel} variant={impactVariant} />
-          <ArrowUpRight size={14} className="text-muted" />
+          <WatchlistToggle watching={isWatching} onToggle={onToggleWatch} size="sm" />
         </div>
       </div>
-    </Link>
+    </div>
+  );
+}
+
+function TopicCard({ topic, policies, watchedIds }: { topic: any; policies: Policy[]; watchedIds: Set<string> }) {
+  return (
+    <div className="bg-surface border border-border-subtle rounded-md">
+      <div className="px-5 py-4 border-b border-border-subtle">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <div className="flex items-center gap-2">
+            <FolderOpen size={16} className="text-secondary" />
+            <h3 className="text-[15px] font-semibold text-primary">{topic.name}</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted">{topic.policyCount} policies</span>
+            {topic.recentActivity > 0 && (
+              <span className="px-1.5 py-0.5 bg-accent-soft border border-accent text-[11px] font-medium text-primary rounded-sm">
+                {topic.recentActivity} new
+              </span>
+            )}
+          </div>
+        </div>
+        <p className="text-[13px] text-muted">{topic.description}</p>
+      </div>
+      <div className="divide-y divide-border-subtle">
+        {policies.map(p => (
+          <Link
+            key={p.id}
+            to={`/policy/${p.id}`}
+            className="flex items-start justify-between gap-3 p-4 hover:bg-surface-muted/30 no-underline"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-primary line-clamp-1">{p.title}</p>
+              <p className="text-[12px] text-muted mt-0.5">{p.jurisdiction} · {p.status} · Effective {p.effectiveDate}</p>
+            </div>
+            {watchedIds.has(p.id) && (
+              <Bell size={12} className="text-accent flex-shrink-0 mt-1" />
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
