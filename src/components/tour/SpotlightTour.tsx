@@ -157,12 +157,12 @@ export function SpotlightTour({ onClose }: SpotlightTourProps) {
           )}
         </div>
 
-        {/* Tooltip */}
+        {/* Tooltip — wrapper persists across steps; only inner content swaps */}
         <motion.div
-          key={current.target}
+          layout
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: motionDurations.tour, ease: motionEasings.out, delay: 0.05 }}
+          transition={{ duration: motionDurations.tour, ease: motionEasings.out }}
           className="absolute pointer-events-auto"
           style={tooltipStyle}
         >

@@ -130,11 +130,22 @@ export function DashboardPage() {
       {/* KPI strip — clickable, linked to surfaces */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {kpiMetrics.map(m => (
-          <Link key={m.id} to={kpiLinks[m.id] || '/'} className="no-underline group">
-            <div className="bg-surface border border-border-subtle rounded-md p-5 group-hover:border-border-default transition-colors h-full">
+          <Link
+            key={m.id}
+            to={kpiLinks[m.id] || '/'}
+            className="no-underline group rounded-md
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-page focus-visible:ring-border-default"
+          >
+            <div className="bg-surface border border-border-subtle rounded-md p-5 h-full
+              transition-[border-color,background-color] duration-150 ease-out
+              group-hover:border-border-default group-hover:bg-surface-muted/20">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[12px] font-medium text-muted uppercase tracking-wider">{m.label}</p>
-                <ArrowUpRight size={12} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowUpRight
+                  size={12}
+                  className="text-muted opacity-0 -translate-x-0.5 group-hover:opacity-100 group-hover:translate-x-0
+                    transition-[opacity,transform] duration-150 ease-out"
+                />
               </div>
               <div className="flex items-end justify-between gap-3 mb-2">
                 <p className="text-[32px] leading-[36px] font-semibold text-primary">{m.value}</p>

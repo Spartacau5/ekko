@@ -360,8 +360,14 @@ function DonorRow({ donor, selected, onToggleSelect }: { donor: Donor; selected:
   const riskVariant = donor.risk === 'High' ? 'danger' : donor.risk === 'Medium' ? 'warning' : 'success';
 
   return (
-    <div className={`grid grid-cols-12 gap-4 px-5 py-4 border-b border-border-subtle last:border-0 items-center transition-colors
-      ${selected ? 'bg-accent-soft/30' : 'hover:bg-surface-muted/30'}`}>
+    <div className={`relative grid grid-cols-12 gap-4 px-5 py-4 border-b border-border-subtle last:border-0 items-center
+      transition-[background-color] duration-150 ease-out
+      ${selected
+        ? 'bg-accent-soft/40 hover:bg-accent-soft/55'
+        : 'hover:bg-surface-muted/40'}`}>
+      {selected && (
+        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" aria-hidden="true" />
+      )}
       <div className="col-span-1 flex items-center">
         <button
           onClick={(e) => { e.preventDefault(); onToggleSelect(); }}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { policies, Stakeholder } from '../data/policies';
 import { watchlist } from '../data/watchlist';
-import { Button, Chip, WatchlistToggle } from '../components/ui';
+import { Button, Chip, WatchlistToggle, useToast } from '../components/ui';
 import {
   ArrowLeft, Clock, MapPin, AlertCircle, Users, Sparkles, ExternalLink, Bell,
 } from 'lucide-react';
@@ -12,6 +12,7 @@ export function PolicyDetailPage() {
   const policy = policies.find((p) => p.id === id);
   const watchItem = watchlist.find(w => w.policyId === id);
   const [isWatching, setIsWatching] = useState(!!watchItem);
+  const toast = useToast();
 
   if (!policy) {
     return (
@@ -54,7 +55,18 @@ export function PolicyDetailPage() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
-              <WatchlistToggle watching={isWatching} onToggle={() => setIsWatching(!isWatching)} />
+              <WatchlistToggle
+                watching={isWatching}
+                onToggle={() => {
+                  const next = !isWatching;
+                  setIsWatching(next);
+                  toast.show({
+                    type: next ? 'success' : 'info',
+                    title: next ? 'Added to watchlist' : 'Removed from watchlist',
+                    description: policy.title,
+                  });
+                }}
+              />
               <Button variant="secondary"><ExternalLink size={14} className="mr-2" />Source</Button>
             </div>
             <Button>Add to brief</Button>
@@ -160,7 +172,17 @@ export function PolicyDetailPage() {
             </div>
             <div className="p-5">
               <p className="text-sm text-primary leading-relaxed mb-4">{policy.recommendedAction}</p>
-              <Button size="sm" className="w-full justify-center">Assign to team</Button>
+              <Button
+                size="sm"
+                className="w-full justify-center"
+                onClick={() => toast.show({
+                  type: 'success',
+                  title: 'Action assigned',
+                  description: `Assigned to ${policy.teams.join(', ')}.`,
+                })}
+              >
+                Assign to team
+              </Button>
             </div>
           </div>
 

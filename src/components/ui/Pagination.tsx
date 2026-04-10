@@ -37,7 +37,12 @@ export function Pagination({ currentPage, totalPages, onPageChange, totalItems, 
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="w-8 h-8 flex items-center justify-center text-secondary hover:text-primary hover:bg-surface-muted rounded-sm disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Previous page"
+          className="w-8 h-8 flex items-center justify-center text-secondary rounded-sm
+            transition-colors duration-150 ease-out
+            hover:text-primary hover:bg-surface-muted
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-page focus-visible:ring-border-default
+            disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         >
           <ChevronLeft size={14} />
         </button>
@@ -48,7 +53,10 @@ export function Pagination({ currentPage, totalPages, onPageChange, totalItems, 
             <button
               key={p}
               onClick={() => onPageChange(p)}
+              aria-current={p === currentPage ? 'page' : undefined}
               className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-sm
+                transition-colors duration-150 ease-out
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-page focus-visible:ring-border-default
                 ${p === currentPage
                   ? 'bg-accent text-primary border border-border-default'
                   : 'text-secondary hover:text-primary hover:bg-surface-muted'
@@ -61,7 +69,12 @@ export function Pagination({ currentPage, totalPages, onPageChange, totalItems, 
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="w-8 h-8 flex items-center justify-center text-secondary hover:text-primary hover:bg-surface-muted rounded-sm disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Next page"
+          className="w-8 h-8 flex items-center justify-center text-secondary rounded-sm
+            transition-colors duration-150 ease-out
+            hover:text-primary hover:bg-surface-muted
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-page focus-visible:ring-border-default
+            disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         >
           <ChevronRight size={14} />
         </button>

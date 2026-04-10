@@ -137,17 +137,40 @@ export function DonorDetailPage() {
                     </div>
                   ) : (
                     <>
-                      {(timelineExpanded ? filteredTimeline : filteredTimeline.slice(0, 5)).map((event, idx, arr) => (
+                      {filteredTimeline.slice(0, 5).map((event, idx, arr) => (
                         <TimelineEvent
-                          key={`${event.date}-${idx}`}
+                          key={`base-${event.date}-${idx}`}
                           event={event}
-                          isLast={idx === arr.length - 1}
+                          isLast={idx === arr.length - 1 && !timelineExpanded}
                         />
                       ))}
+                      <AnimatePresence initial={false}>
+                        {timelineExpanded &&
+                          filteredTimeline.slice(5).map((event, idx, arr) => (
+                            <motion.div
+                              key={`extra-${event.date}-${idx}`}
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{
+                                duration: motionDurations.panel,
+                                ease: motionEasings.out,
+                                delay: idx * 0.04,
+                              }}
+                              style={{ overflow: 'hidden' }}
+                            >
+                              <TimelineEvent
+                                event={event}
+                                isLast={idx === arr.length - 1}
+                              />
+                            </motion.div>
+                          ))}
+                      </AnimatePresence>
                       {filteredTimeline.length > 5 && (
                         <button
                           onClick={() => setTimelineExpanded((e) => !e)}
-                          className="w-full flex items-center justify-center gap-1.5 py-3 mt-1 border-t border-border-subtle text-[13px] text-secondary hover:text-primary transition-colors duration-150"
+                          className="w-full flex items-center justify-center gap-1.5 py-3 mt-1 border-t border-border-subtle text-[13px] text-secondary hover:text-primary transition-colors duration-150
+                            focus-visible:outline-none focus-visible:bg-surface-muted/50 rounded-sm"
                         >
                           {timelineExpanded
                             ? 'Show less'
@@ -155,6 +178,7 @@ export function DonorDetailPage() {
                           <motion.span
                             animate={{ rotate: timelineExpanded ? 180 : 0 }}
                             transition={{ duration: motionDurations.panel, ease: motionEasings.out }}
+                            className="inline-flex"
                           >
                             <ChevronDown size={13} />
                           </motion.span>

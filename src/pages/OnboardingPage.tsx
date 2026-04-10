@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useAnimationControls } from 'framer-motion';
 import { Button, TextInput, SelectInput, Checkbox } from '../components/ui';
 import { OnboardingStepper } from '../components/onboarding/OnboardingStepper';
 import { motionDurations, motionEasings } from '../lib/motion';
@@ -31,6 +31,7 @@ export function OnboardingPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  const profileFormControls = useAnimationControls();
 
   // Step states
   const [profile, setProfile] = useState({ firstName: '', lastName: '', role: '', email: '' });
@@ -62,11 +63,20 @@ export function OnboardingPage() {
     // Validation gate for the Profile step
     if (currentStep === 1) {
       setProfileTouched(true);
-      if (!validateProfile()) return;
+      if (!validateProfile()) {
+        // Subtle attention shake on the form
+        profileFormControls.start({
+          x: [0, -4, 4, -3, 3, 0],
+          transition: { duration: 0.32, ease: 'easeInOut' },
+        });
+        return;
+      }
     }
     setDirection(1);
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
+      // Scroll back to top so the next step starts from a clean position
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       navigate('/dashboard?tour=true');
     }
@@ -131,7 +141,7 @@ export function OnboardingPage() {
           <div className="max-w-md mx-auto py-8">
             <h2 className="text-[22px] leading-[30px] font-semibold text-primary mb-1">Complete your profile</h2>
             <p className="text-sm text-secondary mb-6">Tell us about yourself so we can personalize your experience.</p>
-            <div className="flex flex-col gap-4">
+            <motion.div animate={profileFormControls} className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <TextInput
                   label="First name"
@@ -173,7 +183,7 @@ export function OnboardingPage() {
               {profileTouched && profileErrors.role && (
                 <p className="text-[13px] text-danger">{profileErrors.role}</p>
               )}
-            </div>
+            </motion.div>
           </div>
         );
 
