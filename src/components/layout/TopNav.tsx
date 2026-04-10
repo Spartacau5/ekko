@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { HelpCircle, Settings, User, BookOpen, MessageCircle, Sparkles } from 'lucide-react';
+import { HelpCircle, Settings, BookOpen, MessageCircle, Sparkles } from 'lucide-react';
 import { useTour } from '../../lib/TourContext';
 import { motionDurations, motionEasings } from '../../lib/motion';
+import { RoleSwitcher } from './RoleSwitcher';
+import { useRole } from '../../lib/RoleContext';
+import { Avatar } from '../ui/Avatar';
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard' },
@@ -16,6 +19,7 @@ export function TopNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { startTour } = useTour();
+  const { activeMember } = useRole();
   const [helpOpen, setHelpOpen] = useState(false);
   const helpRef = useRef<HTMLDivElement>(null);
 
@@ -80,6 +84,8 @@ export function TopNav() {
       </nav>
 
       <div className="flex items-center gap-2">
+        <RoleSwitcher />
+        <div className="w-px h-5 bg-border-subtle mx-1" />
         <div className="relative" ref={helpRef}>
           <button
             onClick={() => setHelpOpen((o) => !o)}
@@ -136,8 +142,8 @@ export function TopNav() {
         >
           <Settings size={18} />
         </Link>
-        <div className="ml-2 w-8 h-8 rounded-full bg-accent-soft border border-border-subtle flex items-center justify-center">
-          <User size={16} className="text-secondary" />
+        <div className="ml-1">
+          <Avatar member={activeMember} size="md" />
         </div>
       </div>
     </header>

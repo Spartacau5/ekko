@@ -1,22 +1,113 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { organization } from '../data/organization';
 import { dashboardAlerts } from '../data/alerts';
 import { donors } from '../data/donors';
 import { policies } from '../data/policies';
 import { benchmarkData } from '../data/peers';
-import { kpiMetrics, priorityTasks, recentActivity, fundraisingTrend } from '../data/dashboardMetrics';
-import { ProgressBar, Chip, BarChart } from '../components/ui';
+import { peerCampaigns } from '../data/campaigns';
+import { kpiMetrics, recentActivity, fundraisingTrend } from '../data/dashboardMetrics';
+import { ActionItem, ActionStatus, actions as allActions } from '../data/actions';
+import { policyAlerts, watchlist } from '../data/watchlist';
+import { pinsForRole, trackedPeers, watchlistGroups } from '../data/workspace';
+import { roleMeta, Role } from '../data/team';
+import { useRole } from '../lib/RoleContext';
+import {
+  ProgressBar,
+  Chip,
+  BarChart,
+  TaskCard,
+  PinnedModuleCard,
+  ActionDrawer,
+  useToast,
+} from '../components/ui';
 import { useTour } from '../lib/TourContext';
+import { motionDurations, motionEasings } from '../lib/motion';
 import {
   AlertCircle, AlertTriangle, Info, CheckCircle, ArrowUpRight, Sparkles,
   MapPin, Building2, Gift, Mail, Users as UsersIcon, FileText,
-  Megaphone, TrendingUp, Clock, Bell,
+  Megaphone, TrendingUp, Clock, Bell, Pin, Eye,
 } from 'lucide-react';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Role-aware Dashboard. Same shell, same nav. The hero copy, the priority
+// task list, the pinned modules, and the secondary modules all reorder
+// based on the active role.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Surface = 'people' | 'policy' | 'peers';
+
+interface ModuleConfig {
+  glanceTitle: string;
+  glanceFocus: string;
+  // Triple-column ordering across People / Policy / Peers. The first item
+  // is what this role looks at first.
+  surfaceOrder: Surface[];
+  // Whether the fundraising-trend strip is emphasized for this role.
+  showFundraising: boolean;
+}
+
+const roleModules: Record<Role, ModuleConfig> = {
+  executive: {
+    glanceTitle: 'Across the org',
+    glanceFocus: 'Cross-functional priorities and top risks',
+    surfaceOrder: ['people', 'policy', 'peers'],
+    showFundraising: true,
+  },
+  fundraising: {
+    glanceTitle: 'Fundraising at a glance',
+    glanceFocus: 'Donor risk, retention, and outreach',
+    surfaceOrder: ['people', 'peers', 'policy'],
+    showFundraising: true,
+  },
+  policy: {
+    glanceTitle: 'Policy at a glance',
+    glanceFocus: 'Watchlist, hearings, and advocacy actions',
+    surfaceOrder: ['policy', 'peers', 'people'],
+    showFundraising: false,
+  },
+  program: {
+    glanceTitle: 'Program at a glance',
+    glanceFocus: 'Resident impact and operational signals',
+    surfaceOrder: ['policy', 'people', 'peers'],
+    showFundraising: false,
+  },
+  operations: {
+    glanceTitle: 'Operations at a glance',
+    glanceFocus: 'Compliance, integrations, and team access',
+    surfaceOrder: ['policy', 'people', 'peers'],
+    showFundraising: false,
+  },
+};
+
+// "Today" is static for the prototype so demo numbers stay stable.
+const TODAY = new Date('2026-04-10');
+const daysUntil = (iso: string) => {
+  const d = new Date(iso);
+  return Math.round((d.getTime() - TODAY.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+interface GlanceItem {
+  label: string;
+  value: string;
+  sublabel?: string;
+  accent?: 'danger' | 'warning' | 'success';
+  link?: string;
+}
 
 export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { startTour } = useTour();
+  const { activeRole, activeMember } = useRole();
+  const toast = useToast();
+  const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Local action state — actions live in module data, but the dashboard
+  // owns the live copy so status / owner edits propagate back to the list,
+  // task counts, and the drawer in the same render.
+  const [actionState, setActionState] = useState<ActionItem[]>(() => allActions.slice());
 
   useEffect(() => {
     if (searchParams.get('tour') === 'true') {
@@ -26,11 +117,34 @@ export function DashboardPage() {
     }
   }, [searchParams, setSearchParams, startTour]);
 
-  const priorityDonors = donors.filter(d => d.risk === 'High' || d.stage === 'Growing').slice(0, 4);
-  const criticalPolicies = policies.filter(p => p.impactLevel === 'High risk' || p.impactLevel === 'High opportunity').slice(0, 3);
+  const cfg = roleModules[activeRole];
 
-  const urgentTasks = priorityTasks.filter(t => t.priority === 'urgent');
-  const tasksThisWeek = priorityTasks.filter(t => t.dueLabel.includes('days') || t.dueLabel.includes('week'));
+  // Sort: open & in-progress first (urgent → low, then due date),
+  // completed sink to the bottom but stay visible in counts.
+  const myActions = useMemo(() => {
+    const pri = { urgent: 0, high: 1, medium: 2, low: 3 };
+    const stat = { open: 0, in_progress: 1, completed: 2 };
+    return actionState
+      .filter((a) => a.visibleTo.includes(activeRole))
+      .slice()
+      .sort((a, b) => {
+        if (stat[a.status] !== stat[b.status]) return stat[a.status] - stat[b.status];
+        if (pri[a.priority] !== pri[b.priority]) return pri[a.priority] - pri[b.priority];
+        return a.dueDate.localeCompare(b.dueDate);
+      });
+  }, [actionState, activeRole]);
+
+  const openOrInProgress = myActions.filter((a) => a.status !== 'completed');
+  const openCount = openOrInProgress.length;
+  const inProgressCount = myActions.filter((a) => a.status === 'in_progress').length;
+  const urgentCount = openOrInProgress.filter((a) => a.priority === 'urgent').length;
+
+  const myPins = useMemo(() => pinsForRole(activeRole), [activeRole]);
+
+  const priorityDonors = donors.filter((d) => d.risk === 'High' || d.stage === 'Growing').slice(0, 4);
+  const criticalPolicies = policies
+    .filter((p) => p.impactLevel === 'High risk' || p.impactLevel === 'High opportunity')
+    .slice(0, 3);
 
   // KPI → surface link mapping
   const kpiLinks: Record<string, string> = {
@@ -40,96 +154,246 @@ export function DashboardPage() {
     'avg-engagement': '/peers',
   };
 
+  const greeting = `Good morning, ${activeMember.name.split(' ')[0]}`;
+
+  // Per-role glance content. Each row pulls from real workspace data so
+  // the numbers actually mean something the active role would care about.
+  const glanceItems: GlanceItem[] = useMemo(() => {
+    const unreadAlerts = policyAlerts.filter((a) => a.isUnread).length;
+    const donorsAtRisk = donors.filter((d) => d.risk === 'High').length;
+    const fundraisingActions = actionState.filter(
+      (a) => a.entity?.type === 'donor' && a.status !== 'completed'
+    ).length;
+    const policyActionsOpen = actionState.filter(
+      (a) => a.entity?.type === 'policy' && a.status !== 'completed'
+    ).length;
+    const programActionsOpen = actionState.filter(
+      (a) => a.visibleTo.includes('program') && a.status !== 'completed'
+    ).length;
+    const opsActionsOpen = actionState.filter(
+      (a) => a.visibleTo.includes('operations') && a.status !== 'completed'
+    ).length;
+    const complianceDeadline = policies.find((p) => p.id === 'rental-assistance-reporting');
+    const daysToCompliance = complianceDeadline ? daysUntil('2026-05-15') : 0;
+
+    switch (activeRole) {
+      case 'fundraising':
+        return [
+          { label: 'Donors at risk', value: donorsAtRisk.toString(), accent: donorsAtRisk > 0 ? 'danger' : undefined, link: '/people/donors' },
+          { label: 'Open follow-ups', value: fundraisingActions.toString(), sublabel: 'with donors', accent: 'warning' },
+          { label: 'Foundation pipeline', value: '12', sublabel: 'in stewardship', link: '/people/donors' },
+          { label: 'Gifts received', value: '$12.4K', sublabel: 'last 7 days', accent: 'success' },
+        ];
+      case 'policy':
+        return [
+          { label: 'Watchlist alerts', value: unreadAlerts.toString(), sublabel: 'unread', accent: unreadAlerts > 0 ? 'warning' : undefined, link: '/policy/watchlist' },
+          { label: 'Open advocacy actions', value: policyActionsOpen.toString(), accent: urgentCount > 0 ? 'danger' : undefined },
+          { label: 'Tracked policies', value: watchlist.length.toString(), sublabel: `${watchlistGroups.length} topic groups`, link: '/policy/watchlist' },
+          { label: 'Hearings this month', value: '2', sublabel: 'incl. RTC Apr 22', accent: 'warning' },
+        ];
+      case 'program':
+        return [
+          { label: 'Open program actions', value: programActionsOpen.toString(), accent: 'warning' },
+          { label: 'Emergency aid window', value: `${daysUntil('2026-05-15')}d`, sublabel: 'until close', accent: 'warning', link: '/policy/anti-eviction-funding' },
+          { label: 'Resident outreach', value: '3', sublabel: 'sites active' },
+          { label: 'Volunteer signals', value: '+18%', sublabel: 'vs. last month', accent: 'success' },
+        ];
+      case 'operations':
+        return [
+          { label: 'Compliance deadline', value: `${daysToCompliance}d`, sublabel: 'rental assistance', accent: daysToCompliance < 30 ? 'danger' : 'warning', link: '/policy/rental-assistance-reporting' },
+          { label: 'Open ops tasks', value: opsActionsOpen.toString(), accent: 'warning' },
+          { label: 'Integrations', value: '3 of 5', sublabel: 'connected', link: '/settings' },
+          { label: 'Pending invites', value: '0', sublabel: 'team complete', accent: 'success' },
+        ];
+      case 'executive':
+      default:
+        return [
+          { label: 'Urgent tasks', value: urgentCount.toString(), accent: urgentCount > 0 ? 'danger' : undefined },
+          { label: 'In progress', value: inProgressCount.toString(), accent: 'warning' },
+          { label: 'Policy alerts', value: unreadAlerts.toString(), sublabel: 'unread', link: '/policy/watchlist' },
+          { label: 'Gifts received', value: '$12.4K', sublabel: 'last 7 days', accent: 'success' },
+        ];
+    }
+  }, [activeRole, actionState, urgentCount, inProgressCount]);
+
+  // Real counts for the quick links sidebar.
+  const quickLinkCounts = {
+    donors: donors.length,
+    watchlist: watchlist.length,
+    campaigns: peerCampaigns.length,
+    tracked: trackedPeers.length,
+  };
+
+  const handleStatusChange = (id: string, next: ActionStatus) => {
+    setActionState((prev) => prev.map((a) => (a.id === id ? { ...a, status: next } : a)));
+    const action = actionState.find((a) => a.id === id);
+    toast.show({
+      type: next === 'completed' ? 'success' : 'info',
+      title:
+        next === 'completed' ? 'Task completed' :
+        next === 'in_progress' ? 'Task started' :
+        'Task reopened',
+      description: action?.title,
+    });
+  };
+
+  const handleOwnerChange = (id: string, ownerId: string) => {
+    setActionState((prev) => prev.map((a) => (a.id === id ? { ...a, ownerId } : a)));
+    const action = actionState.find((a) => a.id === id);
+    toast.show({
+      type: 'success',
+      title: 'Task reassigned',
+      description: action ? `"${action.title}" reassigned.` : undefined,
+    });
+  };
+
+  const openDrawer = (action: ActionItem) => {
+    setDrawerAction(action);
+    setDrawerOpen(true);
+  };
+
   return (
     <>
-      {/* Welcome heading */}
-      <div className="mb-6" id="dashboard-welcome">
-        <p className="text-[13px] font-medium text-muted uppercase tracking-wider mb-1">
-          Friday, April 10
-        </p>
-        <h1 className="text-[36px] leading-[44px] font-semibold font-serif text-primary">
-          Good morning, Sofia
-        </h1>
-        <p className="text-base text-secondary mt-1">
-          {urgentTasks.length > 0
-            ? `${urgentTasks.length} urgent ${urgentTasks.length === 1 ? 'task' : 'tasks'} and ${tasksThisWeek.length - urgentTasks.length} more this week.`
-            : `Here's what needs your attention at ${organization.name}.`}
-        </p>
-      </div>
+      {/* Welcome heading — animates between roles */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`hello-${activeRole}`}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -2 }}
+          transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+          className="mb-6"
+          id="dashboard-welcome"
+        >
+          <p className="text-[13px] font-medium text-muted uppercase tracking-wider mb-1">
+            Friday, April 10 · Previewing as {roleMeta[activeRole].label}
+          </p>
+          <h1 className="text-[36px] leading-[44px] font-semibold font-serif text-primary">
+            {greeting}
+          </h1>
+          <p className="text-base text-secondary mt-1">
+            {urgentCount > 0
+              ? `${urgentCount} urgent ${urgentCount === 1 ? 'task' : 'tasks'} and ${openCount - urgentCount} more open. ${cfg.glanceFocus}.`
+              : openCount > 0
+              ? `${openCount} open tasks. ${cfg.glanceFocus}.`
+              : `Nothing urgent. ${cfg.glanceFocus}.`}
+          </p>
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Hero: Priority tasks + today-at-a-glance */}
+      {/* Pinned priorities — always visible above the fold */}
+      {myPins.length > 0 && (
+        <section className="mb-6">
+          <SectionHeading
+            title="Pinned priorities"
+            subtitle="Items the team is keeping close this week"
+          />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`pins-${activeRole}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+              className="grid grid-cols-4 gap-3"
+            >
+              {myPins.map((p) => (
+                <PinnedModuleCard key={p.id} item={p} />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </section>
+      )}
+
+      {/* Hero: Priority tasks (role-aware) + glance panel */}
       <div className="grid grid-cols-12 gap-6 mb-6">
-        {/* Priority tasks — hero card */}
         <div className="col-span-8 bg-surface border border-border-default rounded-md overflow-hidden">
           <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between bg-surface-muted/30">
             <div className="flex items-center gap-2">
               <Sparkles size={15} className="text-primary" />
-              <h2 className="text-[15px] font-semibold text-primary">Priority tasks</h2>
+              <h2 className="text-[15px] font-semibold text-primary">Your priority tasks</h2>
               <Chip
-                label={`${urgentTasks.length} urgent`}
-                variant={urgentTasks.length > 0 ? 'danger' : 'default'}
+                label={`${urgentCount} urgent`}
+                variant={urgentCount > 0 ? 'danger' : 'default'}
               />
+              <Chip label={`${openCount} open`} variant="default" />
+              {inProgressCount > 0 && (
+                <Chip label={`${inProgressCount} in progress`} variant="info" />
+              )}
             </div>
-            <button className="text-[13px] text-secondary hover:text-primary underline">
-              View all {priorityTasks.length}
-            </button>
+            <span className="text-[12px] text-muted">
+              Showing top {Math.min(5, myActions.length)} of {myActions.length}
+            </span>
           </div>
-          <div className="divide-y divide-border-subtle">
-            {priorityTasks.slice(0, 5).map(task => <TaskRow key={task.id} task={task} />)}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`tasks-${activeRole}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+              className="p-3 flex flex-col gap-2"
+            >
+              {myActions.slice(0, 5).map((a) => (
+                <TaskCard
+                  key={a.id}
+                  action={a}
+                  onStatusChange={handleStatusChange}
+                  onOwnerChange={handleOwnerChange}
+                  onOpenDrawer={openDrawer}
+                />
+              ))}
+              {myActions.length === 0 && (
+                <div className="py-10 text-center">
+                  <p className="text-sm text-secondary">
+                    No tasks assigned to {roleMeta[activeRole].label} right now.
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        {/* Today at a glance */}
+        {/* Glance panel — content shifts per role */}
         <div className="col-span-4 flex flex-col gap-4">
           <div className="bg-surface border border-border-subtle rounded-md p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-[14px] font-semibold text-primary flex items-center gap-2">
-                <Clock size={14} /> Today at a glance
+                <Clock size={14} /> {cfg.glanceTitle}
               </h3>
             </div>
-            <div className="flex flex-col gap-3">
-              <GlanceRow
-                label="Urgent tasks"
-                value={urgentTasks.length.toString()}
-                accent={urgentTasks.length > 0 ? 'danger' : undefined}
-              />
-              <GlanceRow
-                label="Policy alerts"
-                value="3"
-                sublabel="unread"
-                accent="warning"
-                link="/policy/watchlist"
-              />
-              <GlanceRow
-                label="Upcoming meetings"
-                value="2"
-                sublabel="this week"
-              />
-              <GlanceRow
-                label="Gifts received"
-                value="$12.4K"
-                sublabel="last 7 days"
-                accent="success"
-              />
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`glance-${activeRole}`}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+                className="flex flex-col gap-3"
+              >
+                {glanceItems.map((g, i) => (
+                  <GlanceRow key={i} {...g} />
+                ))}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
-          {/* Quick links */}
           <div className="bg-surface border border-border-subtle rounded-md p-5">
             <h3 className="text-[14px] font-semibold text-primary mb-3">Quick links</h3>
             <div className="flex flex-col gap-1.5">
-              <QuickLink to="/people/donors" label="Donors" count={donors.length} icon={<UsersIcon size={12} />} />
-              <QuickLink to="/policy/watchlist" label="Policy watchlist" count={4} icon={<Bell size={12} />} />
-              <QuickLink to="/peers/campaigns" label="Campaign library" count={10} icon={<Megaphone size={12} />} />
+              <QuickLink to="/people/donors" label="Donors" count={quickLinkCounts.donors} icon={<UsersIcon size={12} />} />
+              <QuickLink to="/policy/watchlist" label="Policy watchlist" count={quickLinkCounts.watchlist} icon={<Bell size={12} />} />
+              <QuickLink to="/peers/campaigns" label="Campaign library" count={quickLinkCounts.campaigns} icon={<Megaphone size={12} />} />
+              <QuickLink to="/peers" label="Tracked peers" count={quickLinkCounts.tracked} icon={<Eye size={12} />} />
               <QuickLink to="/settings" label="Settings" icon={<FileText size={12} />} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* KPI strip — clickable, linked to surfaces */}
+      {/* KPI strip */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {kpiMetrics.map(m => (
+        {kpiMetrics.map((m) => (
           <Link
             key={m.id}
             to={kpiLinks[m.id] || '/'}
@@ -166,7 +430,7 @@ export function DashboardPage() {
         ))}
       </div>
 
-      {/* Recent signals (alerts) */}
+      {/* Recent signals */}
       <section className="mb-6">
         <SectionHeading
           title="Recent signals"
@@ -179,125 +443,78 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Fundraising trend + setup */}
-      <div className="grid grid-cols-12 gap-6 mb-6">
-        <div className="col-span-8 bg-surface border border-border-subtle rounded-md p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-[15px] font-semibold text-primary">Fundraising trend</h2>
-              <p className="text-[13px] text-muted mt-0.5">Last 6 months — actual vs. target</p>
+      {/* Fundraising / setup row — only emphasized for executive + fundraising */}
+      {cfg.showFundraising && (
+        <div className="grid grid-cols-12 gap-6 mb-6">
+          <div className="col-span-8 bg-surface border border-border-subtle rounded-md p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-[15px] font-semibold text-primary">Fundraising trend</h2>
+                <p className="text-[13px] text-muted mt-0.5">Last 6 months — actual vs. target</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[12px] font-medium text-muted uppercase tracking-wider">YTD raised</p>
+                <p className="text-[22px] font-semibold text-primary">
+                  ${(fundraisingTrend.reduce((sum, m) => sum + m.raised, 0) / 1000).toFixed(0)}K
+                </p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-[12px] font-medium text-muted uppercase tracking-wider">YTD raised</p>
-              <p className="text-[22px] font-semibold text-primary">
-                ${(fundraisingTrend.reduce((sum, m) => sum + m.raised, 0) / 1000).toFixed(0)}K
-              </p>
+            <div className="mt-2">
+              <BarChart
+                data={fundraisingTrend.map((m) => ({ label: m.month, value: m.raised, target: m.target }))}
+                height={180}
+                format={(n) => `$${(n / 1000).toFixed(0)}K`}
+              />
             </div>
           </div>
-          <div className="mt-2">
-            <BarChart data={fundraisingTrend.map(m => ({ label: m.month, value: m.raised, target: m.target }))} height={180} format={(n) => `$${(n / 1000).toFixed(0)}K`} />
+
+          <div className="col-span-4 bg-surface border border-border-subtle rounded-md p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-[15px] font-semibold text-primary">Setup progress</h3>
+              <span className="text-[13px] text-muted">{organization.setupCompletion}%</span>
+            </div>
+            <ProgressBar value={organization.setupCompletion} showPercent={false} />
+            <div className="mt-4 flex flex-col gap-2">
+              <ChecklistItem done label="Verify organization details" />
+              <ChecklistItem done label="Connect Salesforce CRM" />
+              <ChecklistItem done label="Set fundraising goals" />
+              <ChecklistItem label="Connect calendar" />
+              <ChecklistItem label="Invite remaining team" />
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="col-span-4 bg-surface border border-border-subtle rounded-md p-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[15px] font-semibold text-primary">Setup progress</h3>
-            <span className="text-[13px] text-muted">{organization.setupCompletion}%</span>
-          </div>
-          <ProgressBar value={organization.setupCompletion} showPercent={false} />
-          <div className="mt-4 flex flex-col gap-2">
-            <ChecklistItem done label="Verify organization details" />
-            <ChecklistItem done label="Connect Salesforce CRM" />
-            <ChecklistItem done label="Set fundraising goals" />
-            <ChecklistItem label="Connect calendar" />
-            <ChecklistItem label="Invite remaining team" />
-          </div>
-        </div>
-      </div>
-
-      {/* Three-column row: People / Policy / Peers */}
-      <div className="grid grid-cols-12 gap-6 mb-6">
-        <section className="col-span-4" id="dashboard-people">
-          <SectionHeading title="Priority people" link="/people/donors" />
-          <div className="bg-surface border border-border-subtle rounded-md divide-y divide-border-subtle">
-            {priorityDonors.map((donor) => (
-              <Link
-                key={donor.id}
-                to={`/people/donors/${donor.id}`}
-                className="flex items-start justify-between gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-primary truncate">{donor.name}</p>
-                  <p className="text-[13px] text-secondary truncate">{donor.persona}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <Chip
-                      variant={donor.risk === 'High' ? 'danger' : donor.risk === 'Medium' ? 'warning' : 'success'}
-                      label={`${donor.risk} risk`}
-                    />
-                    <span className="text-[12px] text-muted">{donor.stage}</span>
-                  </div>
-                </div>
-                <ArrowUpRight size={14} className="text-muted mt-0.5 flex-shrink-0" />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="col-span-4" id="dashboard-policy">
-          <SectionHeading title="Policy radar" link="/policy" />
-          <div className="bg-surface border border-border-subtle rounded-md divide-y divide-border-subtle">
-            {criticalPolicies.map((policy) => (
-              <Link
-                key={policy.id}
-                to={`/policy/${policy.id}`}
-                className="flex items-start gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-primary line-clamp-2">{policy.title}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <Chip
-                      variant={policy.impactLevel.includes('risk') ? 'danger' : 'success'}
-                      label={policy.impactLevel}
-                    />
-                    <span className="text-[12px] text-muted">{policy.jurisdiction}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="col-span-4" id="dashboard-peers">
-          <SectionHeading title="Peer benchmarks" link="/peers" />
-          <div className="bg-surface border border-border-subtle rounded-md p-5">
-            <BenchmarkRow
-              label="Email open rate"
-              yours={benchmarkData.emailOpenRate.yours}
-              peer={benchmarkData.emailOpenRate.peerAverage}
-              suffix="%"
-            />
-            <BenchmarkRow
-              label="Donation conversion"
-              yours={benchmarkData.donationConversion.yours}
-              peer={benchmarkData.donationConversion.peerAverage}
-              suffix="%"
-            />
-            <BenchmarkRow
-              label="Donor retention"
-              yours={benchmarkData.donorRetention.yours}
-              peer={benchmarkData.donorRetention.peerAverage}
-              suffix="%"
-            />
-          </div>
-        </section>
-      </div>
+      {/* Three-column row — column order rotates by role.
+          The first column is what this role looks at first. */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`surfaces-${activeRole}`}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+          className="grid grid-cols-12 gap-6 mb-6"
+        >
+          {cfg.surfaceOrder.map((surface, idx) => {
+            const isPrimary = idx === 0;
+            if (surface === 'people') {
+              return <PeopleColumn key="people" priorityDonors={priorityDonors} primary={isPrimary} />;
+            }
+            if (surface === 'policy') {
+              return <PolicyColumn key="policy" criticalPolicies={criticalPolicies} primary={isPrimary} />;
+            }
+            return <PeersColumn key="peers" primary={isPrimary} />;
+          })}
+        </motion.div>
+      </AnimatePresence>
 
       {/* Recent activity */}
       <section className="mb-6">
         <SectionHeading title="Recent activity" subtitle="Cross-feature signals from across your workspace" />
         <div className="bg-surface border border-border-subtle rounded-md">
           <div className="divide-y divide-border-subtle">
-            {recentActivity.map(item => <ActivityRow key={item.id} item={item} />)}
+            {recentActivity.map((item) => <ActivityRow key={item.id} item={item} />)}
           </div>
         </div>
       </section>
@@ -326,16 +543,134 @@ export function DashboardPage() {
           <OrgStat label="Revenue" value={organization.revenueRange} />
         </div>
       </div>
+
+      <ActionDrawer
+        action={drawerAction}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onStatusChange={handleStatusChange}
+        onOwnerChange={handleOwnerChange}
+      />
     </>
   );
 }
 
-function SectionHeading({ title, subtitle, link }: { title: string; subtitle?: string; link?: string }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Subcomponents
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PeopleColumn({ priorityDonors, primary }: { priorityDonors: any[]; primary: boolean }) {
+  return (
+    <section className="col-span-4" id="dashboard-people">
+      <SectionHeading
+        title="Priority people"
+        link="/people/donors"
+        accent={primary}
+      />
+      <div className={`bg-surface rounded-md divide-y divide-border-subtle border
+        ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
+        {priorityDonors.map((donor) => (
+          <Link
+            key={donor.id}
+            to={`/people/donors/${donor.id}`}
+            className="flex items-start justify-between gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-primary truncate">{donor.name}</p>
+              <p className="text-[13px] text-secondary truncate">{donor.persona}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Chip
+                  variant={donor.risk === 'High' ? 'danger' : donor.risk === 'Medium' ? 'warning' : 'success'}
+                  label={`${donor.risk} risk`}
+                />
+                <span className="text-[12px] text-muted">{donor.stage}</span>
+              </div>
+            </div>
+            <ArrowUpRight size={14} className="text-muted mt-0.5 flex-shrink-0" />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PolicyColumn({ criticalPolicies, primary }: { criticalPolicies: any[]; primary: boolean }) {
+  return (
+    <section className="col-span-4" id="dashboard-policy">
+      <SectionHeading title="Policy radar" link="/policy" accent={primary} />
+      <div className={`bg-surface rounded-md divide-y divide-border-subtle border
+        ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
+        {criticalPolicies.map((policy) => (
+          <Link
+            key={policy.id}
+            to={`/policy/${policy.id}`}
+            className="flex items-start gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-primary line-clamp-2">{policy.title}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Chip
+                  variant={policy.impactLevel.includes('risk') ? 'danger' : 'success'}
+                  label={policy.impactLevel}
+                />
+                <span className="text-[12px] text-muted">{policy.jurisdiction}</span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PeersColumn({ primary }: { primary: boolean }) {
+  return (
+    <section className="col-span-4" id="dashboard-peers">
+      <SectionHeading title="Peer benchmarks" link="/peers" accent={primary} />
+      <div className={`bg-surface rounded-md p-5 border
+        ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
+        <BenchmarkRow
+          label="Email open rate"
+          yours={benchmarkData.emailOpenRate.yours}
+          peer={benchmarkData.emailOpenRate.peerAverage}
+          suffix="%"
+        />
+        <BenchmarkRow
+          label="Donation conversion"
+          yours={benchmarkData.donationConversion.yours}
+          peer={benchmarkData.donationConversion.peerAverage}
+          suffix="%"
+        />
+        <BenchmarkRow
+          label="Donor retention"
+          yours={benchmarkData.donorRetention.yours}
+          peer={benchmarkData.donorRetention.peerAverage}
+          suffix="%"
+        />
+      </div>
+    </section>
+  );
+}
+
+function SectionHeading({
+  title,
+  subtitle,
+  link,
+  accent,
+}: {
+  title: string;
+  subtitle?: string;
+  link?: string;
+  accent?: boolean;
+}) {
   return (
     <div className="flex items-end justify-between mb-3">
-      <div>
-        <h2 className="text-[15px] font-semibold text-primary">{title}</h2>
-        {subtitle && <p className="text-[13px] text-muted mt-0.5">{subtitle}</p>}
+      <div className="flex items-center gap-2">
+        {accent && <Pin size={12} className="text-accent -rotate-12" />}
+        <div>
+          <h2 className="text-[15px] font-semibold text-primary">{title}</h2>
+          {subtitle && <p className="text-[13px] text-muted mt-0.5">{subtitle}</p>}
+        </div>
       </div>
       {link && (
         <Link to={link} className="text-[13px] text-secondary hover:text-primary underline whitespace-nowrap">
@@ -412,42 +747,6 @@ function BenchmarkRow({ label, yours, peer, suffix }: { label: string; yours: nu
         <span className="text-[13px] text-muted">peer avg {peer}{suffix}</span>
       </div>
     </div>
-  );
-}
-
-function TaskRow({ task }: { task: any }) {
-  const priorityDot =
-    task.priority === 'urgent' ? 'bg-danger border-danger' :
-    task.priority === 'high' ? 'bg-warning border-warning' :
-    'bg-info border-info';
-  const sourceLabel: string =
-    task.source === 'people' ? 'People' :
-    task.source === 'policy' ? 'Policy' :
-    task.source === 'peers' ? 'Peers' :
-    'System';
-  const sourceVariant: 'info' | 'warning' | 'default' =
-    task.source === 'people' ? 'info' :
-    task.source === 'policy' ? 'warning' :
-    'default';
-  return (
-    <Link to={task.link} className="group flex items-start gap-4 px-5 py-4 hover:bg-surface-muted/30 no-underline transition-colors">
-      <div className="pt-1.5 flex-shrink-0">
-        <div className={`w-2 h-2 rounded-full ${priorityDot}`} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-3 mb-1">
-          <p className="text-sm font-semibold text-primary">{task.title}</p>
-          <span className={`text-[12px] font-medium whitespace-nowrap ${task.priority === 'urgent' ? 'text-danger' : 'text-muted'}`}>
-            {task.dueLabel}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Chip label={sourceLabel} variant={sourceVariant} />
-          <span className="text-[13px] text-secondary line-clamp-1">{task.context}</span>
-        </div>
-      </div>
-      <ArrowUpRight size={14} className="text-muted group-hover:text-primary mt-1 flex-shrink-0 transition-colors" />
-    </Link>
   );
 }
 

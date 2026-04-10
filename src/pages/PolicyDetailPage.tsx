@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { policies, Stakeholder } from '../data/policies';
 import { watchlist } from '../data/watchlist';
-import { Button, Chip, WatchlistToggle, useToast } from '../components/ui';
+import { actionsForEntity, ActionItem } from '../data/actions';
+import { notesForEntity } from '../data/notes';
+import { watchlistGroups } from '../data/workspace';
 import {
-  ArrowLeft, Clock, MapPin, AlertCircle, Users, Sparkles, ExternalLink, Bell,
+  Button, Chip, WatchlistToggle, useToast,
+  TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview, ScopeBadge,
+} from '../components/ui';
+import { useRole } from '../lib/RoleContext';
+import { roleMeta } from '../data/team';
+import {
+  ArrowLeft, Clock, MapPin, AlertCircle, Users, Sparkles, ExternalLink, Bell, Plus, Folder,
 } from 'lucide-react';
 
 export function PolicyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const policy = policies.find((p) => p.id === id);
-  const watchItem = watchlist.find(w => w.policyId === id);
+  const watchItem = watchlist.find((w) => w.policyId === id);
   const [isWatching, setIsWatching] = useState(!!watchItem);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const toast = useToast();
+  const { hasCapability, activeRole } = useRole();
+  const canAssign = hasCapability('assignActions');
+
+  const linkedActions = useMemo(() => (id ? actionsForEntity('policy', id) : []), [id]);
+  const linkedNotes = useMemo(() => (id ? notesForEntity('policy', id) : []), [id]);
+  const memberWatchlists = useMemo(
+    () => (id ? watchlistGroups.filter((g) => g.policyIds.includes(id)) : []),
+    [id]
+  );
 
   if (!policy) {
     return (
@@ -69,7 +89,13 @@ export function PolicyDetailPage() {
               />
               <Button variant="secondary"><ExternalLink size={14} className="mr-2" />Source</Button>
             </div>
-            <Button>Add to brief</Button>
+            <Button
+              onClick={() => setComposerOpen(true)}
+              disabled={!canAssign}
+            >
+              <Plus size={14} className="mr-1.5" />
+              Assign action
+            </Button>
           </div>
         </div>
 
@@ -85,6 +111,60 @@ export function PolicyDetailPage() {
       <div className="grid grid-cols-12 gap-6">
         {/* Left */}
         <div className="col-span-8 flex flex-col gap-6">
+          {/* Open actions on this policy */}
+          <div className="bg-surface border border-border-subtle rounded-md">
+            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles size={15} className="text-primary" />
+                <h2 className="text-[15px] font-semibold text-primary">Active follow-ups</h2>
+                <Chip
+                  label={`${linkedActions.filter(a => a.status !== 'completed').length} active`}
+                  variant={linkedActions.some(a => a.priority === 'urgent') ? 'danger' : 'default'}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setComposerOpen(true)}
+                disabled={!canAssign}
+              >
+                <Plus size={13} className="mr-1" /> New action
+              </Button>
+            </div>
+            <div className="p-3 flex flex-col gap-2">
+              {linkedActions.length === 0 ? (
+                <div className="px-2 py-6 text-center">
+                  <p className="text-[13px] text-secondary">
+                    No follow-ups assigned yet. {!canAssign && `${roleMeta[activeRole].label} can view but cannot assign on this policy.`}
+                  </p>
+                </div>
+              ) : (
+                linkedActions.map((a) => (
+                  <TaskCard
+                    key={a.id}
+                    action={a}
+                    canEdit={canAssign}
+                    onStatusChange={(actionId, next) => {
+                      toast.show({
+                        type: next === 'completed' ? 'success' : 'info',
+                        title:
+                          next === 'completed' ? 'Task completed' :
+                          next === 'in_progress' ? 'Task started' : 'Task reopened',
+                      });
+                    }}
+                    onOwnerChange={() => {
+                      toast.show({ type: 'success', title: 'Task reassigned' });
+                    }}
+                    onOpenDrawer={(action) => {
+                      setDrawerAction(action);
+                      setDrawerOpen(true);
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
           {/* Timeline */}
           <div className="bg-surface border border-border-subtle rounded-md">
             <div className="px-5 py-4 border-b border-border-subtle">
@@ -143,21 +223,18 @@ export function PolicyDetailPage() {
                 <h2 className="text-[15px] font-semibold text-primary">Internal discussion</h2>
                 <p className="text-[13px] text-muted mt-0.5">Notes from the team</p>
               </div>
-              <Button variant="ghost" size="sm">+ Add note</Button>
+              <Button variant="ghost" size="sm">
+                <Plus size={13} className="mr-1" /> Note
+              </Button>
             </div>
-            <div className="divide-y divide-border-subtle">
-              <DiscussionNote
-                author="Sofia Reyes"
-                role="Executive Director"
-                date="2026-04-08"
-                content="Coordinating with advocacy team for testimony prep. Need draft talking points by April 18."
-              />
-              <DiscussionNote
-                author="Leah Kim"
-                role="Development Director"
-                date="2026-04-05"
-                content="Maya Patel and Samir Gupta are both highly engaged on tenant rights — good audience for a tailored update once we have a position."
-              />
+            <div className="px-5 divide-y divide-border-subtle">
+              {linkedNotes.length === 0 ? (
+                <div className="py-6 text-center">
+                  <p className="text-[13px] text-secondary">No notes on this policy yet.</p>
+                </div>
+              ) : (
+                linkedNotes.map((n) => <InternalNotePreview key={n.id} note={n} />)
+              )}
             </div>
           </div>
         </div>
@@ -175,14 +252,16 @@ export function PolicyDetailPage() {
               <Button
                 size="sm"
                 className="w-full justify-center"
-                onClick={() => toast.show({
-                  type: 'success',
-                  title: 'Action assigned',
-                  description: `Assigned to ${policy.teams.join(', ')}.`,
-                })}
+                onClick={() => setComposerOpen(true)}
+                disabled={!canAssign}
               >
-                Assign to team
+                Turn into follow-up
               </Button>
+              {!canAssign && (
+                <p className="text-[11px] text-muted mt-2 text-center">
+                  {roleMeta[activeRole].label}s can view but not assign on this policy.
+                </p>
+              )}
             </div>
           </div>
 
@@ -222,6 +301,27 @@ export function PolicyDetailPage() {
             </div>
           )}
 
+          {/* Member watchlists */}
+          {memberWatchlists.length > 0 && (
+            <div className="bg-surface border border-border-subtle rounded-md">
+              <div className="px-5 py-3 border-b border-border-subtle flex items-center gap-2">
+                <Folder size={14} className="text-secondary" />
+                <h3 className="text-[14px] font-semibold text-primary">Member of watchlists</h3>
+              </div>
+              <div className="p-5 flex flex-col gap-3">
+                {memberWatchlists.map((wl) => (
+                  <div key={wl.id} className="flex items-start justify-between gap-3 pb-3 border-b border-border-subtle last:border-0 last:pb-0">
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium text-primary">{wl.name}</p>
+                      <p className="text-[12px] text-muted leading-snug">{wl.description}</p>
+                    </div>
+                    <ScopeBadge scope={wl.shareLevel} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Teams */}
           <div className="bg-surface border border-border-subtle rounded-md">
             <div className="px-5 py-3 border-b border-border-subtle">
@@ -235,6 +335,27 @@ export function PolicyDetailPage() {
           </div>
         </div>
       </div>
+
+      <FollowUpComposer
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        defaultEntity={{ type: 'policy', id: policy.id, label: policy.title, link: `/policy/${policy.id}` }}
+        defaultTitle={policy.recommendedAction}
+        defaultContext={`Linked to ${policy.title}. ${policy.summary}`}
+        onCreate={(payload) => {
+          toast.show({
+            type: 'success',
+            title: 'Action assigned',
+            description: payload.title,
+          });
+        }}
+      />
+      <ActionDrawer
+        action={drawerAction}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        canEdit={canAssign}
+      />
     </>
   );
 }
@@ -309,25 +430,3 @@ function PolicyTimelineEvent({ event, isLast }: { event: any; isLast: boolean })
   );
 }
 
-function DiscussionNote({ author, role, date, content }: { author: string; role: string; date: string; content: string }) {
-  return (
-    <div className="px-5 py-4">
-      <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-full bg-accent-soft border border-border-subtle flex items-center justify-center flex-shrink-0">
-          <span className="text-[12px] font-semibold text-primary">{author.split(' ').map(n => n[0]).join('')}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 mb-0.5">
-            <p className="text-sm font-medium text-primary">{author}</p>
-            <p className="text-[12px] text-muted">{role}</p>
-            <span className="text-[12px] text-muted">·</span>
-            <span className="text-[12px] text-muted">
-              {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </span>
-          </div>
-          <p className="text-[13px] text-secondary leading-relaxed">{content}</p>
-        </div>
-      </div>
-    </div>
-  );
-}

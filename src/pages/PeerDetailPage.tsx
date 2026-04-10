@@ -1,17 +1,49 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { peerOrgs } from '../data/peers';
 import { peerCampaigns } from '../data/campaigns';
-import { Button, Chip, KPI, BarComparison } from '../components/ui';
+import { actionsForEntity, ActionItem } from '../data/actions';
+import { notesForEntity } from '../data/notes';
+import { isPeerTracked, savedCampaigns } from '../data/workspace';
+import {
+  Button, Chip, KPI, BarComparison, useToast,
+  TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview,
+} from '../components/ui';
+import { useRole } from '../lib/RoleContext';
 import {
   ArrowLeft, Building, MapPin, Users, ExternalLink, Lock, Star, CheckCircle2,
-  DollarSign, ArrowUpRight,
+  DollarSign, ArrowUpRight, Plus, Bookmark,
 } from 'lucide-react';
 
 export function PeerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const peer = peerOrgs.find(p => p.id === id);
   const peerCamps = peerCampaigns.filter(c => c.orgId === id);
+  const toast = useToast();
+  const { hasCapability } = useRole();
+  const canAssign = hasCapability('assignActions');
+  const [tracked, setTracked] = useState(id ? isPeerTracked(id) : false);
+  const [savedCampaignIds, setSavedCampaignIds] = useState<string[]>(
+    () => (id ? savedCampaigns.filter(c => c.peerId === id).map(c => c.theme) : [])
+  );
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const linkedActions = useMemo(() => (id ? actionsForEntity('peer', id) : []), [id]);
+  const peerNotes = useMemo(() => (id ? notesForEntity('peer', id) : []), [id]);
+
+  const toggleSavedCampaign = (theme: string) => {
+    setSavedCampaignIds((prev) => {
+      const next = prev.includes(theme) ? prev.filter((t) => t !== theme) : [...prev, theme];
+      toast.show({
+        type: prev.includes(theme) ? 'info' : 'success',
+        title: prev.includes(theme) ? 'Campaign unsaved' : 'Campaign saved',
+        description: theme,
+      });
+      return next;
+    });
+  };
 
   if (!peer) {
     return (
@@ -62,8 +94,30 @@ export function PeerDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="secondary"><Star size={14} className="mr-2" />Follow</Button>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !tracked;
+                setTracked(next);
+                toast.show({
+                  type: next ? 'success' : 'info',
+                  title: next ? 'Now tracking' : 'Stopped tracking',
+                  description: peer.name,
+                });
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium border rounded-sm
+                transition-colors duration-150 ease-out
+                ${tracked
+                  ? 'bg-accent-soft border-accent text-primary'
+                  : 'bg-surface border-border-subtle text-secondary hover:border-border-default hover:text-primary'}`}
+            >
+              <Star size={13} className={tracked ? 'fill-accent text-primary' : ''} />
+              {tracked ? 'Tracking' : 'Track'}
+            </button>
             <Button variant="secondary"><ExternalLink size={14} className="mr-2" />Public profile</Button>
+            <Button onClick={() => setComposerOpen(true)} disabled={!canAssign}>
+              <Plus size={14} className="mr-1.5" /> Action
+            </Button>
           </div>
         </div>
 
@@ -79,6 +133,39 @@ export function PeerDetailPage() {
       {/* Two col */}
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-8 flex flex-col gap-6">
+          {/* Linked actions */}
+          {linkedActions.length > 0 && (
+            <div className="bg-surface border border-border-subtle rounded-md">
+              <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[15px] font-semibold text-primary">Active follow-ups</h2>
+                  <Chip
+                    label={`${linkedActions.filter((a) => a.status !== 'completed').length} active`}
+                    variant="default"
+                  />
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setComposerOpen(true)} disabled={!canAssign}>
+                  <Plus size={13} className="mr-1" /> New
+                </Button>
+              </div>
+              <div className="p-3 flex flex-col gap-2">
+                {linkedActions.map((a) => (
+                  <TaskCard
+                    key={a.id}
+                    action={a}
+                    canEdit={canAssign}
+                    onStatusChange={() => toast.show({ type: 'info', title: 'Status updated' })}
+                    onOwnerChange={() => toast.show({ type: 'success', title: 'Task reassigned' })}
+                    onOpenDrawer={(action) => {
+                      setDrawerAction(action);
+                      setDrawerOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Comparison KPIs */}
           <div className="grid grid-cols-3 gap-4">
             <KPI
@@ -141,24 +228,41 @@ export function PeerDetailPage() {
               {peerCamps.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted">No campaign data shared.</div>
               ) : (
-                peerCamps.map(c => (
-                  <div key={c.id} className="group p-5 hover:bg-surface-muted/30 transition-colors">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Chip label={c.theme} variant="info" />
-                          <span className="text-[12px] text-muted">{c.dateRange}</span>
+                peerCamps.map((c) => {
+                  const isSaved = savedCampaignIds.includes(c.theme);
+                  return (
+                    <div key={c.id} className="group p-5 hover:bg-surface-muted/30 transition-colors">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Chip label={c.theme} variant="info" />
+                            <span className="text-[12px] text-muted">{c.dateRange}</span>
+                          </div>
+                          <p className="text-sm font-semibold text-primary">{c.title}</p>
                         </div>
-                        <p className="text-sm font-semibold text-primary">{c.title}</p>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => toggleSavedCampaign(c.theme)}
+                            className={`inline-flex items-center gap-1 px-2 py-1 text-[12px] font-medium border rounded-sm
+                              transition-colors duration-150 ease-out
+                              ${isSaved
+                                ? 'bg-accent-soft border-accent text-primary'
+                                : 'bg-surface border-border-subtle text-secondary hover:border-border-default hover:text-primary'}`}
+                          >
+                            <Bookmark size={11} className={isSaved ? 'fill-accent' : ''} />
+                            {isSaved ? 'Saved' : 'Save'}
+                          </button>
+                          <Chip
+                            label={`${c.performanceVsAvg > 100 ? '+' : ''}${(c.performanceVsAvg - 100).toFixed(0)}% vs avg`}
+                            variant={c.performanceVsAvg >= 100 ? 'success' : 'default'}
+                          />
+                        </div>
                       </div>
-                      <Chip
-                        label={`${c.performanceVsAvg > 100 ? '+' : ''}${(c.performanceVsAvg - 100).toFixed(0)}% vs avg`}
-                        variant={c.performanceVsAvg >= 100 ? 'success' : 'default'}
-                      />
+                      <p className="text-[13px] text-secondary leading-relaxed italic">"{c.topMessage}"</p>
                     </div>
-                    <p className="text-[13px] text-secondary leading-relaxed italic">"{c.topMessage}"</p>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -217,8 +321,41 @@ export function PeerDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Internal notes */}
+          {peerNotes.length > 0 && (
+            <div className="bg-surface border border-border-subtle rounded-md">
+              <div className="px-5 py-3 border-b border-border-subtle">
+                <h3 className="text-[14px] font-semibold text-primary">Team notes</h3>
+              </div>
+              <div className="px-5 divide-y divide-border-subtle">
+                {peerNotes.map((n) => <InternalNotePreview key={n.id} note={n} />)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      <FollowUpComposer
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        defaultEntity={{ type: 'peer', id: peer.id, label: peer.name, link: `/peers/${peer.id}` }}
+        defaultTitle={`Review ${peer.name}'s recent campaign work`}
+        defaultContext={`Triggered from ${peer.name}'s peer detail.`}
+        onCreate={(payload) => {
+          toast.show({
+            type: 'success',
+            title: 'Action created',
+            description: payload.title,
+          });
+        }}
+      />
+      <ActionDrawer
+        action={drawerAction}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        canEdit={canAssign}
+      />
     </>
   );
 }

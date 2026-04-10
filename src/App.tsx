@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AppLayout } from './components/layout/AppLayout';
 import { ToastProvider } from './components/ui';
 import { TourProvider } from './lib/TourContext';
+import { RoleProvider } from './lib/RoleContext';
 import { motionDurations, motionEasings } from './lib/motion';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -66,6 +67,7 @@ function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
+       <RoleProvider>
         <TourProvider>
           <ScrollToTop />
           <Routes>
@@ -99,6 +101,7 @@ function App() {
             </Route>
           </Routes>
         </TourProvider>
+       </RoleProvider>
       </ToastProvider>
     </BrowserRouter>
   );

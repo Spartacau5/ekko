@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { peerOrgs, benchmarkData, PeerOrg } from '../data/peers';
-import { Button, Chip, SearchBar, Modal, Checkbox, PageHeader, Tabs } from '../components/ui';
-import { Filter, TrendingUp, TrendingDown, Lock, Building, BarChart3, BookOpen, ArrowUpRight } from 'lucide-react';
+import { isPeerTracked } from '../data/workspace';
+import { Button, Chip, SearchBar, Modal, Checkbox, PageHeader, Tabs, useToast } from '../components/ui';
+import { Filter, TrendingUp, TrendingDown, Lock, Building, BarChart3, BookOpen, ArrowUpRight, Star } from 'lucide-react';
 
 const filterOptions = {
   missionArea: ['Tenant rights', 'Affordable housing', 'Family services', 'Homelessness', 'Community organizing', 'Housing research', 'Disaster preparedness'],
@@ -246,12 +247,14 @@ function BenchmarkBar({ label, value, pct, suffix, highlighted }: { label: strin
 
 function PeerOrgCard({ peer }: { peer: PeerOrg }) {
   const optInVariant = peer.optInStatus === 'Opted in' ? 'success' : peer.optInStatus === 'Pending' ? 'warning' : 'default';
+  const toast = useToast();
+  const [tracked, setTracked] = useState(isPeerTracked(peer.id));
   return (
     <Link
       to={`/peers/${peer.id}`}
       className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors no-underline"
     >
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-3 gap-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className="w-10 h-10 rounded-sm bg-surface-muted border border-border-subtle flex items-center justify-center flex-shrink-0">
             <Building size={18} className="text-secondary" />
@@ -261,7 +264,30 @@ function PeerOrgCard({ peer }: { peer: PeerOrg }) {
             <p className="text-[13px] text-muted truncate">{peer.missionArea}</p>
           </div>
         </div>
-        <Chip label={peer.optInStatus} variant={optInVariant} />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              const next = !tracked;
+              setTracked(next);
+              toast.show({
+                type: next ? 'success' : 'info',
+                title: next ? 'Now tracking' : 'Stopped tracking',
+                description: peer.name,
+              });
+            }}
+            className={`inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border rounded-sm
+              transition-colors duration-150
+              ${tracked
+                ? 'bg-accent-soft border-accent text-primary'
+                : 'bg-surface border-border-subtle text-secondary hover:border-border-default hover:text-primary'}`}
+          >
+            <Star size={11} className={tracked ? 'fill-accent text-primary' : ''} />
+            {tracked ? 'Tracking' : 'Track'}
+          </button>
+          <Chip label={peer.optInStatus} variant={optInVariant} />
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 py-3 border-y border-border-subtle text-[12px]">

@@ -19,9 +19,6 @@ export const organization = {
   setupCompletion: 68,
 };
 
-export const teamMembers = [
-  { name: 'Leah Kim', role: 'Development Director', email: 'leah@rivergate.org' },
-  { name: 'Noah Stein', role: 'Partnerships Lead', email: 'noah@rivergate.org' },
-  { name: 'Marcus Bell', role: 'Corporate Relations Manager', email: 'marcus@rivergate.org' },
-  { name: 'Sofia Reyes', role: 'Executive Director', email: 'sofia@rivergate.org' },
-];
+// Phase 4 moved the canonical team list into data/team.ts so it can carry
+// roles and capabilities. This re-export keeps any older import path working.
+export { teamMembers } from './team';

@@ -4,6 +4,7 @@ import { donors, Donor } from '../../data/donors';
 import { savedViews } from '../../data/savedViews';
 import {
   Button, Chip, SearchBar, Modal, Checkbox, SavedViewsBar, Pagination, EmptyState, useToast,
+  SaveViewModal,
 } from '../../components/ui';
 import {
   Filter, ArrowUpRight, ArrowUp, ArrowDown, ChevronsUpDown, Mail, Download, Tag, Users as UsersIcon,
@@ -35,6 +36,7 @@ export function DonorsListPage() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
   const pageSize = 8;
   const toast = useToast();
 
@@ -150,7 +152,7 @@ export function DonorsListPage() {
           views={donorViews}
           activeViewId={activeViewId}
           onSelect={applyView}
-          onSaveNew={() => {}}
+          onSaveNew={() => setSaveViewOpen(true)}
         />
         <Button variant="secondary">+ Add donor</Button>
       </div>
@@ -284,6 +286,22 @@ export function DonorsListPage() {
           />
         </div>
       )}
+
+      <SaveViewModal
+        open={saveViewOpen}
+        onClose={() => setSaveViewOpen(false)}
+        resultCount={filteredAndSorted.length}
+        filterSummary={Object.entries(filters)
+          .filter(([, v]) => v.length > 0)
+          .map(([k, v]) => `${k}: ${v.join(', ')}`)}
+        onSave={(payload) => {
+          toast.show({
+            type: 'success',
+            title: 'View saved',
+            description: `"${payload.name}" — ${filteredAndSorted.length} ${filteredAndSorted.length === 1 ? 'donor' : 'donors'}${payload.isShared ? ', shared with team' : ', private'}.`,
+          });
+        }}
+      />
 
       {/* Filter Modal */}
       <Modal

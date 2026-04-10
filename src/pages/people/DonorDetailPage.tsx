@@ -3,11 +3,17 @@ import { useParams, Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { donors, TimelineEvent as TLEvent } from '../../data/donors';
 import { donorGroups } from '../../data/groups';
-import { Button, Chip, SegmentedControl, useToast } from '../../components/ui';
+import { actionsForEntity, ActionItem } from '../../data/actions';
+import { notesForEntity } from '../../data/notes';
+import {
+  Button, Chip, SegmentedControl, useToast,
+  TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview, Avatar,
+} from '../../components/ui';
+import { useRole } from '../../lib/RoleContext';
 import { motionDurations, motionEasings } from '../../lib/motion';
 import {
   ArrowLeft, Mail, Phone, User, Calendar, Gift, FileText, Download,
-  Sparkles, MessageCircle, Briefcase, MapPin, TrendingUp, Clock, ChevronDown,
+  Sparkles, MessageCircle, Briefcase, MapPin, TrendingUp, Clock, ChevronDown, Plus, Lock,
 } from 'lucide-react';
 
 const timelineFilters = [
@@ -21,9 +27,20 @@ export function DonorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [timelineFilter, setTimelineFilter] = useState('all');
   const [timelineExpanded, setTimelineExpanded] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [showNoteComposer, setShowNoteComposer] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const toast = useToast();
+  const { activeMember, hasCapability } = useRole();
 
   const donor = donors.find((d) => d.id === id);
+
+  const linkedActions = useMemo(() => (id ? actionsForEntity('donor', id) : []), [id]);
+  const donorNotes = useMemo(() => (id ? notesForEntity('donor', id) : []), [id]);
+  const canAssign = hasCapability('assignActions');
 
   const filteredTimeline = useMemo(() => {
     if (!donor) return [];
@@ -87,9 +104,35 @@ export function DonorDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const next = !isFavorited;
+                setIsFavorited(next);
+                toast.show({
+                  type: next ? 'success' : 'info',
+                  title: next ? 'Favorited' : 'Removed from favorites',
+                  description: donor.name,
+                });
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium border rounded-sm
+                transition-colors duration-150 ease-out
+                ${isFavorited
+                  ? 'bg-accent-soft border-accent text-primary'
+                  : 'bg-surface border-border-subtle text-secondary hover:border-border-default hover:text-primary'}`}
+            >
+              {isFavorited ? '★ Favorited' : '☆ Favorite'}
+            </button>
             <Button variant="secondary"><Mail size={14} className="mr-2" />Email</Button>
-            <Button variant="secondary"><MessageCircle size={14} className="mr-2" />Note</Button>
-            <Button>Log activity</Button>
+            <Button
+              variant="secondary"
+              onClick={() => setShowNoteComposer((s) => !s)}
+            >
+              <MessageCircle size={14} className="mr-2" />Add note
+            </Button>
+            <Button onClick={() => setComposerOpen(true)} disabled={!canAssign}>
+              <Plus size={14} className="mr-1.5" />New follow-up
+            </Button>
           </div>
         </div>
 
@@ -105,8 +148,70 @@ export function DonorDetailPage() {
 
       {/* Two column layout */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Left: timeline */}
+        {/* Left: tasks + timeline + persona + notes */}
         <div className="col-span-8 flex flex-col gap-6">
+          {/* Linked tasks */}
+          <div className="bg-surface border border-border-subtle rounded-md">
+            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles size={15} className="text-primary" />
+                <h2 className="text-[15px] font-semibold text-primary">Open follow-ups</h2>
+                <Chip
+                  label={`${linkedActions.filter(a => a.status !== 'completed').length} active`}
+                  variant={linkedActions.some(a => a.priority === 'urgent') ? 'danger' : 'default'}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setComposerOpen(true)}
+                disabled={!canAssign}
+              >
+                <Plus size={13} className="mr-1" /> New
+              </Button>
+            </div>
+            <div className="p-3 flex flex-col gap-2">
+              {linkedActions.length === 0 ? (
+                <div className="px-2 py-6 text-center">
+                  <p className="text-[13px] text-secondary">
+                    No follow-ups assigned for {donor.name} yet.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setComposerOpen(true)}
+                    className="text-[13px] text-primary underline mt-1"
+                    disabled={!canAssign}
+                  >
+                    Create the first follow-up
+                  </button>
+                </div>
+              ) : (
+                linkedActions.map((a) => (
+                  <TaskCard
+                    key={a.id}
+                    action={a}
+                    canEdit={canAssign}
+                    onStatusChange={(actionId, next) => {
+                      toast.show({
+                        type: next === 'completed' ? 'success' : 'info',
+                        title:
+                          next === 'completed' ? 'Task completed' :
+                          next === 'in_progress' ? 'Task started' : 'Task reopened',
+                      });
+                    }}
+                    onOwnerChange={() => {
+                      toast.show({ type: 'success', title: 'Task reassigned' });
+                    }}
+                    onOpenDrawer={(action) => {
+                      setDrawerAction(action);
+                      setDrawerOpen(true);
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
           <div className="bg-surface border border-border-subtle rounded-md">
             <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
               <div>
@@ -191,6 +296,83 @@ export function DonorDetailPage() {
             </div>
           </div>
 
+          {/* Internal notes */}
+          <div className="bg-surface border border-border-subtle rounded-md">
+            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageCircle size={15} className="text-primary" />
+                <h2 className="text-[15px] font-semibold text-primary">Internal notes</h2>
+                <span className="text-[12px] text-muted">{donorNotes.length}</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowNoteComposer((s) => !s)}>
+                <Plus size={13} className="mr-1" /> Note
+              </Button>
+            </div>
+            <AnimatePresence initial={false}>
+              {showNoteComposer && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: motionDurations.panel, ease: motionEasings.out }}
+                  style={{ overflow: 'hidden' }}
+                  className="border-b border-border-subtle"
+                >
+                  <div className="px-5 py-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar member={activeMember} size="sm" />
+                      <div className="flex-1">
+                        <textarea
+                          value={noteDraft}
+                          onChange={(e) => setNoteDraft(e.target.value)}
+                          rows={3}
+                          placeholder="Add context for the team — what should the next person know?"
+                          className="w-full px-3 py-2 text-[13px] bg-surface border border-border-subtle rounded-sm outline-none
+                            placeholder:text-muted/80
+                            hover:border-border-default/60 focus-visible:border-border-default focus-visible:ring-2 focus-visible:ring-border-default/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
+                        />
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-[11px] text-muted flex items-center gap-1">
+                            <Lock size={11} /> Visible to your team only
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => { setShowNoteComposer(false); setNoteDraft(''); }}>
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              disabled={!noteDraft.trim()}
+                              onClick={() => {
+                                toast.show({
+                                  type: 'success',
+                                  title: 'Note added',
+                                  description: 'Your team will see it on this donor.',
+                                });
+                                setNoteDraft('');
+                                setShowNoteComposer(false);
+                              }}
+                            >
+                              Post note
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div className="px-5 divide-y divide-border-subtle">
+              {donorNotes.length === 0 ? (
+                <div className="py-6 text-center">
+                  <p className="text-[13px] text-secondary">No internal notes on {donor.name} yet.</p>
+                </div>
+              ) : (
+                donorNotes.map((n) => <InternalNotePreview key={n.id} note={n} />)
+              )}
+            </div>
+          </div>
+
           {/* Persona insight */}
           <div className="bg-surface border border-border-subtle rounded-md">
             <div className="px-5 py-4 border-b border-border-subtle">
@@ -236,13 +418,10 @@ export function DonorDetailPage() {
                 <Button
                   size="sm"
                   className="w-full justify-center"
-                  onClick={() => toast.show({
-                    type: 'success',
-                    title: 'Action assigned',
-                    description: `${donor.accountOwner} will follow up with ${donor.name}.`,
-                  })}
+                  onClick={() => setComposerOpen(true)}
+                  disabled={!canAssign}
                 >
-                  Take action
+                  Create follow-up
                 </Button>
                 <Button
                   size="sm"
@@ -307,6 +486,27 @@ export function DonorDetailPage() {
           </div>
         </div>
       </div>
+
+      <FollowUpComposer
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        defaultEntity={{ type: 'donor', id: donor.id, label: donor.name, link: `/people/donors/${donor.id}` }}
+        defaultTitle={`Follow up with ${donor.name}`}
+        defaultContext={donor.suggestedNextAction}
+        onCreate={(payload) => {
+          toast.show({
+            type: 'success',
+            title: 'Follow-up created',
+            description: payload.title,
+          });
+        }}
+      />
+      <ActionDrawer
+        action={drawerAction}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        canEdit={canAssign}
+      />
     </>
   );
 }

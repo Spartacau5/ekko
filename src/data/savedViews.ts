@@ -8,6 +8,8 @@ export interface SavedView {
   resultCount: number;
   filters: Record<string, string[]>;
   isDefault?: boolean;
+  // Phase 4: which roles see this view as recommended on first load
+  recommendedFor?: ('executive' | 'fundraising' | 'policy' | 'program' | 'operations')[];
 }
 
 export const savedViews: SavedView[] = [

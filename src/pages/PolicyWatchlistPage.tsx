@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { watchlist, policyAlerts, PolicyAlert } from '../data/watchlist';
 import { policies } from '../data/policies';
-import { PageHeader, Chip, Button, SegmentedControl, EmptyState } from '../components/ui';
+import { watchlistGroups } from '../data/workspace';
+import { getTeamMember } from '../data/team';
+import { PageHeader, Chip, Button, SegmentedControl, EmptyState, ScopeBadge } from '../components/ui';
 import {
   Bell, AlertCircle, Info, CalendarClock,
-  MessageSquare, ExternalLink, ArrowLeft, Settings as SettingsIcon, ArrowUpRight,
+  MessageSquare, ExternalLink, ArrowLeft, Settings as SettingsIcon, ArrowUpRight, Folder, Plus,
 } from 'lucide-react';
 
 const filterOptions = [
@@ -72,6 +74,53 @@ export function PolicyWatchlistPage() {
           value={activityThisWeek.toString()}
           sublabel="alerts received"
         />
+      </div>
+
+      {/* Tracked topics / watchlist groups */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Folder size={14} className="text-secondary" />
+            <h2 className="text-[15px] font-semibold text-primary">Tracked topics</h2>
+            <span className="text-[12px] text-muted">{watchlistGroups.length}</span>
+          </div>
+          <Button variant="ghost" size="sm">
+            <Plus size={13} className="mr-1" /> New tracked topic
+          </Button>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {watchlistGroups.map((g) => {
+            const owner = getTeamMember(g.ownerId);
+            return (
+              <div key={g.id} className="bg-surface border border-border-subtle rounded-md p-4">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <p className="text-[14px] font-semibold text-primary leading-snug">{g.name}</p>
+                  <ScopeBadge scope={g.shareLevel} />
+                </div>
+                <p className="text-[12px] text-muted mb-3">{g.description}</p>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {g.policyIds.map((pid) => {
+                    const p = policies.find((pp) => pp.id === pid);
+                    return p ? (
+                      <Link
+                        key={pid}
+                        to={`/policy/${pid}`}
+                        className="text-[11px] px-1.5 py-0.5 border border-border-subtle rounded-sm bg-surface-muted/40 text-secondary
+                          hover:border-border-default hover:text-primary transition-colors no-underline"
+                      >
+                        {p.title.length > 28 ? `${p.title.slice(0, 28)}…` : p.title}
+                      </Link>
+                    ) : null;
+                  })}
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-muted pt-2 border-t border-border-subtle">
+                  <span>Owner: <span className="text-primary font-medium">{owner?.name ?? '—'}</span></span>
+                  <span>{g.policyIds.length} policies</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Two col */}
