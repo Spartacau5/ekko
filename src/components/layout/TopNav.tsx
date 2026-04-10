@@ -10,7 +10,6 @@ const navItems = [
   { label: 'People', path: '/people' },
   { label: 'Policy', path: '/policy' },
   { label: 'Peers', path: '/peers' },
-  { label: 'Settings', path: '/settings' },
 ];
 
 export function TopNav() {
