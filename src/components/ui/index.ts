@@ -22,3 +22,4 @@ export { SavedViewsBar } from './SavedViewsBar';
 export { WatchlistToggle } from './WatchlistToggle';
 export { BarChart } from './BarChart';
 export { DonutChart } from './DonutChart';
+export { ToastProvider, useToast } from './Toast';

@@ -18,10 +18,21 @@ const variantStyles: Record<string, string> = {
 
 export function Chip({ label, onRemove, variant = 'default' }: ChipProps) {
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[13px] font-medium border rounded-sm ${variantStyles[variant]}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[13px] font-medium border rounded-sm
+        transition-[background-color,border-color,color] duration-150 ease-out
+        ${variantStyles[variant]}`}
+    >
       {label}
       {onRemove && (
-        <button onClick={onRemove} className="ml-0.5 hover:opacity-70 transition-opacity">
+        <button
+          onClick={onRemove}
+          aria-label={`Remove ${label}`}
+          className="ml-0.5 -mr-0.5 p-0.5 rounded-sm
+            transition-colors duration-150 ease-out
+            hover:bg-black/10
+            focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current/50"
+        >
           <X size={12} />
         </button>
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { organization } from '../data/organization';
 import { dashboardAlerts } from '../data/alerts';
@@ -7,7 +7,7 @@ import { policies } from '../data/policies';
 import { benchmarkData } from '../data/peers';
 import { kpiMetrics, priorityTasks, recentActivity, fundraisingTrend } from '../data/dashboardMetrics';
 import { ProgressBar, Chip, BarChart } from '../components/ui';
-import { SpotlightTour } from '../components/tour/SpotlightTour';
+import { useTour } from '../lib/TourContext';
 import {
   AlertCircle, AlertTriangle, Info, CheckCircle, ArrowUpRight, Sparkles,
   MapPin, Building2, Gift, Mail, Users as UsersIcon, FileText,
@@ -16,15 +16,15 @@ import {
 
 export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showTour, setShowTour] = useState(false);
+  const { startTour } = useTour();
 
   useEffect(() => {
     if (searchParams.get('tour') === 'true') {
-      setShowTour(true);
+      startTour();
       searchParams.delete('tour');
       setSearchParams(searchParams);
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, startTour]);
 
   const priorityDonors = donors.filter(d => d.risk === 'High' || d.stage === 'Growing').slice(0, 4);
   const criticalPolicies = policies.filter(p => p.impactLevel === 'High risk' || p.impactLevel === 'High opportunity').slice(0, 3);
@@ -42,8 +42,6 @@ export function DashboardPage() {
 
   return (
     <>
-      {showTour && <SpotlightTour onClose={() => setShowTour(false)} />}
-
       {/* Welcome heading */}
       <div className="mb-6" id="dashboard-welcome">
         <p className="text-[13px] font-medium text-muted uppercase tracking-wider mb-1">
@@ -367,7 +365,9 @@ function AlertCard({ alert }: { alert: any }) {
   return (
     <Link
       to={alert.actionLink || '#'}
-      className="flex items-start gap-3 p-4 bg-surface border border-border-subtle rounded-md hover:border-border-default transition-colors no-underline"
+      className="group flex items-start gap-3 p-4 bg-surface border border-border-subtle rounded-md no-underline
+        transition-[border-color,background-color] duration-150 ease-out
+        hover:border-border-default hover:bg-surface-muted/30"
     >
       <div className={`w-1 self-stretch rounded-full ${dotColor[alert.type]} flex-shrink-0`} />
       <div className="flex-1 min-w-0">
@@ -377,6 +377,10 @@ function AlertCard({ alert }: { alert: any }) {
         </div>
         <p className="text-[13px] text-secondary line-clamp-2 ml-6">{alert.description}</p>
       </div>
+      <ArrowUpRight
+        size={13}
+        className="text-muted opacity-0 group-hover:opacity-100 transition-opacity duration-150 mt-0.5 flex-shrink-0"
+      />
     </Link>
   );
 }

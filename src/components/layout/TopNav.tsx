@@ -1,6 +1,9 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { HelpCircle, Settings, User } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { HelpCircle, Settings, User, BookOpen, MessageCircle, Sparkles } from 'lucide-react';
+import { useTour } from '../../lib/TourContext';
+import { motionDurations, motionEasings } from '../../lib/motion';
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard' },
@@ -12,10 +15,43 @@ const navItems = [
 
 export function TopNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { startTour } = useTour();
+  const [helpOpen, setHelpOpen] = useState(false);
+  const helpRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!helpOpen) return;
+    function onClick(e: MouseEvent) {
+      if (helpRef.current && !helpRef.current.contains(e.target as Node)) {
+        setHelpOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setHelpOpen(false);
+    }
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [helpOpen]);
 
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(path);
+  };
+
+  const handleStartTour = () => {
+    setHelpOpen(false);
+    if (location.pathname !== '/dashboard') {
+      navigate('/dashboard');
+      // Defer until route has rendered so the spotlight targets exist
+      setTimeout(() => startTour(), 80);
+    } else {
+      startTour();
+    }
   };
 
   return (
@@ -32,7 +68,8 @@ export function TopNav() {
           <Link
             key={item.path}
             to={item.path}
-            className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors no-underline
+            className={`px-3 py-1.5 text-sm font-medium rounded-sm no-underline
+              transition-colors duration-150 ease-out
               ${isActive(item.path)
                 ? 'text-primary bg-surface-muted'
                 : 'text-secondary hover:text-primary hover:bg-surface-muted/50'
@@ -44,10 +81,60 @@ export function TopNav() {
       </nav>
 
       <div className="flex items-center gap-2">
-        <button className="p-2 text-muted hover:text-primary transition-colors rounded-sm hover:bg-surface-muted">
-          <HelpCircle size={18} />
-        </button>
-        <Link to="/settings" className="p-2 text-muted hover:text-primary transition-colors rounded-sm hover:bg-surface-muted">
+        <div className="relative" ref={helpRef}>
+          <button
+            onClick={() => setHelpOpen((o) => !o)}
+            aria-label="Help"
+            aria-expanded={helpOpen}
+            className={`p-2 rounded-sm transition-colors duration-150
+              ${helpOpen
+                ? 'text-primary bg-surface-muted'
+                : 'text-muted hover:text-primary hover:bg-surface-muted'}`}
+          >
+            <HelpCircle size={18} />
+          </button>
+          <AnimatePresence>
+            {helpOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                transition={{ duration: motionDurations.modal, ease: motionEasings.out }}
+                className="absolute right-0 top-full mt-2 w-64 bg-surface border border-border-subtle rounded-md shadow-lg overflow-hidden z-50"
+              >
+                <div className="px-4 py-3 border-b border-border-subtle">
+                  <p className="text-[13px] font-semibold text-primary">Help &amp; resources</p>
+                  <p className="text-[12px] text-muted">Get back up to speed</p>
+                </div>
+                <div className="py-1">
+                  <HelpItem
+                    icon={<Sparkles size={14} />}
+                    label="Restart product tour"
+                    description="4-step walkthrough"
+                    onClick={handleStartTour}
+                  />
+                  <HelpItem
+                    icon={<BookOpen size={14} />}
+                    label="Documentation"
+                    description="User guides and tutorials"
+                    onClick={() => setHelpOpen(false)}
+                  />
+                  <HelpItem
+                    icon={<MessageCircle size={14} />}
+                    label="Contact support"
+                    description="Reach the Ekko team"
+                    onClick={() => setHelpOpen(false)}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <Link
+          to="/settings"
+          className="p-2 text-muted hover:text-primary transition-colors duration-150 rounded-sm hover:bg-surface-muted"
+          aria-label="Settings"
+        >
           <Settings size={18} />
         </Link>
         <div className="ml-2 w-8 h-8 rounded-full bg-accent-soft border border-border-subtle flex items-center justify-center">
@@ -55,5 +142,20 @@ export function TopNav() {
         </div>
       </div>
     </header>
+  );
+}
+
+function HelpItem({ icon, label, description, onClick }: { icon: React.ReactNode; label: string; description: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-surface-muted/60 transition-colors duration-150"
+    >
+      <span className="text-secondary mt-0.5">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-medium text-primary">{label}</p>
+        <p className="text-[12px] text-muted">{description}</p>
+      </div>
+    </button>
   );
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { donors, Donor } from '../../data/donors';
 import { savedViews } from '../../data/savedViews';
 import {
-  Button, Chip, SearchBar, Modal, Checkbox, SavedViewsBar, Pagination, EmptyState,
+  Button, Chip, SearchBar, Modal, Checkbox, SavedViewsBar, Pagination, EmptyState, useToast,
 } from '../../components/ui';
 import {
   Filter, ArrowUpRight, ArrowUp, ArrowDown, ChevronsUpDown, Mail, Download, Tag, Users as UsersIcon,
@@ -36,6 +36,7 @@ export function DonorsListPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const pageSize = 8;
+  const toast = useToast();
 
   const donorViews = savedViews.filter(v => v.scope === 'donors');
 
@@ -195,9 +196,39 @@ export function DonorsListPage() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary"><Mail size={13} className="mr-1.5" />Email</Button>
-            <Button size="sm" variant="secondary"><Tag size={13} className="mr-1.5" />Add to group</Button>
-            <Button size="sm" variant="secondary"><Download size={13} className="mr-1.5" />Export</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => toast.show({
+                type: 'success',
+                title: 'Email composer opened',
+                description: `Drafting message to ${selectedIds.size} ${selectedIds.size === 1 ? 'donor' : 'donors'}.`,
+              })}
+            >
+              <Mail size={13} className="mr-1.5" />Email
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => toast.show({
+                type: 'success',
+                title: 'Added to group',
+                description: `${selectedIds.size} ${selectedIds.size === 1 ? 'donor' : 'donors'} added to a new working group.`,
+              })}
+            >
+              <Tag size={13} className="mr-1.5" />Add to group
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => toast.show({
+                type: 'info',
+                title: 'Export started',
+                description: 'CSV will be ready shortly.',
+              })}
+            >
+              <Download size={13} className="mr-1.5" />Export
+            </Button>
           </div>
         </div>
       )}
@@ -263,7 +294,16 @@ export function DonorsListPage() {
         footer={
           <>
             <Button variant="ghost" onClick={clearFilters}>Clear all</Button>
-            <Button onClick={() => setFilterModalOpen(false)}>Apply filters</Button>
+            <Button onClick={() => {
+              setFilterModalOpen(false);
+              if (activeFilterCount > 0) {
+                toast.show({
+                  type: 'success',
+                  title: `${activeFilterCount} ${activeFilterCount === 1 ? 'filter' : 'filters'} applied`,
+                  description: `Showing ${filteredAndSorted.length} of ${donors.length} donors`,
+                });
+              }
+            }}>Apply filters</Button>
           </>
         }
       >

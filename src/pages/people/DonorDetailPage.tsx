@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { donors, TimelineEvent as TLEvent } from '../../data/donors';
 import { donorGroups } from '../../data/groups';
-import { Button, Chip, SegmentedControl } from '../../components/ui';
+import { Button, Chip, SegmentedControl, useToast } from '../../components/ui';
+import { motionDurations, motionEasings } from '../../lib/motion';
 import {
   ArrowLeft, Mail, Phone, User, Calendar, Gift, FileText, Download,
-  Sparkles, MessageCircle, Briefcase, MapPin, TrendingUp, Clock,
+  Sparkles, MessageCircle, Briefcase, MapPin, TrendingUp, Clock, ChevronDown,
 } from 'lucide-react';
 
 const timelineFilters = [
@@ -18,6 +20,8 @@ const timelineFilters = [
 export function DonorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [timelineFilter, setTimelineFilter] = useState('all');
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
+  const toast = useToast();
 
   const donor = donors.find((d) => d.id === id);
 
@@ -113,23 +117,53 @@ export function DonorDetailPage() {
                 size="sm"
                 options={timelineFilters}
                 value={timelineFilter}
-                onChange={setTimelineFilter}
+                onChange={(v) => { setTimelineFilter(v); setTimelineExpanded(false); }}
               />
             </div>
             <div className="px-5 py-2">
-              {filteredTimeline.length === 0 ? (
-                <div className="py-8 text-center text-[13px] text-muted">
-                  No {timelineFilter} activity recorded.
-                </div>
-              ) : (
-                filteredTimeline.map((event, idx) => (
-                  <TimelineEvent
-                    key={`${event.date}-${idx}`}
-                    event={event}
-                    isLast={idx === filteredTimeline.length - 1}
-                  />
-                ))
-              )}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={timelineFilter}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -2 }}
+                  transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+                >
+                  {filteredTimeline.length === 0 ? (
+                    <div className="py-10 flex flex-col items-center text-center">
+                      <Calendar size={24} className="text-muted mb-2" />
+                      <p className="text-sm font-medium text-primary mb-1">No {timelineFilter} activity</p>
+                      <p className="text-[13px] text-muted">Try a different filter to see more events.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {(timelineExpanded ? filteredTimeline : filteredTimeline.slice(0, 5)).map((event, idx, arr) => (
+                        <TimelineEvent
+                          key={`${event.date}-${idx}`}
+                          event={event}
+                          isLast={idx === arr.length - 1}
+                        />
+                      ))}
+                      {filteredTimeline.length > 5 && (
+                        <button
+                          onClick={() => setTimelineExpanded((e) => !e)}
+                          className="w-full flex items-center justify-center gap-1.5 py-3 mt-1 border-t border-border-subtle text-[13px] text-secondary hover:text-primary transition-colors duration-150"
+                        >
+                          {timelineExpanded
+                            ? 'Show less'
+                            : `Show ${filteredTimeline.length - 5} more ${filteredTimeline.length - 5 === 1 ? 'event' : 'events'}`}
+                          <motion.span
+                            animate={{ rotate: timelineExpanded ? 180 : 0 }}
+                            transition={{ duration: motionDurations.panel, ease: motionEasings.out }}
+                          >
+                            <ChevronDown size={13} />
+                          </motion.span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
 
@@ -175,8 +209,29 @@ export function DonorDetailPage() {
             <div className="p-5">
               <p className="text-sm text-primary leading-relaxed mb-4">{donor.suggestedNextAction}</p>
               <div className="flex flex-col gap-2">
-                <Button size="sm" className="w-full justify-center">Take action</Button>
-                <Button size="sm" variant="ghost" className="w-full justify-center">Dismiss</Button>
+                <Button
+                  size="sm"
+                  className="w-full justify-center"
+                  onClick={() => toast.show({
+                    type: 'success',
+                    title: 'Action assigned',
+                    description: `${donor.accountOwner} will follow up with ${donor.name}.`,
+                  })}
+                >
+                  Take action
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full justify-center"
+                  onClick={() => toast.show({
+                    type: 'info',
+                    title: 'Suggestion dismissed',
+                    description: "We'll surface a new one tomorrow.",
+                  })}
+                >
+                  Dismiss
+                </Button>
               </div>
             </div>
           </div>

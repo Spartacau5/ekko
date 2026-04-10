@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { motionDurations, motionEasings } from '../../lib/motion';
 
 interface SubNavItem {
   label: string;
@@ -10,13 +12,13 @@ interface SubNavItem {
 
 interface SubNavProps {
   items: SubNavItem[];
+  layoutId?: string;
 }
 
-export function SubNav({ items }: SubNavProps) {
+export function SubNav({ items, layoutId = 'subnav-indicator' }: SubNavProps) {
   const location = useLocation();
   const isActive = (path: string) => {
     if (location.pathname === path) return true;
-    // Match subpaths under the same root, but not too greedily
     return location.pathname.startsWith(path + '/');
   };
 
@@ -28,16 +30,21 @@ export function SubNav({ items }: SubNavProps) {
           <Link
             key={item.path}
             to={item.path}
-            className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors no-underline
+            className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium no-underline
+              transition-colors duration-150 ease-out
               ${active ? 'text-primary' : 'text-muted hover:text-secondary'}`}
           >
-            {item.icon && <span className="text-secondary">{item.icon}</span>}
+            {item.icon && <span className={active ? 'text-primary' : 'text-secondary'}>{item.icon}</span>}
             {item.label}
             {item.count !== undefined && (
               <span className="text-[12px] text-muted">{item.count}</span>
             )}
             {active && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent" />
+              <motion.div
+                layoutId={layoutId}
+                className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent"
+                transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+              />
             )}
           </Link>
         );

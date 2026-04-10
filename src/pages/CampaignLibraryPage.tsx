@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { peerCampaigns, PeerCampaign, CampaignTheme, CampaignChannel } from '../data/campaigns';
 import {
-  PageHeader, Chip, SearchBar, Button, SegmentedControl, Modal, Checkbox, EmptyState,
+  PageHeader, Chip, SearchBar, Button, SegmentedControl, Modal, Checkbox, EmptyState, useToast,
 } from '../components/ui';
 import {
   Filter, Star, TrendingUp, Megaphone, BookOpen, ArrowLeft,
@@ -29,6 +29,7 @@ export function CampaignLibraryPage() {
   const [filter, setFilter] = useState('all');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [advFilters, setAdvFilters] = useState<{ themes: string[]; channels: string[] }>({ themes: [], channels: [] });
+  const toast = useToast();
 
   const toggleTheme = (t: string) => {
     setAdvFilters(f => ({
@@ -125,7 +126,16 @@ export function CampaignLibraryPage() {
         footer={
           <>
             <Button variant="ghost" onClick={clearAdv}>Clear all</Button>
-            <Button onClick={() => setFilterModalOpen(false)}>Apply filters</Button>
+            <Button onClick={() => {
+              setFilterModalOpen(false);
+              if (advCount > 0) {
+                toast.show({
+                  type: 'success',
+                  title: `${advCount} ${advCount === 1 ? 'filter' : 'filters'} applied`,
+                  description: `Showing ${filtered.length} of ${peerCampaigns.length} campaigns`,
+                });
+              }
+            }}>Apply filters</Button>
           </>
         }
       >

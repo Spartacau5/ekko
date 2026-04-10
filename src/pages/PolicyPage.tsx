@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { policies, Policy } from '../data/policies';
 import { policyTopics, watchlist } from '../data/watchlist';
 import {
-  Button, Chip, SearchBar, Modal, Checkbox, PageHeader, SegmentedControl, WatchlistToggle,
+  Button, Chip, SearchBar, Modal, Checkbox, PageHeader, SegmentedControl, WatchlistToggle, useToast,
 } from '../components/ui';
 import { Filter, Clock, AlertCircle, Bell, FolderOpen } from 'lucide-react';
 
@@ -26,6 +26,7 @@ export function PolicyPage() {
   const [watchedIds, setWatchedIds] = useState<Set<string>>(
     new Set(watchlist.map(w => w.policyId))
   );
+  const toast = useToast();
   const [filters, setFilters] = useState<Record<string, string[]>>({
     jurisdiction: [],
     status: [],
@@ -43,10 +44,20 @@ export function PolicyPage() {
   const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
 
   const toggleWatch = (id: string) => {
+    const policy = policies.find(p => p.id === id);
     setWatchedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
+      const wasWatching = next.has(id);
+      if (wasWatching) next.delete(id);
       else next.add(id);
+      // Toast feedback
+      if (policy) {
+        toast.show({
+          type: wasWatching ? 'info' : 'success',
+          title: wasWatching ? 'Removed from watchlist' : 'Added to watchlist',
+          description: policy.title,
+        });
+      }
       return next;
     });
   };
@@ -168,7 +179,16 @@ export function PolicyPage() {
         footer={
           <>
             <Button variant="ghost" onClick={clearFilters}>Clear all</Button>
-            <Button onClick={() => setFilterModalOpen(false)}>Apply filters</Button>
+            <Button onClick={() => {
+              setFilterModalOpen(false);
+              if (activeFilterCount > 0) {
+                toast.show({
+                  type: 'success',
+                  title: `${activeFilterCount} ${activeFilterCount === 1 ? 'filter' : 'filters'} applied`,
+                  description: `Showing ${filtered.length} of ${policies.length} policies`,
+                });
+              }
+            }}>Apply filters</Button>
           </>
         }
       >

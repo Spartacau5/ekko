@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { ToastProvider } from './components/ui';
+import { TourProvider } from './lib/TourContext';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PeopleLayout } from './pages/people/PeopleLayout';
@@ -29,36 +31,40 @@ function LayoutWrapper() {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/onboarding" replace />} />
-        <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route element={<LayoutWrapper />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+      <ToastProvider>
+        <TourProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/onboarding" replace />} />
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route element={<LayoutWrapper />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
 
-          {/* People surface */}
-          <Route path="/people" element={<PeopleLayout />}>
-            <Route index element={<Navigate to="/people/donors" replace />} />
-            <Route path="donors" element={<DonorsListPage />} />
-            <Route path="donors/:id" element={<DonorDetailPage />} />
-            <Route path="groups" element={<GroupsListPage />} />
-            <Route path="groups/:id" element={<GroupDetailPage />} />
-            <Route path="accounts" element={<AccountsListPage />} />
-            <Route path="accounts/:id" element={<AccountDetailPage />} />
-          </Route>
+              {/* People surface */}
+              <Route path="/people" element={<PeopleLayout />}>
+                <Route index element={<Navigate to="/people/donors" replace />} />
+                <Route path="donors" element={<DonorsListPage />} />
+                <Route path="donors/:id" element={<DonorDetailPage />} />
+                <Route path="groups" element={<GroupsListPage />} />
+                <Route path="groups/:id" element={<GroupDetailPage />} />
+                <Route path="accounts" element={<AccountsListPage />} />
+                <Route path="accounts/:id" element={<AccountDetailPage />} />
+              </Route>
 
-          {/* Policy surface */}
-          <Route path="/policy" element={<PolicyPage />} />
-          <Route path="/policy/watchlist" element={<PolicyWatchlistPage />} />
-          <Route path="/policy/:id" element={<PolicyDetailPage />} />
+              {/* Policy surface */}
+              <Route path="/policy" element={<PolicyPage />} />
+              <Route path="/policy/watchlist" element={<PolicyWatchlistPage />} />
+              <Route path="/policy/:id" element={<PolicyDetailPage />} />
 
-          {/* Peers surface */}
-          <Route path="/peers" element={<PeersPage />} />
-          <Route path="/peers/campaigns" element={<CampaignLibraryPage />} />
-          <Route path="/peers/:id" element={<PeerDetailPage />} />
+              {/* Peers surface */}
+              <Route path="/peers" element={<PeersPage />} />
+              <Route path="/peers/campaigns" element={<CampaignLibraryPage />} />
+              <Route path="/peers/:id" element={<PeerDetailPage />} />
 
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
-      </Routes>
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+          </Routes>
+        </TourProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }
