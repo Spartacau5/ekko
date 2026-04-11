@@ -217,12 +217,12 @@ function CampaignCard({ campaign }: { campaign: PeerCampaign }) {
 function StatCard({ label, value, icon, sublabel }: { label: string; value: string; icon: React.ReactNode; sublabel?: string }) {
   return (
     <div className="bg-surface border border-border-subtle rounded-md p-5">
-      <div className="flex items-center gap-1.5 mb-2">
+      <div className="flex items-center gap-1.5 mb-3">
         <span className="text-muted">{icon}</span>
-        <p className="text-[12px] font-medium text-muted uppercase tracking-wider">{label}</p>
+        <p className="eyebrow-plain">{label}</p>
       </div>
-      <p className="text-[32px] leading-[36px] font-semibold text-primary">{value}</p>
-      {sublabel && <p className="text-[13px] text-muted mt-1">{sublabel}</p>}
+      <p className="metric-display">{value}</p>
+      {sublabel && <p className="text-[11px] text-muted mt-2 pt-2 border-t border-border-subtle">{sublabel}</p>}
     </div>
   );
 }

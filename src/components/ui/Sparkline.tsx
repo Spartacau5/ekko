@@ -1,3 +1,11 @@
+// Phase 6: refined sparkline.
+// A quieter, more editorial sparkline. The default fill is a soft neutral
+// wash (not the yellow accent) so sparklines sit beside stats without
+// competing for attention. The yellow is reserved for the end-dot, where
+// it functions as a read-mark.
+//
+// Props stay the same as before so existing callers work unchanged.
+
 import React from 'react';
 
 interface SparklineProps {
@@ -7,15 +15,19 @@ interface SparklineProps {
   color?: string;
   fillColor?: string;
   showFill?: boolean;
+  endDot?: boolean;
+  strokeWidth?: number;
 }
 
 export function Sparkline({
   data,
   width = 100,
   height = 28,
-  color = '#111111',
-  fillColor = '#F4BE00',
+  color = '#262626',
+  fillColor = '#D6D0C7',
   showFill = true,
+  endDot = true,
+  strokeWidth = 1.25,
 }: SparklineProps) {
   if (!data || data.length === 0) return null;
 
@@ -34,27 +46,34 @@ export function Sparkline({
 
   const polyline = points.join(' ');
   const fillPath = `M ${padding},${height - padding} L ${points.join(' L ')} L ${width - padding},${height - padding} Z`;
+  const [endX, endY] = points[points.length - 1].split(',').map(parseFloat);
 
   return (
-    <svg width={width} height={height} className="block">
+    <svg
+      width={width}
+      height={height}
+      className="block"
+      role="img"
+      aria-label="Trend sparkline"
+    >
       {showFill && (
-        <path d={fillPath} fill={fillColor} fillOpacity={0.25} />
+        <path d={fillPath} fill={fillColor} fillOpacity={0.35} />
       )}
       <polyline
         points={polyline}
         fill="none"
         stroke={color}
-        strokeWidth={1.5}
+        strokeWidth={strokeWidth}
         strokeLinejoin="round"
         strokeLinecap="round"
       />
-      {/* End dot */}
-      <circle
-        cx={parseFloat(points[points.length - 1].split(',')[0])}
-        cy={parseFloat(points[points.length - 1].split(',')[1])}
-        r={2}
-        fill={color}
-      />
+      {endDot && (
+        <>
+          {/* A yellow ring + dark center — the only place the accent lives. */}
+          <circle cx={endX} cy={endY} r={3} fill="#F4BE00" />
+          <circle cx={endX} cy={endY} r={1.5} fill={color} />
+        </>
+      )}
     </svg>
   );
 }

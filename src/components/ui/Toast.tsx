@@ -58,34 +58,39 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
     return () => clearTimeout(t);
   }, [onDismiss]);
 
-  const config: Record<ToastType, { icon: React.ReactNode; bg: string; border: string }> = {
-    success: { icon: <CheckCircle size={16} className="text-success" />, bg: 'bg-success-soft', border: 'border-success/30' },
-    info:    { icon: <Info size={16} className="text-info" />,         bg: 'bg-info-soft',    border: 'border-info/30' },
-    warning: { icon: <AlertTriangle size={16} className="text-warning" />, bg: 'bg-warning-soft', border: 'border-warning/30' },
-    danger:  { icon: <AlertCircle size={16} className="text-danger" />, bg: 'bg-danger-soft', border: 'border-danger/30' },
+  const config: Record<ToastType, { icon: React.ReactNode; rule: string }> = {
+    success: { icon: <CheckCircle size={15} className="text-success" />, rule: 'bg-success' },
+    info:    { icon: <Info size={15} className="text-info" />,            rule: 'bg-info' },
+    warning: { icon: <AlertTriangle size={15} className="text-warning" />, rule: 'bg-warning' },
+    danger:  { icon: <AlertCircle size={15} className="text-danger" />,    rule: 'bg-danger' },
   };
   const c = config[toast.type];
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 16, scale: 0.96 }}
+      initial={{ opacity: 0, y: 16, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 16, scale: 0.96 }}
+      exit={{ opacity: 0, x: 16, scale: 0.98 }}
       transition={{ duration: motionDurations.toast, ease: motionEasings.out }}
-      className={`pointer-events-auto flex items-start gap-3 px-4 py-3 min-w-[320px] max-w-[420px] bg-surface border ${c.border} rounded-md shadow-lg`}
+      className="pointer-events-auto relative flex items-start gap-3 pl-4 pr-3 py-3 min-w-[320px] max-w-[420px] bg-surface border border-border-default rounded-md shadow-[0_2px_12px_rgba(17,17,17,0.10),0_1px_0_rgba(17,17,17,0.05)]"
     >
+      {/* Printed left rule in the toast's tone colour — Ekko's editorial
+          motif carried into ephemeral notifications. */}
+      <span className={`absolute left-0 top-0 bottom-0 w-[2px] ${c.rule} rounded-l-md`} aria-hidden="true" />
       <div className="mt-0.5 flex-shrink-0">{c.icon}</div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-primary">{toast.title}</p>
-        {toast.description && <p className="text-[13px] text-secondary mt-0.5">{toast.description}</p>}
+        <p className="text-[13px] font-semibold text-primary leading-snug">{toast.title}</p>
+        {toast.description && (
+          <p className="text-[12px] text-secondary mt-0.5 leading-relaxed">{toast.description}</p>
+        )}
       </div>
       <button
         onClick={onDismiss}
         className="text-muted hover:text-primary transition-colors flex-shrink-0 -mr-1 -mt-0.5"
         aria-label="Dismiss"
       >
-        <X size={14} />
+        <X size={13} />
       </button>
     </motion.div>
   );

@@ -95,22 +95,22 @@ export function TaskCard({
       layout
       initial={false}
       transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
-      className={`group bg-surface border border-border-subtle rounded-md
-        transition-[border-color,background-color] duration-150 ease-out
-        hover:border-border-default
+      className={`group relative bg-surface border border-border-subtle rounded-md
+        transition-[border-color,background-color,box-shadow] duration-150 ease-out
+        hover:border-border-default hover:shadow-[0_1px_0_rgba(17,17,17,0.04)]
         ${isCompact ? 'p-3' : 'p-4'}
         ${isCompleted ? 'opacity-65' : ''}`}
     >
       <div className="flex items-start gap-3">
         <div
           aria-hidden="true"
-          className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ring-2 ${priorityDot[action.priority]} ${priorityRing[action.priority]}`}
+          className={`mt-[7px] w-[7px] h-[7px] rounded-full flex-shrink-0 ring-2 ${priorityDot[action.priority]} ${priorityRing[action.priority]}`}
         />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3 mb-1">
             <p
-              className={`text-[14px] font-semibold text-primary leading-snug
+              className={`text-[13.5px] font-semibold text-primary leading-snug tracking-tight
                 ${isCompleted ? 'line-through text-muted' : ''}`}
             >
               {action.title}
@@ -118,7 +118,7 @@ export function TaskCard({
             <DueDateBadge dueDate={action.dueDate} status={action.status} size={isCompact ? 'sm' : 'md'} />
           </div>
 
-          <p className="text-[13px] text-secondary line-clamp-2 mb-2.5">{action.context}</p>
+          <p className="text-[12.5px] text-secondary line-clamp-2 mb-2.5 leading-relaxed">{action.context}</p>
 
           <div className="flex items-center justify-between gap-3 flex-wrap">
             {/* Left cluster: status + linked entity + source */}

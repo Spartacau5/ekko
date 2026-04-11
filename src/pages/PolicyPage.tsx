@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useMaturity } from '../lib/MaturityContext';
+import { PolicyDay0Page } from './day0/PolicyDay0Page';
 import { policies, Policy } from '../data/policies';
 import { policyTopics, watchlist } from '../data/watchlist';
 import {
-  Button, Chip, SearchBar, Modal, Checkbox, PageHeader, SegmentedControl, WatchlistToggle, useToast,
+  Button, Chip, SearchBar, Modal, Checkbox, PageHeader, SegmentedControl, WatchlistToggle, NarrativeSpineBadge, useToast,
 } from '../components/ui';
 import { Filter, Clock, AlertCircle, Bell, FolderOpen } from 'lucide-react';
 
@@ -20,6 +22,12 @@ const viewOptions = [
 ];
 
 export function PolicyPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <PolicyDay0Page />;
+  return <PolicyDayXPage />;
+}
+
+function PolicyDayXPage() {
   const [search, setSearch] = useState('');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [view, setView] = useState('list');
@@ -117,12 +125,13 @@ export function PolicyPage() {
 
       {view === 'list' && activeFilterCount > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <span className="eyebrow-plain mr-1">Filters</span>
           {Object.entries(filters).map(([key, values]) =>
             values.map((v) => (
               <Chip key={`${key}-${v}`} label={v} onRemove={() => toggleFilter(key, v)} />
             ))
           )}
-          <button onClick={clearFilters} className="text-[13px] text-secondary hover:text-primary underline">
+          <button onClick={clearFilters} className="text-[12px] text-secondary hover:text-primary border-b border-transparent hover:border-primary/40 pb-px">
             Clear all
           </button>
         </div>
@@ -209,16 +218,19 @@ function PolicyCard({ policy, isWatching, onToggleWatch }: { policy: Policy; isW
   const impactVariant = isOpportunity ? 'success' : isRisk ? 'danger' : 'warning';
 
   return (
-    <div className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors">
+    <div className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default hover:shadow-[0_1px_0_rgba(17,17,17,0.04)] transition-[border-color,box-shadow] duration-150 ease-out">
       <div className="flex items-start justify-between gap-4">
         <Link to={`/policy/${policy.id}`} className="flex-1 min-w-0 no-underline">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
             <Chip label={policy.jurisdiction} variant="info" />
             <Chip label={policy.topic} variant="default" />
-            <span className="text-[12px] text-muted">&middot;</span>
-            <span className="text-[12px] text-muted">{policy.status}</span>
+            <span className="text-border-subtle">·</span>
+            <p className="eyebrow-plain">{policy.status}</p>
           </div>
-          <h3 className="text-[18px] leading-[26px] font-semibold text-primary mb-1.5">{policy.title}</h3>
+          <div className="flex items-center gap-2 mb-1.5">
+            <h3 className="text-[18px] leading-[26px] font-semibold text-primary">{policy.title}</h3>
+            <NarrativeSpineBadge id={policy.id} />
+          </div>
           <p className="text-[14px] text-secondary line-clamp-2 mb-3">{policy.summary}</p>
 
           <div className="flex items-center gap-4 text-[13px] text-muted">
@@ -284,8 +296,8 @@ function PolicyStatCard({ label, value, variant }: { label: string; value: strin
   const colorMap = { success: 'text-success', danger: 'text-danger' };
   return (
     <div className="bg-surface border border-border-subtle rounded-md p-5">
-      <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-2">{label}</p>
-      <p className={`text-[32px] leading-[36px] font-semibold ${variant ? colorMap[variant] : 'text-primary'}`}>{value}</p>
+      <p className="eyebrow-plain mb-3">{label}</p>
+      <p className={`metric-display ${variant ? colorMap[variant] : 'text-primary'}`}>{value}</p>
     </div>
   );
 }

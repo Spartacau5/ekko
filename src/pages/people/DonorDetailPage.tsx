@@ -8,8 +8,12 @@ import { notesForEntity } from '../../data/notes';
 import {
   Button, Chip, SegmentedControl, useToast,
   TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview, Avatar,
+  LinkedInsightSection, NarrativeSpineBadge,
 } from '../../components/ui';
+import { linksFor } from '../../data/demoFlows';
 import { useRole } from '../../lib/RoleContext';
+import { useMaturity } from '../../lib/MaturityContext';
+import { DonorDetailDay0Page } from '../day0/DonorDetailDay0Page';
 import { motionDurations, motionEasings } from '../../lib/motion';
 import {
   ArrowLeft, Mail, Phone, User, Calendar, Gift, FileText, Download,
@@ -24,6 +28,12 @@ const timelineFilters = [
 ];
 
 export function DonorDetailPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <DonorDetailDay0Page />;
+  return <DonorDetailDayXPage />;
+}
+
+function DonorDetailDayXPage() {
   const { id } = useParams<{ id: string }>();
   const [timelineFilter, setTimelineFilter] = useState('all');
   const [timelineExpanded, setTimelineExpanded] = useState(false);
@@ -93,9 +103,13 @@ export function DonorDetailPage() {
               </span>
             </div>
             <div>
-              <h1 className="text-[28px] leading-[36px] font-semibold font-serif text-primary">{donor.name}</h1>
-              <p className="text-sm text-secondary mt-0.5">{donor.persona}</p>
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
+              <p className="eyebrow mb-2">Donor</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="page-title">{donor.name}</h1>
+                <NarrativeSpineBadge id={donor.id} />
+              </div>
+              <p className="text-[13px] text-secondary mt-1">{donor.persona}</p>
+              <div className="flex items-center gap-1.5 mt-3 flex-wrap">
                 <Chip label={donor.donorType} variant="default" />
                 <Chip label={donor.givingStatus} variant={statusVariant} />
                 <Chip label={`${donor.risk} risk`} variant={riskVariant} />
@@ -152,14 +166,16 @@ export function DonorDetailPage() {
         <div className="col-span-8 flex flex-col gap-6">
           {/* Linked tasks */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles size={15} className="text-primary" />
-                <h2 className="text-[15px] font-semibold text-primary">Open follow-ups</h2>
-                <Chip
-                  label={`${linkedActions.filter(a => a.status !== 'completed').length} active`}
-                  variant={linkedActions.some(a => a.priority === 'urgent') ? 'danger' : 'default'}
-                />
+            <div className="px-5 py-4 border-b border-border-subtle flex items-start justify-between gap-4 bg-surface-muted/25">
+              <div className="min-w-0">
+                <p className="eyebrow mb-1.5">Actions</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[15px] font-semibold text-primary tracking-tight">Open follow-ups</h2>
+                  <Chip
+                    label={`${linkedActions.filter(a => a.status !== 'completed').length} active`}
+                    variant={linkedActions.some(a => a.priority === 'urgent') ? 'danger' : 'default'}
+                  />
+                </div>
               </div>
               <Button
                 variant="ghost"
@@ -212,11 +228,12 @@ export function DonorDetailPage() {
             </div>
           </div>
 
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+          <div className="bg-surface border border-border-subtle rounded-md" data-walkthrough-focus="Risk + timeline">
+            <div className="px-5 py-4 border-b border-border-subtle flex items-start justify-between gap-4 bg-surface-muted/25">
               <div>
-                <h2 className="text-[15px] font-semibold text-primary">Activity timeline</h2>
-                <p className="text-[13px] text-muted mt-0.5">Engagements, gifts, and meeting notes</p>
+                <p className="eyebrow mb-1.5">History</p>
+                <h2 className="text-[15px] font-semibold text-primary tracking-tight">Activity timeline</h2>
+                <p className="text-[12px] text-muted mt-0.5">Engagements, gifts, and meeting notes</p>
               </div>
               <SegmentedControl
                 size="sm"
@@ -298,11 +315,13 @@ export function DonorDetailPage() {
 
           {/* Internal notes */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageCircle size={15} className="text-primary" />
-                <h2 className="text-[15px] font-semibold text-primary">Internal notes</h2>
-                <span className="text-[12px] text-muted">{donorNotes.length}</span>
+            <div className="px-5 py-4 border-b border-border-subtle flex items-start justify-between gap-4 bg-surface-muted/25">
+              <div>
+                <p className="eyebrow mb-1.5">Team</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[15px] font-semibold text-primary tracking-tight">Internal notes</h2>
+                  <span className="text-[11px] text-muted tabular-nums">{donorNotes.length}</span>
+                </div>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowNoteComposer((s) => !s)}>
                 <Plus size={13} className="mr-1" /> Note
@@ -375,9 +394,10 @@ export function DonorDetailPage() {
 
           {/* Persona insight */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle">
-              <h2 className="text-[15px] font-semibold text-primary">Persona insight</h2>
-              <p className="text-[13px] text-muted mt-0.5">What we know about how they engage</p>
+            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow mb-1.5">Intelligence</p>
+              <h2 className="text-[15px] font-semibold text-primary tracking-tight">Persona insight</h2>
+              <p className="text-[12px] text-muted mt-0.5">What we know about how they engage</p>
             </div>
             <div className="p-5 grid grid-cols-2 gap-5">
               <InsightItem
@@ -406,11 +426,20 @@ export function DonorDetailPage() {
 
         {/* Right: side panels */}
         <div className="col-span-4 flex flex-col gap-6">
+          {/* Phase 5: cross-surface connective tissue — the donor story ties
+              into a policy moment and a peer campaign. Promoted to the top
+              of the side rail so the "why this donor matters right now" read
+              happens before the suggested next step. */}
+          {id && linksFor('donor', id).length > 0 && (
+            <LinkedInsightSection insights={linksFor('donor', id)} />
+          )}
+
           {/* Suggested next step */}
-          <div className="bg-surface border border-border-subtle rounded-md overflow-hidden">
-            <div className="px-5 py-4 bg-accent-soft/40 border-b border-border-subtle flex items-center gap-2">
-              <Sparkles size={15} className="text-primary" />
-              <h3 className="text-[14px] font-semibold text-primary">Suggested next step</h3>
+          <div className="relative bg-surface border border-border-subtle rounded-md overflow-hidden" data-walkthrough-focus="Suggested next step">
+            <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />
+            <div className="px-5 py-3.5 bg-accent-soft/35 border-b border-border-subtle flex items-center gap-2">
+              <Sparkles size={13} className="text-primary" />
+              <p className="eyebrow-plain">Suggested next step</p>
             </div>
             <div className="p-5">
               <p className="text-sm text-primary leading-relaxed mb-4">{donor.suggestedNextAction}</p>
@@ -441,8 +470,8 @@ export function DonorDetailPage() {
 
           {/* Contact */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle">
-              <h3 className="text-[14px] font-semibold text-primary">Contact</h3>
+            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow-plain">Contact</p>
             </div>
             <div className="p-5 flex flex-col gap-3">
               <ContactRow icon={<Mail size={14} />} label={donor.email} />
@@ -454,9 +483,9 @@ export function DonorDetailPage() {
           {/* Group memberships */}
           {memberOfGroups.length > 0 && (
             <div className="bg-surface border border-border-subtle rounded-md">
-              <div className="px-5 py-3 border-b border-border-subtle flex items-center justify-between">
-                <h3 className="text-[14px] font-semibold text-primary">Member of</h3>
-                <span className="text-[12px] text-muted">{memberOfGroups.length}</span>
+              <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25 flex items-center justify-between">
+                <p className="eyebrow-plain">Member of</p>
+                <span className="text-[11px] text-muted tabular-nums">{memberOfGroups.length}</span>
               </div>
               <div className="p-5 flex flex-col gap-2">
                 {memberOfGroups.map(g => (
@@ -475,8 +504,8 @@ export function DonorDetailPage() {
 
           {/* Interests */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle">
-              <h3 className="text-[14px] font-semibold text-primary">Mission interests</h3>
+            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow-plain">Mission interests</p>
             </div>
             <div className="p-5 flex flex-wrap gap-2">
               {donor.interests.map((interest) => (
@@ -514,8 +543,8 @@ export function DonorDetailPage() {
 function StatBlock({ label, value, small }: { label: string; value: string; small?: boolean }) {
   return (
     <div>
-      <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-1">{label}</p>
-      <p className={`font-semibold text-primary ${small ? 'text-sm leading-tight' : 'text-[22px] leading-[28px]'}`}>
+      <p className="eyebrow-plain mb-1.5">{label}</p>
+      <p className={`font-semibold text-primary tabular-nums tracking-tight ${small ? 'text-sm leading-tight' : 'text-[22px] leading-[26px]'}`}>
         {value}
       </p>
     </div>

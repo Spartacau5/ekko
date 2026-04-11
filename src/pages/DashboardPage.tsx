@@ -13,6 +13,8 @@ import { policyAlerts, watchlist } from '../data/watchlist';
 import { pinsForRole, trackedPeers, watchlistGroups } from '../data/workspace';
 import { roleMeta, Role } from '../data/team';
 import { useRole } from '../lib/RoleContext';
+import { useMaturity } from '../lib/MaturityContext';
+import { DashboardDay0Page } from './day0/DashboardDay0Page';
 import {
   ProgressBar,
   Chip,
@@ -20,14 +22,18 @@ import {
   TaskCard,
   PinnedModuleCard,
   ActionDrawer,
+  DemoPathCard,
+  NarrativeSpineBadge,
+  MaturityComparisonStrip,
   useToast,
 } from '../components/ui';
+import { demoFlows } from '../data/demoFlows';
 import { useTour } from '../lib/TourContext';
 import { motionDurations, motionEasings } from '../lib/motion';
 import {
-  AlertCircle, AlertTriangle, Info, CheckCircle, ArrowUpRight, Sparkles,
+  AlertCircle, AlertTriangle, Info, CheckCircle, ArrowUpRight,
   MapPin, Building2, Gift, Mail, Users as UsersIcon, FileText,
-  Megaphone, TrendingUp, Clock, Bell, Pin, Eye,
+  Megaphone, TrendingUp, Clock, Bell, Eye, Sprout,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,9 +103,16 @@ interface GlanceItem {
 }
 
 export function DashboardPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <DashboardDay0Page />;
+  return <DashboardDayXPage />;
+}
+
+function DashboardDayXPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { startTour } = useTour();
   const { activeRole, activeMember } = useRole();
+  const { setActiveMaturity } = useMaturity();
   const toast = useToast();
   const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -264,29 +277,83 @@ export function DashboardPage() {
           transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
           className="mb-6"
           id="dashboard-welcome"
+          data-walkthrough-focus="Hero + pins"
         >
-          <p className="text-[13px] font-medium text-muted uppercase tracking-wider mb-1">
-            Friday, April 10 · Previewing as {roleMeta[activeRole].label}
-          </p>
-          <h1 className="text-[36px] leading-[44px] font-semibold font-serif text-primary">
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            <p className="eyebrow">Day X · Mature workspace</p>
+            <span className="text-border-subtle">·</span>
+            <p className="text-[12px] text-secondary">
+              Friday, April 10 · Previewing as <span className="text-primary font-medium">{roleMeta[activeRole].label}</span>
+            </p>
+          </div>
+          <h1 className="display-title">
             {greeting}
           </h1>
-          <p className="text-base text-secondary mt-1">
-            {urgentCount > 0
-              ? `${urgentCount} urgent ${urgentCount === 1 ? 'task' : 'tasks'} and ${openCount - urgentCount} more open. ${cfg.glanceFocus}.`
-              : openCount > 0
-              ? `${openCount} open tasks. ${cfg.glanceFocus}.`
-              : `Nothing urgent. ${cfg.glanceFocus}.`}
-          </p>
+          <div className="flex items-start justify-between gap-6 mt-3 flex-wrap">
+            <p className="text-base text-secondary max-w-2xl">
+              {urgentCount > 0
+                ? `${urgentCount} urgent ${urgentCount === 1 ? 'task' : 'tasks'} and ${openCount - urgentCount} more open. ${cfg.glanceFocus}.`
+                : openCount > 0
+                ? `${openCount} open tasks. ${cfg.glanceFocus}.`
+                : `Nothing urgent. ${cfg.glanceFocus}.`}
+            </p>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-right">
+                <p className="text-[10px] font-semibold text-muted uppercase tracking-wider">Setup</p>
+                <p className="text-[13px] text-secondary mt-0.5 font-medium">
+                  <span className="text-muted">Day 0: 28%</span>
+                  <span className="mx-1.5 text-muted">→</span>
+                  <span className="text-primary">Day X: 86%</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveMaturity('day0')}
+                className="inline-flex items-center gap-1.5 bg-surface text-primary border border-border-default px-3 py-1.5 text-[12px] font-semibold rounded-sm hover:bg-surface-muted transition-colors duration-150 whitespace-nowrap"
+                title="Rewind to the Day 0 setup view"
+              >
+                <Sprout size={11} className="text-success" /> See Day 0 view
+              </button>
+            </div>
+          </div>
         </motion.div>
       </AnimatePresence>
 
+      {/* Phase 5 polish: Day 0 ↔ Day X comparison strip — every metric, in
+          both states, at a glance. Gives a presenter a single object to point
+          at when explaining what maturity actually changes. */}
+      <MaturityComparisonStrip />
+
+      {/* Phase 5: Demo walkthroughs — guided paths into the product story.
+          Lives just under the hero so a presenter or reviewer can pick a flow
+          and the walkthrough strip will guide them step by step. */}
+      <section className="mb-8">
+        <div className="flex items-end justify-between gap-6 mb-4">
+          <div className="min-w-0">
+            <p className="eyebrow mb-2">For presenters &amp; reviewers</p>
+            <h2 className="text-[22px] font-serif font-semibold text-primary leading-tight tracking-tight">
+              Demo walkthroughs
+            </h2>
+            <p className="text-[13px] text-secondary mt-1.5 leading-relaxed max-w-2xl">
+              Five rehearsed product stories. Each one auto-sets the recommended role and maturity, then guides you step by step.
+            </p>
+          </div>
+          <span className="text-[11px] text-muted font-medium tabular-nums whitespace-nowrap">{demoFlows.length} flows</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          {demoFlows.map((f) => (
+            <DemoPathCard key={f.id} flow={f} />
+          ))}
+        </div>
+      </section>
+
       {/* Pinned priorities — always visible above the fold */}
       {myPins.length > 0 && (
-        <section className="mb-6">
+        <section className="mb-6" data-walkthrough-focus="Pinned priorities">
           <SectionHeading
+            eyebrow="This week"
             title="Pinned priorities"
-            subtitle="Items the team is keeping close this week"
+            subtitle="Items the team is keeping close"
           />
           <AnimatePresence mode="wait">
             <motion.div
@@ -307,22 +374,27 @@ export function DashboardPage() {
 
       {/* Hero: Priority tasks (role-aware) + glance panel */}
       <div className="grid grid-cols-12 gap-6 mb-6">
-        <div className="col-span-8 bg-surface border border-border-default rounded-md overflow-hidden">
+        <div
+          className="col-span-8 bg-surface border border-border-default rounded-md overflow-hidden"
+          data-walkthrough-focus="Priority tasks"
+        >
           <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between bg-surface-muted/30">
-            <div className="flex items-center gap-2">
-              <Sparkles size={15} className="text-primary" />
-              <h2 className="text-[15px] font-semibold text-primary">Your priority tasks</h2>
-              <Chip
-                label={`${urgentCount} urgent`}
-                variant={urgentCount > 0 ? 'danger' : 'default'}
-              />
-              <Chip label={`${openCount} open`} variant="default" />
-              {inProgressCount > 0 && (
-                <Chip label={`${inProgressCount} in progress`} variant="info" />
-              )}
+            <div className="min-w-0">
+              <p className="eyebrow mb-1.5">Your work</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-[15px] font-semibold text-primary leading-tight tracking-tight">Priority tasks</h2>
+                <Chip
+                  label={`${urgentCount} urgent`}
+                  variant={urgentCount > 0 ? 'danger' : 'default'}
+                />
+                <Chip label={`${openCount} open`} variant="default" />
+                {inProgressCount > 0 && (
+                  <Chip label={`${inProgressCount} in progress`} variant="info" />
+                )}
+              </div>
             </div>
-            <span className="text-[12px] text-muted">
-              Showing top {Math.min(5, myActions.length)} of {myActions.length}
+            <span className="text-[11px] text-muted tabular-nums whitespace-nowrap">
+              Top {Math.min(5, myActions.length)} of {myActions.length}
             </span>
           </div>
           <AnimatePresence mode="wait">
@@ -357,9 +429,10 @@ export function DashboardPage() {
         {/* Glance panel — content shifts per role */}
         <div className="col-span-4 flex flex-col gap-4">
           <div className="bg-surface border border-border-subtle rounded-md p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[14px] font-semibold text-primary flex items-center gap-2">
-                <Clock size={14} /> {cfg.glanceTitle}
+            <div className="mb-3">
+              <p className="eyebrow mb-1.5">At a glance</p>
+              <h3 className="text-[14px] font-semibold text-primary leading-tight tracking-tight flex items-center gap-2">
+                <Clock size={13} className="text-muted" /> {cfg.glanceTitle}
               </h3>
             </div>
             <AnimatePresence mode="wait">
@@ -379,7 +452,8 @@ export function DashboardPage() {
           </div>
 
           <div className="bg-surface border border-border-subtle rounded-md p-5">
-            <h3 className="text-[14px] font-semibold text-primary mb-3">Quick links</h3>
+            <p className="eyebrow mb-2">Navigate</p>
+            <h3 className="text-[14px] font-semibold text-primary mb-3 tracking-tight">Quick links</h3>
             <div className="flex flex-col gap-1.5">
               <QuickLink to="/people/donors" label="Donors" count={quickLinkCounts.donors} icon={<UsersIcon size={12} />} />
               <QuickLink to="/policy/watchlist" label="Policy watchlist" count={quickLinkCounts.watchlist} icon={<Bell size={12} />} />
@@ -403,8 +477,8 @@ export function DashboardPage() {
             <div className="bg-surface border border-border-subtle rounded-md p-5 h-full
               transition-[border-color,background-color] duration-150 ease-out
               group-hover:border-border-default group-hover:bg-surface-muted/20">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[12px] font-medium text-muted uppercase tracking-wider">{m.label}</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="eyebrow-plain">{m.label}</p>
                 <ArrowUpRight
                   size={12}
                   className="text-muted opacity-0 -translate-x-0.5 group-hover:opacity-100 group-hover:translate-x-0
@@ -412,7 +486,7 @@ export function DashboardPage() {
                 />
               </div>
               <div className="flex items-end justify-between gap-3 mb-2">
-                <p className="text-[32px] leading-[36px] font-semibold text-primary">{m.value}</p>
+                <p className="metric-display">{m.value}</p>
               </div>
               <div className="flex items-center gap-1.5">
                 {m.delta >= 0 ? (
@@ -433,8 +507,9 @@ export function DashboardPage() {
       {/* Recent signals */}
       <section className="mb-6">
         <SectionHeading
-          title="Recent signals"
-          subtitle="What's changed across your accounts, policy feed, and peer network"
+          eyebrow="Signals"
+          title="What's changed"
+          subtitle="Across your accounts, policy feed, and peer network"
         />
         <div className="grid grid-cols-2 gap-3">
           {dashboardAlerts.slice(0, 4).map((alert) => (
@@ -447,14 +522,15 @@ export function DashboardPage() {
       {cfg.showFundraising && (
         <div className="grid grid-cols-12 gap-6 mb-6">
           <div className="col-span-8 bg-surface border border-border-subtle rounded-md p-6">
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between gap-6 mb-5">
               <div>
-                <h2 className="text-[15px] font-semibold text-primary">Fundraising trend</h2>
-                <p className="text-[13px] text-muted mt-0.5">Last 6 months — actual vs. target</p>
+                <p className="eyebrow mb-2">Revenue</p>
+                <h2 className="text-[18px] font-serif font-semibold text-primary leading-tight tracking-tight">Fundraising trend</h2>
+                <p className="text-[12px] text-muted mt-1">Last 6 months — actual vs. target</p>
               </div>
               <div className="text-right">
-                <p className="text-[12px] font-medium text-muted uppercase tracking-wider">YTD raised</p>
-                <p className="text-[22px] font-semibold text-primary">
+                <p className="eyebrow-plain mb-1">YTD raised</p>
+                <p className="text-[24px] font-semibold text-primary tabular-nums leading-none">
                   ${(fundraisingTrend.reduce((sum, m) => sum + m.raised, 0) / 1000).toFixed(0)}K
                 </p>
               </div>
@@ -469,9 +545,12 @@ export function DashboardPage() {
           </div>
 
           <div className="col-span-4 bg-surface border border-border-subtle rounded-md p-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[15px] font-semibold text-primary">Setup progress</h3>
-              <span className="text-[13px] text-muted">{organization.setupCompletion}%</span>
+            <div className="mb-4">
+              <p className="eyebrow mb-2">Onboarding</p>
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="text-[15px] font-semibold text-primary leading-tight tracking-tight">Setup progress</h3>
+                <span className="text-[13px] text-muted tabular-nums">{organization.setupCompletion}%</span>
+              </div>
             </div>
             <ProgressBar value={organization.setupCompletion} showPercent={false} />
             <div className="mt-4 flex flex-col gap-2">
@@ -495,6 +574,7 @@ export function DashboardPage() {
           exit={{ opacity: 0 }}
           transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
           className="grid grid-cols-12 gap-6 mb-6"
+          data-walkthrough-focus="Triple column"
         >
           {cfg.surfaceOrder.map((surface, idx) => {
             const isPrimary = idx === 0;
@@ -511,7 +591,7 @@ export function DashboardPage() {
 
       {/* Recent activity */}
       <section className="mb-6">
-        <SectionHeading title="Recent activity" subtitle="Cross-feature signals from across your workspace" />
+        <SectionHeading eyebrow="Activity" title="Recent activity" subtitle="Cross-feature signals from across your workspace" />
         <div className="bg-surface border border-border-subtle rounded-md">
           <div className="divide-y divide-border-subtle">
             {recentActivity.map((item) => <ActivityRow key={item.id} item={item} />)}
@@ -521,19 +601,19 @@ export function DashboardPage() {
 
       {/* Org summary footer */}
       <div className="bg-surface border border-border-subtle rounded-md p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 bg-accent-soft border border-border-subtle rounded-sm flex items-center justify-center flex-shrink-0">
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-accent-soft border border-border-default rounded-sm flex items-center justify-center flex-shrink-0 shadow-[0_1px_0_rgba(17,17,17,0.06)]">
               <Building2 size={22} className="text-primary" />
             </div>
             <div>
-              <p className="text-[13px] font-medium text-muted uppercase tracking-wider">Your organization</p>
-              <h2 className="text-[22px] leading-[30px] font-semibold text-primary">{organization.name}</h2>
-              <p className="text-sm text-secondary">{organization.missionArea}</p>
+              <p className="eyebrow mb-1.5">Your organization</p>
+              <h2 className="text-[22px] leading-[28px] font-serif font-semibold text-primary tracking-tight">{organization.name}</h2>
+              <p className="text-[13px] text-secondary mt-0.5">{organization.missionArea}</p>
             </div>
           </div>
-          <Link to="/settings" className="text-[13px] text-secondary hover:text-primary underline">
-            Edit
+          <Link to="/settings" className="text-[12px] text-secondary hover:text-primary no-underline border-b border-transparent hover:border-primary/40 pb-px">
+            Edit →
           </Link>
         </div>
         <div className="grid grid-cols-4 gap-4 pt-4 border-t border-border-subtle">
@@ -561,9 +641,10 @@ export function DashboardPage() {
 
 function PeopleColumn({ priorityDonors, primary }: { priorityDonors: any[]; primary: boolean }) {
   return (
-    <section className="col-span-4" id="dashboard-people">
+    <section className="col-span-4" id="dashboard-people" data-walkthrough-focus="People column">
       <SectionHeading
-        title="Priority people"
+        eyebrow="People"
+        title="Priority donors"
         link="/people/donors"
         accent={primary}
       />
@@ -576,7 +657,10 @@ function PeopleColumn({ priorityDonors, primary }: { priorityDonors: any[]; prim
             className="flex items-start justify-between gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-primary truncate">{donor.name}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-primary truncate">{donor.name}</p>
+                <NarrativeSpineBadge id={donor.id} compact />
+              </div>
               <p className="text-[13px] text-secondary truncate">{donor.persona}</p>
               <div className="flex items-center gap-2 mt-1.5">
                 <Chip
@@ -596,8 +680,8 @@ function PeopleColumn({ priorityDonors, primary }: { priorityDonors: any[]; prim
 
 function PolicyColumn({ criticalPolicies, primary }: { criticalPolicies: any[]; primary: boolean }) {
   return (
-    <section className="col-span-4" id="dashboard-policy">
-      <SectionHeading title="Policy radar" link="/policy" accent={primary} />
+    <section className="col-span-4" id="dashboard-policy" data-walkthrough-focus="Policy column">
+      <SectionHeading eyebrow="Policy" title="Policy radar" link="/policy" accent={primary} />
       <div className={`bg-surface rounded-md divide-y divide-border-subtle border
         ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
         {criticalPolicies.map((policy) => (
@@ -607,7 +691,10 @@ function PolicyColumn({ criticalPolicies, primary }: { criticalPolicies: any[]; 
             className="flex items-start gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-primary line-clamp-2">{policy.title}</p>
+              <div className="flex items-start gap-1.5">
+                <p className="text-sm font-medium text-primary line-clamp-2 flex-1">{policy.title}</p>
+                <NarrativeSpineBadge id={policy.id} compact />
+              </div>
               <div className="flex items-center gap-2 mt-1.5">
                 <Chip
                   variant={policy.impactLevel.includes('risk') ? 'danger' : 'success'}
@@ -625,8 +712,8 @@ function PolicyColumn({ criticalPolicies, primary }: { criticalPolicies: any[]; 
 
 function PeersColumn({ primary }: { primary: boolean }) {
   return (
-    <section className="col-span-4" id="dashboard-peers">
-      <SectionHeading title="Peer benchmarks" link="/peers" accent={primary} />
+    <section className="col-span-4" id="dashboard-peers" data-walkthrough-focus="Peers column">
+      <SectionHeading eyebrow="Peers" title="Benchmarks" link="/peers" accent={primary} />
       <div className={`bg-surface rounded-md p-5 border
         ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
         <BenchmarkRow
@@ -652,29 +739,41 @@ function PeersColumn({ primary }: { primary: boolean }) {
   );
 }
 
+// Phase 6: dashboard section heading with editorial rhythm.
+// Small eyebrow overline, sans section title, optional meta line, optional
+// "View all" link. The `accent` flag (used for the active role's primary
+// surface column) adds a printed yellow bar before the eyebrow so the eye
+// lands on the role's home surface first.
 function SectionHeading({
+  eyebrow,
   title,
   subtitle,
   link,
   accent,
 }: {
+  eyebrow?: string;
   title: string;
   subtitle?: string;
   link?: string;
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-end justify-between mb-3">
-      <div className="flex items-center gap-2">
-        {accent && <Pin size={12} className="text-accent -rotate-12" />}
-        <div>
-          <h2 className="text-[15px] font-semibold text-primary">{title}</h2>
-          {subtitle && <p className="text-[13px] text-muted mt-0.5">{subtitle}</p>}
-        </div>
+    <div className="flex items-end justify-between gap-3 mb-3">
+      <div className="min-w-0">
+        {eyebrow && (
+          <p className={accent ? 'eyebrow mb-1.5' : 'eyebrow-plain mb-1.5'}>{eyebrow}</p>
+        )}
+        <h2 className="text-[15px] font-semibold text-primary leading-tight tracking-tight">
+          {title}
+        </h2>
+        {subtitle && <p className="text-[12px] text-muted mt-0.5">{subtitle}</p>}
       </div>
       {link && (
-        <Link to={link} className="text-[13px] text-secondary hover:text-primary underline whitespace-nowrap">
-          View all
+        <Link
+          to={link}
+          className="text-[12px] font-medium text-secondary hover:text-primary whitespace-nowrap flex-shrink-0 inline-flex items-center gap-1 no-underline border-b border-transparent hover:border-primary/40 pb-px"
+        >
+          View all →
         </Link>
       )}
     </div>
@@ -758,9 +857,9 @@ function GlanceRow({ label, value, sublabel, accent, link }: { label: string; va
     'text-primary';
   const content = (
     <div className="flex items-baseline justify-between gap-2">
-      <span className="text-[13px] text-secondary">{label}</span>
+      <span className="text-[12px] text-secondary">{label}</span>
       <div className="flex items-baseline gap-1">
-        <span className={`text-[18px] font-semibold ${valueClass}`}>{value}</span>
+        <span className={`text-[17px] font-semibold tabular-nums tracking-tight ${valueClass}`}>{value}</span>
         {sublabel && <span className="text-[11px] text-muted">{sublabel}</span>}
       </div>
     </div>
@@ -825,9 +924,9 @@ function ActivityRow({ item }: { item: any }) {
 function OrgStat({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-sm text-primary flex items-center gap-1">
-        {icon}
+      <p className="eyebrow-plain mb-1.5">{label}</p>
+      <p className="text-[13px] text-primary flex items-center gap-1.5">
+        {icon && <span className="text-muted">{icon}</span>}
         {value}
       </p>
     </div>

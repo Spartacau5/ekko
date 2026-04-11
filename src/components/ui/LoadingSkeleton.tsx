@@ -9,10 +9,12 @@ interface LoadingSkeletonProps {
 
 export function LoadingSkeleton({ width = '100%', height = 16, className = '', rounded = 'sm' }: LoadingSkeletonProps) {
   const radius = rounded === 'full' ? 'rounded-full' : rounded === 'md' ? 'rounded-md' : 'rounded-sm';
+  // A subtle linear-gradient sweep feels more printed than a flat pulse.
   return (
     <div
-      className={`bg-surface-muted animate-pulse ${radius} ${className}`}
+      className={`bg-surface-muted/80 border border-border-subtle/60 ${radius} ${className} animate-pulse`}
       style={{ width, height }}
+      aria-hidden="true"
     />
   );
 }

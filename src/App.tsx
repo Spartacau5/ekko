@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AppLayout } from './components/layout/AppLayout';
 import { ToastProvider } from './components/ui';
 import { TourProvider } from './lib/TourContext';
 import { RoleProvider } from './lib/RoleContext';
+import { MaturityProvider, useMaturity } from './lib/MaturityContext';
+import { DemoFlowProvider } from './lib/DemoFlowContext';
+import { WalkthroughStrip } from './components/layout/WalkthroughStrip';
 import { motionDurations, motionEasings } from './lib/motion';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -29,6 +32,31 @@ function ScrollToTop() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [pathname]);
+  return null;
+}
+
+// Phase 4.5: empty placeholder for /day-0/* and /day-x/* routes. The hydrator
+// runs as a sibling and rewrites the URL away on the next render.
+function MaturityPrefixCatchAll() {
+  return null;
+}
+
+// Phase 4.5: support deep-link URLs like /day-0/dashboard or /day-x/people/donors.
+// When such a URL is visited, set the maturity state and rewrite the URL to the
+// canonical path. The switcher updates context directly without touching the URL.
+function MaturityURLHydrator() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { setActiveMaturity } = useMaturity();
+
+  useEffect(() => {
+    const m = location.pathname.match(/^\/(day-0|day-x)(\/.*)?$/);
+    if (!m) return;
+    setActiveMaturity(m[1] === 'day-0' ? 'day0' : 'dayX');
+    const target = m[2] && m[2] !== '/' ? m[2] : '/dashboard';
+    navigate(target, { replace: true });
+  }, [location.pathname, navigate, setActiveMaturity]);
+
   return null;
 }
 
@@ -67,10 +95,17 @@ function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
+       <MaturityProvider>
        <RoleProvider>
+        <DemoFlowProvider>
         <TourProvider>
           <ScrollToTop />
+          <MaturityURLHydrator />
+          <WalkthroughStrip />
           <Routes>
+            {/* Phase 4.5: maturity prefix routes — hydrator rewrites to canonical path */}
+            <Route path="/day-0/*" element={<MaturityPrefixCatchAll />} />
+            <Route path="/day-x/*" element={<MaturityPrefixCatchAll />} />
             <Route path="/" element={<Navigate to="/onboarding" replace />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
             <Route element={<LayoutWrapper />}>
@@ -101,7 +136,9 @@ function App() {
             </Route>
           </Routes>
         </TourProvider>
+        </DemoFlowProvider>
        </RoleProvider>
+       </MaturityProvider>
       </ToastProvider>
     </BrowserRouter>
   );

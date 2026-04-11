@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useMaturity } from '../lib/MaturityContext';
+import { PeersDay0Page } from './day0/PeersDay0Page';
 import { peerOrgs, benchmarkData, PeerOrg } from '../data/peers';
 import { isPeerTracked } from '../data/workspace';
-import { Button, Chip, SearchBar, Modal, Checkbox, PageHeader, Tabs, useToast } from '../components/ui';
+import { Button, Chip, SearchBar, Modal, Checkbox, PageHeader, Tabs, NarrativeSpineBadge, useToast } from '../components/ui';
 import { Filter, TrendingUp, TrendingDown, Lock, Building, BarChart3, BookOpen, ArrowUpRight, Star } from 'lucide-react';
 
 const filterOptions = {
@@ -21,6 +23,12 @@ const tabs = [
 ];
 
 export function PeersPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <PeersDay0Page />;
+  return <PeersDayXPage />;
+}
+
+function PeersDayXPage() {
   const [activeTab, setActiveTab] = useState('orgs');
   const [search, setSearch] = useState('');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -65,13 +73,15 @@ export function PeersPage() {
         }
       />
 
-      {/* Consent banner */}
-      <div className="bg-info-soft border border-info/20 rounded-md p-4 mb-6 flex items-start gap-3">
-        <Lock size={16} className="text-info mt-0.5 flex-shrink-0" />
+      {/* Consent banner — editorial, printed, with a left rule */}
+      <div className="relative bg-info-soft/55 border border-info/30 rounded-md pl-5 pr-4 py-3.5 mb-6 flex items-start gap-3">
+        <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-[2px] bg-info" />
+        <Lock size={15} className="text-info mt-0.5 flex-shrink-0" />
         <div className="flex-1">
-          <p className="text-sm font-medium text-primary">Your data sharing: Aggregated only</p>
-          <p className="text-[13px] text-secondary mt-0.5">
-            Rivergate shares anonymized benchmark metrics with peer orgs. No donor or stakeholder details are shared. <button className="underline text-primary font-medium">Manage sharing</button>
+          <p className="eyebrow-plain mb-1">Data sharing</p>
+          <p className="text-[13px] font-semibold text-primary tracking-tight">Aggregated only — anonymized benchmarks</p>
+          <p className="text-[12px] text-secondary mt-1 leading-relaxed">
+            Rivergate shares anonymized benchmark metrics with peer orgs. No donor or stakeholder details are shared. <button className="text-primary font-semibold border-b border-primary/40 hover:border-primary pb-px">Manage sharing →</button>
           </p>
         </div>
       </div>
@@ -212,34 +222,41 @@ function BenchmarkChartCard({ title, yours, peer, top, suffix }: { title: string
 
   return (
     <div className="bg-surface border border-border-subtle rounded-md p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[14px] font-semibold text-primary">{title}</h3>
-        {ahead ? <TrendingUp size={14} className="text-success" /> : <TrendingDown size={14} className="text-danger" />}
+      <div className="flex items-start justify-between mb-3">
+        <div className="min-w-0">
+          <p className="eyebrow-plain mb-1.5">Benchmark</p>
+          <h3 className="text-[14px] font-semibold text-primary tracking-tight">{title}</h3>
+        </div>
+        {ahead ? <TrendingUp size={14} className="text-success flex-shrink-0" /> : <TrendingDown size={14} className="text-danger flex-shrink-0" />}
       </div>
       <div className="flex items-baseline gap-2 mb-4">
-        <span className="text-[32px] leading-[36px] font-semibold text-primary">{yours}{suffix}</span>
-        <span className={`text-[13px] font-medium ${ahead ? 'text-success' : 'text-danger'}`}>
-          {ahead ? '+' : ''}{(yours - peer).toFixed(1)}{suffix}
+        <span className="metric-display">{yours}{suffix}</span>
+        <span className={`text-[12px] font-medium tabular-nums ${ahead ? 'text-success' : 'text-danger'}`}>
+          {ahead ? '+' : ''}{(yours - peer).toFixed(1)}{suffix} vs peers
         </span>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 pt-3 border-t border-border-subtle">
         <BenchmarkBar label="You" value={yours} pct={yoursPct} suffix={suffix} highlighted />
         <BenchmarkBar label="Peer avg" value={peer} pct={peerPct} suffix={suffix} />
-        <BenchmarkBar label="Top quartile" value={top} pct={topPct} suffix={suffix} />
+        <BenchmarkBar label="Top quartile" value={top} pct={topPct} suffix={suffix} dashed />
       </div>
     </div>
   );
 }
 
-function BenchmarkBar({ label, value, pct, suffix, highlighted }: { label: string; value: number; pct: number; suffix: string; highlighted?: boolean }) {
+function BenchmarkBar({ label, value, pct, suffix, highlighted, dashed }: { label: string; value: number; pct: number; suffix: string; highlighted?: boolean; dashed?: boolean }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-0.5">
-        <span className="text-[12px] text-muted">{label}</span>
-        <span className="text-[12px] text-secondary">{value}{suffix}</span>
+      <div className="flex items-center justify-between mb-1">
+        <span className={`text-[11px] ${highlighted ? 'text-primary font-medium' : 'text-muted'}`}>{label}</span>
+        <span className={`text-[11px] tabular-nums ${highlighted ? 'text-primary font-medium' : 'text-secondary'}`}>{value}{suffix}</span>
       </div>
-      <div className="h-1.5 bg-surface-muted rounded-sm overflow-hidden">
-        <div className={`h-full rounded-sm ${highlighted ? 'bg-accent' : 'bg-border-subtle'}`} style={{ width: `${pct}%` }} />
+      <div className="h-[6px] bg-surface-muted/70 border border-border-subtle/60 rounded-sm overflow-hidden relative">
+        {dashed ? (
+          <div className="absolute inset-y-0 left-0 border-r-[1.5px] border-dashed border-primary/60" style={{ width: `${pct}%` }} aria-hidden="true" />
+        ) : (
+          <div className={`h-full ${highlighted ? 'bg-accent' : 'bg-border-subtle'}`} style={{ width: `${pct}%` }} />
+        )}
       </div>
     </div>
   );
@@ -252,15 +269,18 @@ function PeerOrgCard({ peer }: { peer: PeerOrg }) {
   return (
     <Link
       to={`/peers/${peer.id}`}
-      className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors no-underline"
+      className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default hover:shadow-[0_1px_0_rgba(17,17,17,0.04)] transition-[border-color,box-shadow] duration-150 ease-out no-underline"
     >
       <div className="flex items-start justify-between mb-3 gap-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-sm bg-surface-muted border border-border-subtle flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-sm bg-surface border border-border-default flex items-center justify-center flex-shrink-0 shadow-[0_1px_0_rgba(17,17,17,0.04)]">
             <Building size={18} className="text-secondary" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold text-primary truncate">{peer.name}</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-[15px] font-semibold text-primary truncate">{peer.name}</h3>
+              <NarrativeSpineBadge id={peer.id} compact />
+            </div>
             <p className="text-[13px] text-muted truncate">{peer.missionArea}</p>
           </div>
         </div>

@@ -10,14 +10,49 @@ The product is designed to feel **institution-grade, editorial, trustworthy, inf
 
 ## Status
 
-**Phase 2 — Expanded prototype.** Frontend only, no backend. All data is mock data wired through TypeScript modules. Phase 2 deepens every surface to feel like a more complete and believable SaaS workspace while staying inside the same visual system.
+**Phase 5 — Demo-ready narrative.** Frontend only, no backend, all mock data. Ekko now ships with five guided walkthroughs that connect People, Policy, and Peers into coherent product stories, plus cross-surface linked insights that make the relationships between surfaces visible.
 
-What Phase 2 adds on top of Phase 1:
+The phases on top of Phase 1 (the original 13 desktop screens):
 
-- **People** is now a workspace, not a single list. New sub-routes for Donors / Groups / Accounts, with a saved-views bar, sortable columns, multi-select bulk actions, and a richer donor detail page (filterable timeline, persona insight, group memberships).
-- **Policy** has a watchlist + alerts page, a topic-organized browse mode, watchlist toggles on every card, and a richer policy detail with stakeholder alignment bars and internal team discussion.
-- **Peers** has full peer organization detail pages with you-vs-them benchmark comparisons and a separate Campaign intelligence library page with theme/channel filtering.
-- **Dashboard** is now a mission-control surface with KPI sparklines, a priority tasks panel, fundraising trend chart, and a cross-feature recent activity feed.
+- **Phase 2** turned People, Policy, and Peers into multi-route workspaces with saved views, watchlists, benchmark comparisons, and a mission-control dashboard.
+- **Phase 3** added motion, micro-interactions, validation feedback, and tour smoothness.
+- **Phase 4** introduced a role-aware workspace, a typed action/task model with owners and due dates, internal notes, watchlist groups, a permission matrix, and per-role dashboards.
+- **Phase 4.5** added **product maturity states** — Day 0 (first-week activation) and Day X (mature, connected), switchable from the top nav and deep-linkable via `/day-0/...` and `/day-x/...` URLs.
+- **Phase 5** makes Ekko **demo-ready**: five canonical walkthroughs, a persistent walkthrough strip, and cross-surface linked insights that tie the narrative together.
+
+### Demo walkthroughs
+
+Each walkthrough lives on the dashboard and starts in the recommended role + maturity state. A persistent strip at the bottom of the screen guides you step by step.
+
+| Flow | Audience | Duration | Maturity |
+|---|---|---|---|
+| Day 0 → first value | Any new team | ~2 min | Day 0 |
+| Fundraising · Save Jordan Rivera | Fundraising lead | ~2 min | Day X |
+| Policy · Right-to-Counsel hearing | Policy lead | ~2 min | Day X |
+| Peer · Learn from Bronx Housing | Fundraising / program lead | ~2 min | Day X |
+| Executive · Scan the org | Executive director | ~90 sec | Day X |
+
+The walkthroughs share a narrative spine — **Jordan Rivera ↔ Right-to-Counsel ↔ Bronx Housing Justice Network** — so the same story shows up from three different surfaces. On each detail page, a "Connected across Ekko" rail makes the cross-links visible.
+
+### Day 0 vs Day X
+
+| | Day 0 | Day X |
+|---|---|---|
+| Setup completion | 28% | 86% |
+| Connected sources | 1 of 6 | 5 of 6 |
+| Donors loaded | 3 sample | 1,200+ |
+| Policies tracked | 0 | 6 |
+| Peers tracked | 0 | 4 |
+| Watchlist groups | 0 | 3 |
+| Benchmarking | not opted in | opted in |
+| Goals defined | no | yes |
+| Team seats used | 2 of 8 | 7 of 8 |
+
+The **Day 0** experience is a guided activation workspace: lighter density, educational empty states, a setup-progress checklist, integration prompts, value previews of what unlocks once data is connected, and a tracked-topics setup card on the Policy page. Each surface tells the same story in its own dialect.
+
+The **Day X** experience is the mature, connected workspace from Phase 4: real alerts, pinned priorities, role-aware action lists, stakeholder maps, peer benchmarks, internal notes, and audit-aware governance.
+
+The **maturity switcher** sits next to the role switcher in the top nav. The switcher persists to localStorage, and any URL prefixed with `/day-0/...` or `/day-x/...` (e.g., `/day-x/people/donors`) hydrates the state and rewrites to the canonical path.
 
 ---
 
@@ -52,6 +87,8 @@ What Phase 2 adds on top of Phase 1:
 | 14 | Peer organization detail | `/peers/:id` |
 | 15 | Campaign intelligence library | `/peers/campaigns` |
 | 16 | Settings overview | `/settings` |
+
+All screens above render in either Day 0 or Day X depending on the active maturity state. Use the maturity switcher in the top nav, or visit `/day-0/dashboard` / `/day-x/dashboard` to deep-link a state.
 
 ---
 

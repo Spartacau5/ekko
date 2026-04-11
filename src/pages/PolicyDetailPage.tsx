@@ -8,14 +8,24 @@ import { watchlistGroups } from '../data/workspace';
 import {
   Button, Chip, WatchlistToggle, useToast,
   TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview, ScopeBadge,
+  LinkedInsightSection, NarrativeSpineBadge,
 } from '../components/ui';
+import { linksFor } from '../data/demoFlows';
 import { useRole } from '../lib/RoleContext';
+import { useMaturity } from '../lib/MaturityContext';
+import { PolicyDetailDay0Page } from './day0/PolicyDetailDay0Page';
 import { roleMeta } from '../data/team';
 import {
   ArrowLeft, Clock, MapPin, AlertCircle, Users, Sparkles, ExternalLink, Bell, Plus, Folder,
 } from 'lucide-react';
 
 export function PolicyDetailPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <PolicyDetailDay0Page />;
+  return <PolicyDetailDayXPage />;
+}
+
+function PolicyDetailDayXPage() {
   const { id } = useParams<{ id: string }>();
   const policy = policies.find((p) => p.id === id);
   const watchItem = watchlist.find((w) => w.policyId === id);
@@ -64,14 +74,18 @@ export function PolicyDetailPage() {
       <div className="bg-surface border border-border-subtle rounded-md p-6 mb-6">
         <div className="flex items-start justify-between gap-6 mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <p className="eyebrow mb-2">Policy</p>
+            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
               <Chip label={policy.jurisdiction} variant="info" />
               <Chip label={policy.topic} variant="default" />
               <Chip label={policy.status} variant="default" />
               <Chip label={policy.impactLevel} variant={impactVariant} />
             </div>
-            <h1 className="text-[28px] leading-[36px] font-semibold font-serif text-primary mb-2">{policy.title}</h1>
-            <p className="text-base text-secondary leading-relaxed max-w-3xl">{policy.summary}</p>
+            <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+              <h1 className="page-title">{policy.title}</h1>
+              <NarrativeSpineBadge id={policy.id} />
+            </div>
+            <p className="text-[15px] text-secondary leading-relaxed max-w-3xl">{policy.summary}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
@@ -113,14 +127,16 @@ export function PolicyDetailPage() {
         <div className="col-span-8 flex flex-col gap-6">
           {/* Open actions on this policy */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles size={15} className="text-primary" />
-                <h2 className="text-[15px] font-semibold text-primary">Active follow-ups</h2>
-                <Chip
-                  label={`${linkedActions.filter(a => a.status !== 'completed').length} active`}
-                  variant={linkedActions.some(a => a.priority === 'urgent') ? 'danger' : 'default'}
-                />
+            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25 flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow mb-1.5">Actions</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[15px] font-semibold text-primary tracking-tight">Active follow-ups</h2>
+                  <Chip
+                    label={`${linkedActions.filter(a => a.status !== 'completed').length} active`}
+                    variant={linkedActions.some(a => a.priority === 'urgent') ? 'danger' : 'default'}
+                  />
+                </div>
               </div>
               <Button
                 variant="ghost"
@@ -166,10 +182,11 @@ export function PolicyDetailPage() {
           </div>
 
           {/* Timeline */}
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle">
-              <h2 className="text-[15px] font-semibold text-primary">Policy timeline</h2>
-              <p className="text-[13px] text-muted mt-0.5">Recent changes, hearings, and milestones</p>
+          <div className="bg-surface border border-border-subtle rounded-md" data-walkthrough-focus="Stakeholders + timeline">
+            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow mb-1.5">History</p>
+              <h2 className="text-[15px] font-semibold text-primary tracking-tight">Policy timeline</h2>
+              <p className="text-[12px] text-muted mt-0.5">Recent changes, hearings, and milestones</p>
             </div>
             <div className="px-5 py-2">
               {policy.timeline.map((event, idx) => (
@@ -179,10 +196,11 @@ export function PolicyDetailPage() {
           </div>
 
           {/* Stakeholder map */}
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle">
-              <h2 className="text-[15px] font-semibold text-primary">Stakeholder map</h2>
-              <p className="text-[13px] text-muted mt-0.5">Who supports, opposes, or is uncertain</p>
+          <div className="bg-surface border border-border-subtle rounded-md" data-walkthrough-focus="Stakeholders">
+            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow mb-1.5">Coalition</p>
+              <h2 className="text-[15px] font-semibold text-primary tracking-tight">Stakeholder map</h2>
+              <p className="text-[12px] text-muted mt-0.5">Who supports, opposes, or is uncertain</p>
             </div>
 
             {/* Alignment bar */}
@@ -218,10 +236,11 @@ export function PolicyDetailPage() {
 
           {/* Internal discussion / notes */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-[15px] font-semibold text-primary">Internal discussion</h2>
-                <p className="text-[13px] text-muted mt-0.5">Notes from the team</p>
+                <p className="eyebrow mb-1.5">Team</p>
+                <h2 className="text-[15px] font-semibold text-primary tracking-tight">Internal discussion</h2>
+                <p className="text-[12px] text-muted mt-0.5">Notes from the team</p>
               </div>
               <Button variant="ghost" size="sm">
                 <Plus size={13} className="mr-1" /> Note
@@ -241,11 +260,19 @@ export function PolicyDetailPage() {
 
         {/* Side */}
         <div className="col-span-4 flex flex-col gap-6">
+          {/* Phase 5: cross-surface connective tissue */}
+          {id && linksFor('policy', id).length > 0 && (
+            <div data-walkthrough-focus="Linked donors">
+              <LinkedInsightSection insights={linksFor('policy', id)} />
+            </div>
+          )}
+
           {/* Recommended action */}
-          <div className="bg-surface border border-border-subtle rounded-md overflow-hidden">
-            <div className="px-5 py-4 bg-accent-soft/40 border-b border-border-subtle flex items-center gap-2">
-              <Sparkles size={15} className="text-primary" />
-              <h3 className="text-[14px] font-semibold text-primary">Recommended action</h3>
+          <div className="relative bg-surface border border-border-subtle rounded-md overflow-hidden" data-walkthrough-focus="Recommended action">
+            <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />
+            <div className="px-5 py-3.5 bg-accent-soft/35 border-b border-border-subtle flex items-center gap-2">
+              <Sparkles size={13} className="text-primary" />
+              <p className="eyebrow-plain">Recommended action</p>
             </div>
             <div className="p-5">
               <p className="text-sm text-primary leading-relaxed mb-4">{policy.recommendedAction}</p>
@@ -267,8 +294,8 @@ export function PolicyDetailPage() {
 
           {/* Impact panel */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle">
-              <h3 className="text-[14px] font-semibold text-primary">Impact assessment</h3>
+            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow-plain">Impact assessment</p>
             </div>
             <div className="p-5 flex flex-col gap-4">
               <ImpactRow label="Opportunity / risk" value={policy.impactLevel} variant={impactVariant} />
@@ -281,9 +308,9 @@ export function PolicyDetailPage() {
           {/* Watchlist info */}
           {watchItem && (
             <div className="bg-surface border border-border-subtle rounded-md">
-              <div className="px-5 py-3 border-b border-border-subtle flex items-center gap-2">
-                <Bell size={14} className="text-accent" />
-                <h3 className="text-[14px] font-semibold text-primary">On watchlist</h3>
+              <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25 flex items-center gap-1.5">
+                <Bell size={11} className="text-accent-hover" />
+                <p className="eyebrow-plain">On watchlist</p>
               </div>
               <div className="p-5 flex flex-col gap-3">
                 <div className="text-[12px] text-muted">
@@ -304,9 +331,9 @@ export function PolicyDetailPage() {
           {/* Member watchlists */}
           {memberWatchlists.length > 0 && (
             <div className="bg-surface border border-border-subtle rounded-md">
-              <div className="px-5 py-3 border-b border-border-subtle flex items-center gap-2">
-                <Folder size={14} className="text-secondary" />
-                <h3 className="text-[14px] font-semibold text-primary">Member of watchlists</h3>
+              <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25 flex items-center gap-1.5">
+                <Folder size={11} className="text-muted" />
+                <p className="eyebrow-plain">Member of watchlists</p>
               </div>
               <div className="p-5 flex flex-col gap-3">
                 {memberWatchlists.map((wl) => (
@@ -324,8 +351,8 @@ export function PolicyDetailPage() {
 
           {/* Teams */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle">
-              <h3 className="text-[14px] font-semibold text-primary">Teams to notify</h3>
+            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow-plain">Teams to notify</p>
             </div>
             <div className="p-5 flex flex-wrap gap-2">
               {policy.teams.map((team) => (
@@ -363,10 +390,10 @@ export function PolicyDetailPage() {
 function DetailItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div>
-      <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
-        {icon} {label}
+      <p className="eyebrow-plain mb-1.5 flex items-center gap-1.5">
+        <span className="text-muted">{icon}</span> {label}
       </p>
-      <p className="text-sm text-primary">{value}</p>
+      <p className="text-[13px] text-primary">{value}</p>
     </div>
   );
 }
@@ -374,8 +401,8 @@ function DetailItem({ icon, label, value }: { icon: React.ReactNode; label: stri
 function ImpactRow({ label, value, variant }: { label: string; value: string; variant?: any }) {
   return (
     <div>
-      <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-1">{label}</p>
-      {variant ? <Chip label={value} variant={variant} /> : <p className="text-sm text-primary">{value}</p>}
+      <p className="eyebrow-plain mb-1.5">{label}</p>
+      {variant ? <Chip label={value} variant={variant} /> : <p className="text-[13px] text-primary">{value}</p>}
     </div>
   );
 }

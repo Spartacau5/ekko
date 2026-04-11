@@ -5,6 +5,8 @@ import { HelpCircle, Settings, BookOpen, MessageCircle, Sparkles } from 'lucide-
 import { useTour } from '../../lib/TourContext';
 import { motionDurations, motionEasings } from '../../lib/motion';
 import { RoleSwitcher } from './RoleSwitcher';
+import { MaturityStateSwitcher } from './MaturityStateSwitcher';
+import { WalkthroughLauncher } from './WalkthroughLauncher';
 import { useRole } from '../../lib/RoleContext';
 import { Avatar } from '../ui/Avatar';
 
@@ -58,32 +60,57 @@ export function TopNav() {
   };
 
   return (
-    <header className="h-14 bg-surface border-b border-border-subtle flex items-center px-6 sticky top-0 z-40">
-      <Link to="/dashboard" className="flex items-center gap-2 mr-10 no-underline">
-        <div className="w-7 h-7 bg-accent rounded-sm flex items-center justify-center">
-          <span className="text-[15px] font-bold text-primary leading-none">E</span>
+    <header className="h-14 bg-surface border-b border-border-subtle flex items-center px-8 sticky top-0 z-40">
+      <Link
+        to="/dashboard"
+        className="flex items-center gap-2.5 mr-12 no-underline group"
+        aria-label="Ekko — go to dashboard"
+      >
+        {/* Logo mark: serifed 'E' inside a yellow square, paired with the
+            serif wordmark. The punctuation dot on the right is Ekko's quiet
+            brand motif — a printed, editorial signal that visually rhymes
+            with the eyebrow rule used throughout the product. */}
+        <div className="w-[26px] h-[26px] bg-accent border border-border-default rounded-sm flex items-center justify-center shadow-[0_1px_0_rgba(17,17,17,0.06)]">
+          <span className="font-serif text-[15px] font-semibold text-primary leading-none -mt-[1px]">E</span>
         </div>
-        <span className="text-[18px] font-semibold font-serif text-primary tracking-tight">Ekko</span>
+        <span className="text-[19px] font-semibold font-serif text-primary tracking-tight leading-none">
+          Ekko<span className="text-accent">.</span>
+        </span>
       </Link>
 
-      <nav className="flex items-center gap-1 flex-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`px-3 py-1.5 text-sm font-medium rounded-sm no-underline
-              transition-colors duration-150 ease-out
-              ${isActive(item.path)
-                ? 'text-primary bg-surface-muted'
-                : 'text-secondary hover:text-primary hover:bg-surface-muted/50'
-              }`}
-          >
-            {item.label}
-          </Link>
-        ))}
+      <nav className="flex items-center gap-0.5 flex-1">
+        {navItems.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`relative px-3 py-1.5 text-[13px] font-medium rounded-sm no-underline
+                transition-colors duration-150 ease-out
+                ${active
+                  ? 'text-primary'
+                  : 'text-secondary hover:text-primary'
+                }`}
+            >
+              {item.label}
+              {/* Active-state rule — a 2px yellow bar under the active item,
+                  echoing the eyebrow motif. Subtle, printed, ownable. */}
+              {active && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-3 right-3 -bottom-[17px] h-[2px] bg-accent"
+                />
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="flex items-center gap-2">
+        <WalkthroughLauncher />
+        <div className="w-px h-5 bg-border-subtle mx-1" />
+        <MaturityStateSwitcher />
+        <div className="w-px h-5 bg-border-subtle mx-1" />
         <RoleSwitcher />
         <div className="w-px h-5 bg-border-subtle mx-1" />
         <div className="relative" ref={helpRef}>

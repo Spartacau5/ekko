@@ -1,6 +1,12 @@
+// Phase 6: refined KPI card.
+// Tighter typographic rhythm — eyebrow label, large tabular number, trend
+// sparkline, delta line. Sparklines are now neutral so the value reads first.
+// The card has a 1px border and no shadow, matching the overall printed,
+// editorial surface treatment used across the product.
+
 import React from 'react';
 import { Sparkline } from './Sparkline';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface KPIProps {
   label: string;
@@ -12,27 +18,42 @@ interface KPIProps {
 }
 
 export function KPI({ label, value, delta, deltaLabel, trend, className = '' }: KPIProps) {
-  const isPositive = delta !== undefined && delta >= 0;
+  const hasDelta = delta !== undefined && !Number.isNaN(delta);
+  const isPositive = hasDelta && (delta as number) > 0;
+  const isNegative = hasDelta && (delta as number) < 0;
+
+  const deltaColor = isPositive
+    ? 'text-success'
+    : isNegative
+      ? 'text-danger'
+      : 'text-muted';
+
+  const DeltaIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;
+
   return (
     <div className={`bg-surface border border-border-subtle rounded-md p-5 ${className}`}>
-      <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-2">{label}</p>
-      <div className="flex items-end justify-between gap-3 mb-2">
-        <p className="text-[32px] leading-[36px] font-semibold text-primary">{value}</p>
-        {trend && <Sparkline data={trend} width={88} height={28} />}
+      <p className="eyebrow-plain mb-3">{label}</p>
+      <div className="flex items-end justify-between gap-3 mb-2.5">
+        <p className="metric-display">{value}</p>
+        {trend && (
+          <div className="pb-1">
+            <Sparkline data={trend} width={84} height={26} />
+          </div>
+        )}
       </div>
-      {delta !== undefined && (
-        <div className="flex items-center gap-1.5">
-          {isPositive ? (
-            <TrendingUp size={13} className="text-success" />
-          ) : (
-            <TrendingDown size={13} className="text-danger" />
-          )}
-          <span className={`text-[13px] font-medium ${isPositive ? 'text-success' : 'text-danger'}`}>
-            {isPositive ? '+' : ''}{delta.toFixed(1)}%
+      {hasDelta ? (
+        <div className="flex items-center gap-1.5 pt-2 border-t border-border-subtle">
+          <DeltaIcon size={13} className={deltaColor} />
+          <span className={`text-[13px] font-medium tabular-nums ${deltaColor}`}>
+            {isPositive ? '+' : ''}{(delta as number).toFixed(1)}%
           </span>
           {deltaLabel && <span className="text-[13px] text-muted">{deltaLabel}</span>}
         </div>
-      )}
+      ) : deltaLabel ? (
+        <div className="pt-2 border-t border-border-subtle">
+          <span className="text-[13px] text-muted">{deltaLabel}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

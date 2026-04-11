@@ -8,14 +8,24 @@ import { isPeerTracked, savedCampaigns } from '../data/workspace';
 import {
   Button, Chip, KPI, BarComparison, useToast,
   TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview,
+  LinkedInsightSection, NarrativeSpineBadge,
 } from '../components/ui';
+import { linksFor } from '../data/demoFlows';
 import { useRole } from '../lib/RoleContext';
+import { useMaturity } from '../lib/MaturityContext';
+import { PeerDetailDay0Page } from './day0/PeerDetailDay0Page';
 import {
   ArrowLeft, Building, MapPin, Users, ExternalLink, Lock, Star, CheckCircle2,
   DollarSign, ArrowUpRight, Plus, Bookmark,
 } from 'lucide-react';
 
 export function PeerDetailPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <PeerDetailDay0Page />;
+  return <PeerDetailDayXPage />;
+}
+
+function PeerDetailDayXPage() {
   const { id } = useParams<{ id: string }>();
   const peer = peerOrgs.find(p => p.id === id);
   const peerCamps = peerCampaigns.filter(c => c.orgId === id);
@@ -85,9 +95,13 @@ export function PeerDetailPage() {
               <Building size={24} className="text-secondary" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-[28px] leading-[36px] font-semibold font-serif text-primary">{peer.name}</h1>
-              <p className="text-sm text-secondary mt-1">{peer.missionArea}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <p className="eyebrow mb-2">Peer organization</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="page-title">{peer.name}</h1>
+                <NarrativeSpineBadge id={peer.id} />
+              </div>
+              <p className="text-[13px] text-secondary mt-1">{peer.missionArea}</p>
+              <div className="flex items-center gap-1.5 mt-2.5">
                 <Chip label={peer.optInStatus} variant={optInVariant[peer.optInStatus]} />
                 <Chip label={peer.orgSize.split(' (')[0]} variant="default" />
               </div>
@@ -136,13 +150,16 @@ export function PeerDetailPage() {
           {/* Linked actions */}
           {linkedActions.length > 0 && (
             <div className="bg-surface border border-border-subtle rounded-md">
-              <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-[15px] font-semibold text-primary">Active follow-ups</h2>
-                  <Chip
-                    label={`${linkedActions.filter((a) => a.status !== 'completed').length} active`}
-                    variant="default"
-                  />
+              <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25 flex items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow mb-1.5">Actions</p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[15px] font-semibold text-primary tracking-tight">Active follow-ups</h2>
+                    <Chip
+                      label={`${linkedActions.filter((a) => a.status !== 'completed').length} active`}
+                      variant="default"
+                    />
+                  </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setComposerOpen(true)} disabled={!canAssign}>
                   <Plus size={13} className="mr-1" /> New
@@ -190,10 +207,11 @@ export function PeerDetailPage() {
           </div>
 
           {/* Side-by-side comparison */}
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle">
-              <h2 className="text-[15px] font-semibold text-primary">You vs. {peer.name.split(' ')[0]}</h2>
-              <p className="text-[13px] text-muted mt-0.5">Anonymized benchmark comparison</p>
+          <div className="bg-surface border border-border-subtle rounded-md" data-walkthrough-focus="Benchmark vs sector">
+            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow mb-1.5">Benchmark</p>
+              <h2 className="text-[15px] font-semibold text-primary tracking-tight">You vs. {peer.name.split(' ')[0]}</h2>
+              <p className="text-[12px] text-muted mt-0.5">Anonymized comparison across shared metrics</p>
             </div>
             <div className="p-5 flex flex-col gap-5">
               {benchmarks.map(b => (
@@ -210,18 +228,19 @@ export function PeerDetailPage() {
           </div>
 
           {/* Their recent campaigns */}
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+          <div className="bg-surface border border-border-subtle rounded-md" data-walkthrough-focus="Saved campaigns">
+            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-[15px] font-semibold text-primary">Recent campaigns</h2>
-                <p className="text-[13px] text-muted mt-0.5">
+                <p className="eyebrow mb-1.5">Campaign intelligence</p>
+                <h2 className="text-[15px] font-semibold text-primary tracking-tight">Recent campaigns</h2>
+                <p className="text-[12px] text-muted mt-0.5">
                   {peerCamps.length > 0
                     ? `${peerCamps.length} shared by this org`
                     : 'No campaign data shared'}
                 </p>
               </div>
-              <Link to="/peers/campaigns" className="text-[13px] text-secondary hover:text-primary underline">
-                Full library
+              <Link to="/peers/campaigns" className="text-[12px] text-secondary hover:text-primary no-underline border-b border-transparent hover:border-primary/40 pb-px whitespace-nowrap">
+                Full library →
               </Link>
             </div>
             <div className="divide-y divide-border-subtle">
@@ -270,10 +289,17 @@ export function PeerDetailPage() {
 
         {/* Side */}
         <div className="col-span-4 flex flex-col gap-6">
+          {/* Phase 5: cross-surface connective tissue */}
+          {id && linksFor('peer', id).length > 0 && (
+            <div data-walkthrough-focus="Linked donors">
+              <LinkedInsightSection insights={linksFor('peer', id)} />
+            </div>
+          )}
+
           {/* Why they're a peer */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle">
-              <h3 className="text-[14px] font-semibold text-primary">Why they're a peer</h3>
+            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow-plain">Why they&rsquo;re a peer</p>
             </div>
             <div className="p-5 flex flex-col gap-2.5">
               <PeerReason label="Similar mission area" />
@@ -285,9 +311,9 @@ export function PeerDetailPage() {
 
           {/* Data sharing */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle flex items-center gap-2">
-              <Lock size={14} className="text-secondary" />
-              <h3 className="text-[14px] font-semibold text-primary">Data sharing</h3>
+            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25 flex items-center gap-1.5">
+              <Lock size={11} className="text-muted" />
+              <p className="eyebrow-plain">Data sharing</p>
             </div>
             <div className="p-5">
               <Chip label={peer.optInStatus} variant={optInVariant[peer.optInStatus]} />
@@ -303,8 +329,8 @@ export function PeerDetailPage() {
 
           {/* Activity */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle">
-              <h3 className="text-[14px] font-semibold text-primary">Recent activity</h3>
+            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
+              <p className="eyebrow-plain">Recent activity</p>
             </div>
             <div className="divide-y divide-border-subtle">
               {peerCamps.slice(0, 2).map(c => (
@@ -325,8 +351,8 @@ export function PeerDetailPage() {
           {/* Internal notes */}
           {peerNotes.length > 0 && (
             <div className="bg-surface border border-border-subtle rounded-md">
-              <div className="px-5 py-3 border-b border-border-subtle">
-                <h3 className="text-[14px] font-semibold text-primary">Team notes</h3>
+              <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
+                <p className="eyebrow-plain">Team notes</p>
               </div>
               <div className="px-5 divide-y divide-border-subtle">
                 {peerNotes.map((n) => <InternalNotePreview key={n.id} note={n} />)}
@@ -363,8 +389,8 @@ export function PeerDetailPage() {
 function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div>
-      <p className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
-        {icon}
+      <p className="eyebrow-plain mb-1.5 flex items-center gap-1.5">
+        <span className="text-muted">{icon}</span>
         {label}
       </p>
       <p className="text-[13px] text-primary">{value}</p>

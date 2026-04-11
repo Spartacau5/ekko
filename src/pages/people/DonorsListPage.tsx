@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { donors, Donor } from '../../data/donors';
+import { useMaturity } from '../../lib/MaturityContext';
+import { DonorsListDay0Page } from '../day0/DonorsListDay0Page';
 import { savedViews } from '../../data/savedViews';
 import {
   Button, Chip, SearchBar, Modal, Checkbox, SavedViewsBar, Pagination, EmptyState, useToast,
-  SaveViewModal,
+  SaveViewModal, NarrativeSpineBadge,
 } from '../../components/ui';
 import {
   Filter, ArrowUpRight, ArrowUp, ArrowDown, ChevronsUpDown, Mail, Download, Tag, Users as UsersIcon,
@@ -22,6 +24,12 @@ type SortField = 'name' | 'lifetimeGiving' | 'lastGift' | 'risk' | 'stage';
 type SortDir = 'asc' | 'desc';
 
 export function DonorsListPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <DonorsListDay0Page />;
+  return <DonorsListDayXPage />;
+}
+
+function DonorsListDayXPage() {
   const [search, setSearch] = useState('');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string[]>>({
@@ -237,21 +245,21 @@ export function DonorsListPage() {
 
       {/* Donors table */}
       <div className="bg-surface border border-border-subtle rounded-md overflow-hidden">
-        <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-border-subtle bg-surface-muted/40 items-center">
+        <div className="grid grid-cols-12 gap-4 px-5 py-2.5 border-b border-border-default bg-surface-muted/40 items-center">
           <div className="col-span-1 flex items-center">
             <button
               onClick={togglePageSelection}
-              className={`w-[18px] h-[18px] rounded-sm border flex items-center justify-center
+              className={`w-[16px] h-[16px] rounded-sm border flex items-center justify-center
                 ${allOnPageSelected ? 'bg-accent border-border-default' : 'bg-surface border-border-subtle'}`}
             >
-              {allOnPageSelected && <span className="text-[11px] font-bold text-primary leading-none">✓</span>}
+              {allOnPageSelected && <span className="text-[10px] font-bold text-primary leading-none">✓</span>}
             </button>
           </div>
           <SortHeader label="Donor" field="name" sortField={sortField} sortDir={sortDir} onSort={handleSort} className="col-span-3" />
           <SortHeader label="Lifetime" field="lifetimeGiving" sortField={sortField} sortDir={sortDir} onSort={handleSort} className="col-span-2" />
           <SortHeader label="Stage" field="stage" sortField={sortField} sortDir={sortDir} onSort={handleSort} className="col-span-2" />
           <SortHeader label="Risk" field="risk" sortField={sortField} sortDir={sortDir} onSort={handleSort} className="col-span-1" />
-          <div className="col-span-2 text-[12px] font-medium text-muted uppercase tracking-wider">Owner</div>
+          <div className="col-span-2"><p className="eyebrow-plain">Owner</p></div>
           <div className="col-span-1"></div>
         </div>
 
@@ -349,13 +357,13 @@ function SortHeader({ label, field, sortField, sortDir, onSort, className }: {
   return (
     <button
       onClick={() => onSort(field)}
-      className={`${className} text-[12px] font-medium text-muted uppercase tracking-wider flex items-center gap-1 hover:text-primary transition-colors`}
+      className={`${className} inline-flex items-center gap-1 hover:text-primary transition-colors`}
     >
-      {label}
+      <span className={`eyebrow-plain ${isActive ? 'text-primary' : ''}`}>{label}</span>
       {isActive ? (
-        sortDir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />
+        sortDir === 'asc' ? <ArrowUp size={10} className="text-primary" /> : <ArrowDown size={10} className="text-primary" />
       ) : (
-        <ChevronsUpDown size={11} className="opacity-40" />
+        <ChevronsUpDown size={10} className="opacity-40" />
       )}
     </button>
   );
@@ -396,14 +404,17 @@ function DonorRow({ donor, selected, onToggleSelect }: { donor: Donor; selected:
         </button>
       </div>
       <Link to={`/people/donors/${donor.id}`} className="col-span-3 no-underline">
-        <p className="text-sm font-medium text-primary">{donor.name}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-medium text-primary truncate">{donor.name}</p>
+          <NarrativeSpineBadge id={donor.id} compact />
+        </div>
         <p className="text-[13px] text-muted truncate">{donor.persona}</p>
       </Link>
       <Link to={`/people/donors/${donor.id}`} className="col-span-2 no-underline">
-        <p className="text-sm text-primary font-medium">
+        <p className="text-[13px] text-primary font-semibold tabular-nums tracking-tight">
           {donor.lifetimeGiving ? `$${donor.lifetimeGiving.toLocaleString()}` : '\u2014'}
         </p>
-        <p className="text-[12px] text-muted">
+        <p className="text-[11px] text-muted tabular-nums">
           Last: {typeof donor.lastGift === 'number' ? `$${donor.lastGift.toLocaleString()}` : donor.lastGift || '\u2014'}
         </p>
       </Link>

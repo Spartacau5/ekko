@@ -1,3 +1,8 @@
+// Phase 6 (second pass): refined Tabs.
+// Tighter labels, uppercase count chips, and a thicker accent underline that
+// echoes the TopNav active-state motif. The indicator animates between tabs
+// via framer-motion's layoutId.
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { motionDurations, motionEasings } from '../../lib/motion';
@@ -26,19 +31,28 @@ export function Tabs({ tabs, activeTab, onChange, layoutId = 'tabs-indicator' }:
             role="tab"
             aria-selected={active}
             onClick={() => onChange(tab.id)}
-            className={`px-4 py-2.5 text-sm font-medium relative cursor-pointer
+            className={`px-4 py-2.5 text-[13px] font-semibold relative cursor-pointer tracking-tight
               transition-colors duration-150 ease-out
               focus-visible:outline-none focus-visible:bg-surface-muted/40
               ${active ? 'text-primary' : 'text-muted hover:text-secondary'}`}
           >
-            {tab.label}
-            {tab.count !== undefined && (
-              <span className="ml-1.5 text-[12px] text-muted">{tab.count}</span>
-            )}
+            <span className="inline-flex items-center gap-1.5">
+              {tab.label}
+              {tab.count !== undefined && (
+                <span
+                  className={`tabular-nums text-[10px] font-semibold px-1.5 py-0.5 rounded-sm border
+                    ${active
+                      ? 'bg-accent-soft text-primary border-accent/40'
+                      : 'bg-surface-muted/70 text-muted border-border-subtle'}`}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </span>
             {active && (
               <motion.div
                 layoutId={layoutId}
-                className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent"
+                className="absolute -bottom-[1px] left-3 right-3 h-[2px] bg-accent"
                 transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
               />
             )}

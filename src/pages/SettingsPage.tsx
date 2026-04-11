@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useMaturity } from '../lib/MaturityContext';
+import { SettingsDay0Page } from './day0/SettingsDay0Page';
 import { organization } from '../data/organization';
 import { teamMembers, roleMeta, Role } from '../data/team';
 import { notificationPrefs } from '../data/workspace';
@@ -18,6 +20,12 @@ const settingsTabs = [
 ];
 
 export function SettingsPage() {
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <SettingsDay0Page />;
+  return <SettingsDayXPage />;
+}
+
+function SettingsDayXPage() {
   const [activeTab, setActiveTab] = useState('organization');
 
   return (
@@ -46,13 +54,14 @@ export function SettingsPage() {
 // Shared scaffolding
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SettingCard({ title, description, children, action }: { title: string; description?: string; children: React.ReactNode; action?: React.ReactNode }) {
+function SettingCard({ eyebrow, title, description, children, action }: { eyebrow?: string; title: string; description?: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="bg-surface border border-border-subtle rounded-md mb-4">
-      <div className="px-6 py-4 border-b border-border-subtle flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-[15px] font-semibold text-primary">{title}</h3>
-          {description && <p className="text-[13px] text-muted mt-0.5">{description}</p>}
+      <div className="px-6 py-4 border-b border-border-subtle bg-surface-muted/25 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          {eyebrow && <p className="eyebrow mb-1.5">{eyebrow}</p>}
+          <h3 className="text-[15px] font-semibold text-primary tracking-tight">{title}</h3>
+          {description && <p className="text-[12px] text-muted mt-0.5">{description}</p>}
         </div>
         {action}
       </div>
@@ -64,8 +73,8 @@ function SettingCard({ title, description, children, action }: { title: string; 
 function FieldRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="grid grid-cols-3 gap-4 py-3 border-b border-border-subtle last:border-0">
-      <span className="text-[13px] font-medium text-muted">{label}</span>
-      <div className="col-span-2 text-sm text-primary">{value}</div>
+      <span className="eyebrow-plain mt-0.5">{label}</span>
+      <div className="col-span-2 text-[13px] text-primary">{value}</div>
     </div>
   );
 }
