@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useMaturity } from '../lib/MaturityContext';
+import { useWatchlist } from '../lib/WatchlistContext';
 import { PolicyDay0Page } from './day0/PolicyDay0Page';
 import { policies, Policy } from '../data/policies';
 import { policyTopics, watchlist } from '../data/watchlist';
@@ -31,9 +32,7 @@ function PolicyDayXPage() {
   const [search, setSearch] = useState('');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [view, setView] = useState('list');
-  const [watchedIds, setWatchedIds] = useState<Set<string>>(
-    new Set(watchlist.map(w => w.policyId))
-  );
+  const { watchedIds, toggleWatched } = useWatchlist();
   const toast = useToast();
   const [filters, setFilters] = useState<Record<string, string[]>>({
     jurisdiction: [],
@@ -53,21 +52,15 @@ function PolicyDayXPage() {
 
   const toggleWatch = (id: string) => {
     const policy = policies.find(p => p.id === id);
-    setWatchedIds(prev => {
-      const next = new Set(prev);
-      const wasWatching = next.has(id);
-      if (wasWatching) next.delete(id);
-      else next.add(id);
-      // Toast feedback
-      if (policy) {
-        toast.show({
-          type: wasWatching ? 'info' : 'success',
-          title: wasWatching ? 'Removed from watchlist' : 'Added to watchlist',
-          description: policy.title,
-        });
-      }
-      return next;
-    });
+    const wasWatching = watchedIds.has(id);
+    toggleWatched(id);
+    if (policy) {
+      toast.show({
+        type: wasWatching ? 'info' : 'success',
+        title: wasWatching ? 'Removed from watchlist' : 'Added to watchlist',
+        description: policy.title,
+      });
+    }
   };
 
   const filtered = useMemo(() => {

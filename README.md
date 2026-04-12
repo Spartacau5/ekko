@@ -202,16 +202,26 @@ A complete Figma design system was built in parallel using the Figma MCP server.
 
 **File:** [Ekko-MVP on Figma](https://www.figma.com/design/i1TGASxRLzCopGTdquPitA)
 
-The Figma file contains three pages:
+The Figma file contains four pages:
 
 ### 01 — Design Tokens
-Color variables (bg / text / border / accent / success / warning / danger / info) bound to a single Ekko / Colors collection, plus text styles (Display 1/2, Heading 1/2, Body, Body small, Label, Stat) and a type specimen.
+Color variables (bg / text / border / accent / success / warning / danger / info) bound to a single Ekko / Colors collection, plus text styles (Display 1/2, Heading 1/2, Body, Body small, Label, Stat) and a type specimen. Phase 3-6 added an editorial type primitives section: Display title, Page title, Section title, Metric display, Body small, Editorial rule — each rendered as a labelled specimen with the eyebrow accent bar.
 
 ### 02 — Components
-Real Figma components, instanced across every screen. Phase 1 includes Buttons, Chips, TextInput, SelectInput, Checkbox, Toggle, Tab, Avatar, IconButton, StatCard, StepperItem, IntegrationCard, ProgressBar, Banner, DonorCard, PolicyCard, PeerOrgCard. Phase 2 added KPI Card, SubNavItem (active/inactive), SavedViewsBar, WatchlistToggle (watching/not), SegmentedControl, SortableHeader (asc/desc/inactive), TaskRow, ActivityRow, PolicyAlertRow, StakeholderAlignment bar, BarComparison, CampaignCard, MetaItem, GlanceRow.
+Real Figma components, instanced across every screen. Phase 1 brought Buttons, Chips, TextInput, SelectInput, Checkbox, Toggle, Tab, Avatar, IconButton, StatCard, StepperItem, IntegrationCard, ProgressBar, Banner, DonorCard, PolicyCard, PeerOrgCard. Phase 2 added KPI Card, SubNavItem, SavedViewsBar, WatchlistToggle, SegmentedControl, SortableHeader, TaskRow, ActivityRow, PolicyAlertRow, StakeholderAlignment, BarComparison, CampaignCard, MetaItem, GlanceRow.
+
+Phase 3-6 added 52 more components, organized in three batches below the Phase 1-2 grid:
+
+- **Phase 3 polish (18):** Toast (success / info / danger), Modal, Pagination, EmptyState, LoadingSkeleton, SearchBar, StatusBadge (active / at-risk / stalled / draft), PageHeader, SectionHeader, CardHeader, Drawer, SubNav, Tabs.
+- **Phase 4 governance (13):** RoleSwitcher, ActionDrawer, ScopeBadge (private / team / shared), AssignOwnerControl, PermissionMatrix, TaskCard, DueDateBadge (soon / today / overdue), FollowUpComposer, InternalNotePreview.
+- **Phase 4.5 maturity (13):** MaturityStateSwitcher, MatureInsightsPanel, MaturityComparisonStrip, EducationalEmptyState, DataMissingCallout, SetupProgressCard, TrackedTopicsSetupCard, ConnectionPromptCard, UnlockCTA, ValuePreviewCard, BenchmarkPreviewCard, LinkedInsightCard, PinnedModuleCard.
+- **Phase 6 walkthrough + charts (8):** WalkthroughLauncher, WalkthroughStrip, DemoPathCard, BarChart, DonutChart, Sparkline, KPI, SaveViewModal.
 
 ### 03 — Screens
-All 21 desktop screens at 1440px width. Phase 1 brought the original 13 (Onboarding × 6, Dashboard, People list, Donor detail, Policy list, Policy detail, Peers, Settings). Phase 2 added 5 new screens (Groups list, Group detail, Accounts list, Account detail, Policy watchlist, Peer detail, Campaign library) and replaced Dashboard, Donors list, Donor detail, Policy list, and Policy detail in place with their polished versions.
+Hero mature screens at 1440px with the new TopNav (RoleSwitcher, MaturityStateSwitcher, WalkthroughLauncher) and Phase 4 governance hooks: Dashboard (mature with mature insights panel + today's actions + policy alerts), People > Donors List (with scoped saved views + filter chips), Donor Detail with ActionDrawer overlay open, HR 4521 Policy Detail (with stakeholder alignment, regional bar comparison, AI summary, linked donors), Settings > Permissions (PermissionMatrix + default visibility scope).
+
+### 04 — Phase 4.5 & 6
+Maturity states and the demo walkthrough overlay: Dashboard Day 0 (empty workspace, 4-step setup hero, 3 educational empty-state cards), Dashboard Setup (50% complete, live KPIs alongside locked preview cards), Dashboard with Walkthrough Strip overlay (Phase 6 — focus pulse on the at-risk KPI mid-walkthrough).
 
 ---
 

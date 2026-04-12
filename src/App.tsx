@@ -7,6 +7,9 @@ import { TourProvider } from './lib/TourContext';
 import { RoleProvider } from './lib/RoleContext';
 import { MaturityProvider, useMaturity } from './lib/MaturityContext';
 import { DemoFlowProvider } from './lib/DemoFlowContext';
+import { ActionProvider } from './lib/ActionContext';
+import { RecentProvider } from './lib/RecentContext';
+import { WatchlistProvider } from './lib/WatchlistContext';
 import { WalkthroughStrip } from './components/layout/WalkthroughStrip';
 import { motionDurations, motionEasings } from './lib/motion';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -97,6 +100,9 @@ function App() {
       <ToastProvider>
        <MaturityProvider>
        <RoleProvider>
+        <ActionProvider>
+        <WatchlistProvider>
+        <RecentProvider>
         <DemoFlowProvider>
         <TourProvider>
           <ScrollToTop />
@@ -137,6 +143,9 @@ function App() {
           </Routes>
         </TourProvider>
         </DemoFlowProvider>
+        </RecentProvider>
+        </WatchlistProvider>
+        </ActionProvider>
        </RoleProvider>
        </MaturityProvider>
       </ToastProvider>

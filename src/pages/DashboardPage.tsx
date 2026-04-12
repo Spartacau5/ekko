@@ -8,9 +8,11 @@ import { policies } from '../data/policies';
 import { benchmarkData } from '../data/peers';
 import { peerCampaigns } from '../data/campaigns';
 import { kpiMetrics, recentActivity, fundraisingTrend } from '../data/dashboardMetrics';
-import { ActionItem, ActionStatus, actions as allActions } from '../data/actions';
+import { ActionItem, ActionStatus } from '../data/actions';
+import { useActions } from '../lib/ActionContext';
+import { useRecent } from '../lib/RecentContext';
 import { policyAlerts, watchlist } from '../data/watchlist';
-import { pinsForRole, trackedPeers, watchlistGroups } from '../data/workspace';
+import { pinsForRole, trackedPeers, watchlistGroups, savedCampaigns } from '../data/workspace';
 import { roleMeta, Role } from '../data/team';
 import { useRole } from '../lib/RoleContext';
 import { useMaturity } from '../lib/MaturityContext';
@@ -88,7 +90,7 @@ const roleModules: Record<Role, ModuleConfig> = {
 };
 
 // "Today" is static for the prototype so demo numbers stay stable.
-const TODAY = new Date('2026-04-10');
+const TODAY = new Date('2026-04-12');
 const daysUntil = (iso: string) => {
   const d = new Date(iso);
   return Math.round((d.getTime() - TODAY.getTime()) / (1000 * 60 * 60 * 24));
@@ -114,13 +116,10 @@ function DashboardDayXPage() {
   const { activeRole, activeMember } = useRole();
   const { setActiveMaturity } = useMaturity();
   const toast = useToast();
+  const { actions: actionState, updateStatus, updateOwner } = useActions();
+  const { recent } = useRecent();
   const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // Local action state — actions live in module data, but the dashboard
-  // owns the live copy so status / owner edits propagate back to the list,
-  // task counts, and the drawer in the same render.
-  const [actionState, setActionState] = useState<ActionItem[]>(() => allActions.slice());
 
   useEffect(() => {
     if (searchParams.get('tour') === 'true') {
@@ -190,13 +189,18 @@ function DashboardDayXPage() {
     const daysToCompliance = complianceDeadline ? daysUntil('2026-05-15') : 0;
 
     switch (activeRole) {
-      case 'fundraising':
+      case 'fundraising': {
+        const foundationCount = donors.filter((d) => d.donorType === 'Foundation contact').length;
+        const recentGifts = donors
+          .flatMap((d) => d.timeline.filter((e) => e.type === 'gift' && e.date >= '2026-04-05'))
+          .length;
         return [
           { label: 'Donors at risk', value: donorsAtRisk.toString(), accent: donorsAtRisk > 0 ? 'danger' : undefined, link: '/people/donors' },
           { label: 'Open follow-ups', value: fundraisingActions.toString(), sublabel: 'with donors', accent: 'warning' },
-          { label: 'Foundation pipeline', value: '12', sublabel: 'in stewardship', link: '/people/donors' },
-          { label: 'Gifts received', value: '$12.4K', sublabel: 'last 7 days', accent: 'success' },
+          { label: 'Foundation pipeline', value: foundationCount.toString(), sublabel: 'in stewardship', link: '/people/donors' },
+          { label: 'Gifts this week', value: recentGifts.toString(), sublabel: 'since Apr 5', accent: 'success' },
         ];
+      }
       case 'policy':
         return [
           { label: 'Watchlist alerts', value: unreadAlerts.toString(), sublabel: 'unread', accent: unreadAlerts > 0 ? 'warning' : undefined, link: '/policy/watchlist' },
@@ -219,13 +223,17 @@ function DashboardDayXPage() {
           { label: 'Pending invites', value: '0', sublabel: 'team complete', accent: 'success' },
         ];
       case 'executive':
-      default:
+      default: {
+        const recentGiftCount = donors
+          .flatMap((d) => d.timeline.filter((e) => e.type === 'gift' && e.date >= '2026-04-05'))
+          .length;
         return [
           { label: 'Urgent tasks', value: urgentCount.toString(), accent: urgentCount > 0 ? 'danger' : undefined },
           { label: 'In progress', value: inProgressCount.toString(), accent: 'warning' },
           { label: 'Policy alerts', value: unreadAlerts.toString(), sublabel: 'unread', link: '/policy/watchlist' },
-          { label: 'Gifts received', value: '$12.4K', sublabel: 'last 7 days', accent: 'success' },
+          { label: 'Gifts this week', value: recentGiftCount.toString(), sublabel: 'since Apr 5', accent: 'success' },
         ];
+      }
     }
   }, [activeRole, actionState, urgentCount, inProgressCount]);
 
@@ -238,7 +246,7 @@ function DashboardDayXPage() {
   };
 
   const handleStatusChange = (id: string, next: ActionStatus) => {
-    setActionState((prev) => prev.map((a) => (a.id === id ? { ...a, status: next } : a)));
+    updateStatus(id, next);
     const action = actionState.find((a) => a.id === id);
     toast.show({
       type: next === 'completed' ? 'success' : 'info',
@@ -251,7 +259,7 @@ function DashboardDayXPage() {
   };
 
   const handleOwnerChange = (id: string, ownerId: string) => {
-    setActionState((prev) => prev.map((a) => (a.id === id ? { ...a, ownerId } : a)));
+    updateOwner(id, ownerId);
     const action = actionState.find((a) => a.id === id);
     toast.show({
       type: 'success',
@@ -283,7 +291,7 @@ function DashboardDayXPage() {
             <p className="eyebrow">Day X · Mature workspace</p>
             <span className="text-border-subtle">·</span>
             <p className="text-[12px] text-secondary">
-              Friday, April 10 · Previewing as <span className="text-primary font-medium">{roleMeta[activeRole].label}</span>
+              {TODAY.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} · Previewing as <span className="text-primary font-medium">{roleMeta[activeRole].label}</span>
             </p>
           </div>
           <h1 className="display-title">
@@ -461,6 +469,23 @@ function DashboardDayXPage() {
               <QuickLink to="/peers" label="Tracked peers" count={quickLinkCounts.tracked} icon={<Eye size={12} />} />
               <QuickLink to="/settings" label="Settings" icon={<FileText size={12} />} />
             </div>
+            {recent.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-border-subtle">
+                <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">Recently viewed</p>
+                <div className="flex flex-col gap-1">
+                  {recent.slice(0, 4).map((r) => (
+                    <Link
+                      key={`${r.type}-${r.id}`}
+                      to={r.path}
+                      className="text-[12px] text-secondary hover:text-primary no-underline truncate py-0.5 transition-colors"
+                    >
+                      <span className="text-muted mr-1.5">{r.type === 'donor' ? '●' : r.type === 'policy' ? '◆' : '▲'}</span>
+                      {r.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -579,7 +604,7 @@ function DashboardDayXPage() {
           {cfg.surfaceOrder.map((surface, idx) => {
             const isPrimary = idx === 0;
             if (surface === 'people') {
-              return <PeopleColumn key="people" priorityDonors={priorityDonors} primary={isPrimary} />;
+              return <PeopleColumn key="people" priorityDonors={priorityDonors} primary={isPrimary} actionState={actionState} />;
             }
             if (surface === 'policy') {
               return <PolicyColumn key="policy" criticalPolicies={criticalPolicies} primary={isPrimary} />;
@@ -639,7 +664,7 @@ function DashboardDayXPage() {
 // Subcomponents
 // ─────────────────────────────────────────────────────────────────────────────
 
-function PeopleColumn({ priorityDonors, primary }: { priorityDonors: any[]; primary: boolean }) {
+function PeopleColumn({ priorityDonors, primary, actionState }: { priorityDonors: any[]; primary: boolean; actionState: ActionItem[] }) {
   return (
     <section className="col-span-4" id="dashboard-people" data-walkthrough-focus="People column">
       <SectionHeading
@@ -650,29 +675,37 @@ function PeopleColumn({ priorityDonors, primary }: { priorityDonors: any[]; prim
       />
       <div className={`bg-surface rounded-md divide-y divide-border-subtle border
         ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
-        {priorityDonors.map((donor) => (
-          <Link
-            key={donor.id}
-            to={`/people/donors/${donor.id}`}
-            className="flex items-start justify-between gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-primary truncate">{donor.name}</p>
-                <NarrativeSpineBadge id={donor.id} compact />
+        {priorityDonors.map((donor) => {
+          const openActions = actionState.filter(
+            (a) => a.entity?.type === 'donor' && a.entity?.id === donor.id && a.status !== 'completed'
+          ).length;
+          return (
+            <Link
+              key={donor.id}
+              to={`/people/donors/${donor.id}`}
+              className="flex items-start justify-between gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-primary truncate">{donor.name}</p>
+                  <NarrativeSpineBadge id={donor.id} compact />
+                </div>
+                <p className="text-[13px] text-secondary truncate">{donor.persona}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Chip
+                    variant={donor.risk === 'High' ? 'danger' : donor.risk === 'Medium' ? 'warning' : 'success'}
+                    label={`${donor.risk} risk`}
+                  />
+                  <span className="text-[12px] text-muted">{donor.stage}</span>
+                  {openActions > 0 && (
+                    <span className="text-[11px] text-info font-medium">{openActions} open {openActions === 1 ? 'task' : 'tasks'}</span>
+                  )}
+                </div>
               </div>
-              <p className="text-[13px] text-secondary truncate">{donor.persona}</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <Chip
-                  variant={donor.risk === 'High' ? 'danger' : donor.risk === 'Medium' ? 'warning' : 'success'}
-                  label={`${donor.risk} risk`}
-                />
-                <span className="text-[12px] text-muted">{donor.stage}</span>
-              </div>
-            </div>
-            <ArrowUpRight size={14} className="text-muted mt-0.5 flex-shrink-0" />
-          </Link>
-        ))}
+              <ArrowUpRight size={14} className="text-muted mt-0.5 flex-shrink-0" />
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
@@ -684,27 +717,34 @@ function PolicyColumn({ criticalPolicies, primary }: { criticalPolicies: any[]; 
       <SectionHeading eyebrow="Policy" title="Policy radar" link="/policy" accent={primary} />
       <div className={`bg-surface rounded-md divide-y divide-border-subtle border
         ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
-        {criticalPolicies.map((policy) => (
-          <Link
-            key={policy.id}
-            to={`/policy/${policy.id}`}
-            className="flex items-start gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start gap-1.5">
-                <p className="text-sm font-medium text-primary line-clamp-2 flex-1">{policy.title}</p>
-                <NarrativeSpineBadge id={policy.id} compact />
+        {criticalPolicies.map((policy) => {
+          const alerts = policyAlerts.filter((a) => a.policyId === policy.id);
+          const unread = alerts.filter((a) => a.isUnread).length;
+          return (
+            <Link
+              key={policy.id}
+              to={`/policy/${policy.id}`}
+              className="flex items-start gap-3 p-4 hover:bg-surface-muted/30 transition-colors no-underline"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-1.5">
+                  <p className="text-sm font-medium text-primary line-clamp-2 flex-1">{policy.title}</p>
+                  <NarrativeSpineBadge id={policy.id} compact />
+                </div>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Chip
+                    variant={policy.impactLevel.includes('risk') ? 'danger' : 'success'}
+                    label={policy.impactLevel}
+                  />
+                  <span className="text-[12px] text-muted">{policy.jurisdiction}</span>
+                  {unread > 0 && (
+                    <span className="text-[11px] text-warning font-medium">{unread} new {unread === 1 ? 'alert' : 'alerts'}</span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 mt-1.5">
-                <Chip
-                  variant={policy.impactLevel.includes('risk') ? 'danger' : 'success'}
-                  label={policy.impactLevel}
-                />
-                <span className="text-[12px] text-muted">{policy.jurisdiction}</span>
-              </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
@@ -713,7 +753,7 @@ function PolicyColumn({ criticalPolicies, primary }: { criticalPolicies: any[]; 
 function PeersColumn({ primary }: { primary: boolean }) {
   return (
     <section className="col-span-4" id="dashboard-peers" data-walkthrough-focus="Peers column">
-      <SectionHeading eyebrow="Peers" title="Benchmarks" link="/peers" accent={primary} />
+      <SectionHeading eyebrow="Peers" title="Benchmarks" link="/peers" accent={primary} subtitle={`${trackedPeers.length} peers tracked · ${savedCampaigns.length} campaigns saved`} />
       <div className={`bg-surface rounded-md p-5 border
         ${primary ? 'border-border-default' : 'border-border-subtle'}`}>
         <BenchmarkRow
@@ -807,6 +847,12 @@ function AlertCard({ alert }: { alert: any }) {
     info: 'bg-info',
     success: 'bg-success',
   };
+  const timeAgo = alert.timestamp ? (() => {
+    const now = new Date('2026-04-12T10:00:00');
+    const d = new Date(alert.timestamp);
+    const diffH = Math.round((now.getTime() - d.getTime()) / (1000 * 60 * 60));
+    return diffH < 1 ? 'just now' : diffH < 24 ? `${diffH}h ago` : `${Math.floor(diffH / 24)}d ago`;
+  })() : null;
   return (
     <Link
       to={alert.actionLink || '#'}
@@ -821,6 +867,13 @@ function AlertCard({ alert }: { alert: any }) {
           <p className="text-sm font-medium text-primary line-clamp-1">{alert.title}</p>
         </div>
         <p className="text-[13px] text-secondary line-clamp-2 ml-6">{alert.description}</p>
+        {(alert.source || timeAgo) && (
+          <p className="text-[11px] text-muted mt-1 ml-6">
+            {alert.source && <>via {alert.source}</>}
+            {alert.source && timeAgo && <> · </>}
+            {timeAgo}
+          </p>
+        )}
       </div>
       <ArrowUpRight
         size={13}
@@ -899,7 +952,7 @@ function ActivityRow({ item }: { item: any }) {
     team: <TrendingUp size={13} />,
   };
   const date = new Date(item.timestamp);
-  const now = new Date('2026-04-10T10:00:00');
+  const now = new Date('2026-04-12T10:00:00');
   const diffH = Math.round((now.getTime() - date.getTime()) / (1000 * 60 * 60));
   const timeAgo = diffH < 1 ? 'just now' : diffH < 24 ? `${diffH}h ago` : `${Math.floor(diffH / 24)}d ago`;
 

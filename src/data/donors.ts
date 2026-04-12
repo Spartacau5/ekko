@@ -22,6 +22,7 @@ export interface Donor {
   stage: Stage;
   risk: RiskLevel;
   suggestedNextAction: string;
+  suggestedReason?: string;
   lifetimeGiving?: number;
   lastGift?: number | string;
   email: string;
@@ -42,6 +43,7 @@ export const donors: Donor[] = [
     stage: 'Growing',
     risk: 'Low',
     suggestedNextAction: 'Send tailored update on tenant protection policy wins',
+    suggestedReason: 'Maya attended the donor breakfast 6 days ago and asked about Right-to-Counsel. She sits on a Crown Heights community board — this lands directly.',
     lifetimeGiving: 18500,
     lastGift: 2500,
     email: 'maya.patel@email.com',
@@ -68,6 +70,7 @@ export const donors: Donor[] = [
     stage: 'Slipping',
     risk: 'High',
     suggestedNextAction: 'Re-engage with community impact story and simple renewal CTA',
+    suggestedReason: 'No email opens in 45 days but he was previously active (opened 2 of 3). Bronx Housing\u2019s emergency aid messaging resonates in his neighborhoods — use that hook.',
     lifetimeGiving: 4200,
     lastGift: '$50/month',
     email: 'jordan.rivera@email.com',
@@ -94,6 +97,7 @@ export const donors: Donor[] = [
     stage: 'Early',
     risk: 'Medium',
     suggestedNextAction: 'Invite to small briefing event',
+    suggestedReason: 'Downloaded the annual report last week and subscribed to the newsletter — strong warm signals. A low-pressure briefing converts her profile type well.',
     email: 'amira.hassan@email.com',
     phone: '(646) 555-0187',
     timeline: [
@@ -114,6 +118,7 @@ export const donors: Donor[] = [
     stage: 'Lapsed',
     risk: 'High',
     suggestedNextAction: 'Send concise impact snapshot with renewal ask',
+    suggestedReason: 'Lapsed 14 months but kept opening emails through Q1 2025 — soft signal he can be re-warmed. He\u2019s outcome-focused, so a single-page snapshot fits his pattern.',
     lifetimeGiving: 7800,
     lastGift: 500,
     email: 'daniel.cho@email.com',
@@ -138,6 +143,7 @@ export const donors: Donor[] = [
     stage: 'Stewardship',
     risk: 'Low',
     suggestedNextAction: 'Share peer benchmark report before renewal meeting',
+    suggestedReason: 'Priya specifically asked for benchmark context last quarter. Renewal meeting is in two weeks — the housing finance cohort data is the right frame.',
     lifetimeGiving: 75000,
     lastGift: 25000,
     email: 'priya.narang@foundation.org',
@@ -162,6 +168,7 @@ export const donors: Donor[] = [
     stage: 'Stable',
     risk: 'Low',
     suggestedNextAction: 'Thank and invite to volunteer night',
+    suggestedReason: 'Clicked yesterday\u2019s email and attended a volunteer orientation last month. He\u2019s a consistent monthly giver — volunteer night deepens that tie.',
     email: 'luis.martinez@email.com',
     phone: '(347) 555-0219',
     timeline: [
@@ -184,6 +191,7 @@ export const donors: Donor[] = [
     stage: 'Evaluation',
     risk: 'Medium',
     suggestedNextAction: 'Send partnership concept note',
+    suggestedReason: 'Helen opened the sponsorship deck and had an intro call with Marcus. CSR evaluators at this stage convert 40% of the time with a tailored concept note.',
     email: 'helen.brooks@corp.com',
     phone: '(212) 555-0788',
     timeline: [
@@ -204,6 +212,7 @@ export const donors: Donor[] = [
     stage: 'Growing',
     risk: 'Low',
     suggestedNextAction: 'Schedule one-to-one policy update',
+    suggestedReason: 'Samir just read the March policy digest and gave $10K last quarter. He\u2019s research-driven — a 1:1 policy update with Noah matches his engagement pattern.',
     lifetimeGiving: 32000,
     lastGift: 10000,
     email: 'samir.gupta@email.com',
@@ -228,6 +237,7 @@ export const donors: Donor[] = [
     stage: 'Stable',
     risk: 'Low',
     suggestedNextAction: 'Offer ambassador toolkit',
+    suggestedReason: 'Erin shared a campaign post on social — she\u2019s already advocating unprompted. Ambassador toolkit formalizes what she\u2019s doing naturally.',
     email: 'erin.wallace@email.com',
     phone: '(718) 555-0167',
     timeline: [
@@ -249,6 +259,7 @@ export const donors: Donor[] = [
     stage: 'Unqualified',
     risk: 'Medium',
     suggestedNextAction: 'Nurture with one short case study email',
+    suggestedReason: 'Omar clicked an ad and visited the donation page but didn\u2019t convert. A single case study email is the lightest next touch that keeps the thread alive.',
     email: 'omar.elsayed@email.com',
     phone: '(917) 555-0602',
     timeline: [

@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { peerOrgs } from '../data/peers';
 import { peerCampaigns } from '../data/campaigns';
-import { actionsForEntity, ActionItem } from '../data/actions';
+import { ActionItem } from '../data/actions';
+import { useActions } from '../lib/ActionContext';
 import { notesForEntity } from '../data/notes';
 import { isPeerTracked, savedCampaigns } from '../data/workspace';
 import {
@@ -12,6 +13,7 @@ import {
 } from '../components/ui';
 import { linksFor } from '../data/demoFlows';
 import { useRole } from '../lib/RoleContext';
+import { useRecent } from '../lib/RecentContext';
 import { useMaturity } from '../lib/MaturityContext';
 import { PeerDetailDay0Page } from './day0/PeerDetailDay0Page';
 import {
@@ -30,7 +32,8 @@ function PeerDetailDayXPage() {
   const peer = peerOrgs.find(p => p.id === id);
   const peerCamps = peerCampaigns.filter(c => c.orgId === id);
   const toast = useToast();
-  const { hasCapability } = useRole();
+  const { hasCapability, activeMember } = useRole();
+  const { actions: allActions, updateStatus, updateOwner, addAction } = useActions();
   const canAssign = hasCapability('assignActions');
   const [tracked, setTracked] = useState(id ? isPeerTracked(id) : false);
   const [savedCampaignIds, setSavedCampaignIds] = useState<string[]>(
@@ -40,7 +43,13 @@ function PeerDetailDayXPage() {
   const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const linkedActions = useMemo(() => (id ? actionsForEntity('peer', id) : []), [id]);
+  const { trackVisit } = useRecent();
+
+  React.useEffect(() => {
+    if (peer) trackVisit({ type: 'peer', id: peer.id, label: peer.name, path: `/peers/${peer.id}` });
+  }, [peer?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const linkedActions = useMemo(() => allActions.filter((a) => a.entity?.type === 'peer' && a.entity?.id === id), [allActions, id]);
   const peerNotes = useMemo(() => (id ? notesForEntity('peer', id) : []), [id]);
 
   const toggleSavedCampaign = (theme: string) => {
@@ -171,8 +180,14 @@ function PeerDetailDayXPage() {
                     key={a.id}
                     action={a}
                     canEdit={canAssign}
-                    onStatusChange={() => toast.show({ type: 'info', title: 'Status updated' })}
-                    onOwnerChange={() => toast.show({ type: 'success', title: 'Task reassigned' })}
+                    onStatusChange={(actionId, next) => {
+                      updateStatus(actionId, next);
+                      toast.show({ type: next === 'completed' ? 'success' : 'info', title: next === 'completed' ? 'Task completed' : 'Status updated' });
+                    }}
+                    onOwnerChange={(actionId, ownerId) => {
+                      updateOwner(actionId, ownerId);
+                      toast.show({ type: 'success', title: 'Task reassigned' });
+                    }}
                     onOpenDrawer={(action) => {
                       setDrawerAction(action);
                       setDrawerOpen(true);
@@ -369,6 +384,11 @@ function PeerDetailDayXPage() {
         defaultTitle={`Review ${peer.name}'s recent campaign work`}
         defaultContext={`Triggered from ${peer.name}'s peer detail.`}
         onCreate={(payload) => {
+          addAction(
+            { ...payload, entity: payload.entity || { type: 'peer', id: peer.id, label: peer.name, link: `/peers/${peer.id}` } },
+            activeMember.id,
+            ['executive', 'fundraising', 'program'],
+          );
           toast.show({
             type: 'success',
             title: 'Action created',
@@ -380,6 +400,14 @@ function PeerDetailDayXPage() {
         action={drawerAction}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        onStatusChange={(id, next) => {
+          updateStatus(id, next);
+          toast.show({ type: next === 'completed' ? 'success' : 'info', title: next === 'completed' ? 'Task completed' : 'Status updated' });
+        }}
+        onOwnerChange={(id, ownerId) => {
+          updateOwner(id, ownerId);
+          toast.show({ type: 'success', title: 'Task reassigned' });
+        }}
         canEdit={canAssign}
       />
     </>

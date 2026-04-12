@@ -4,6 +4,7 @@ import { watchlist, policyAlerts, PolicyAlert } from '../data/watchlist';
 import { policies } from '../data/policies';
 import { watchlistGroups } from '../data/workspace';
 import { getTeamMember } from '../data/team';
+import { useWatchlist } from '../lib/WatchlistContext';
 import { PageHeader, Chip, Button, SegmentedControl, EmptyState, ScopeBadge } from '../components/ui';
 import {
   Bell, AlertCircle, Info, CalendarClock,
@@ -18,19 +19,22 @@ const filterOptions = [
 
 export function PolicyWatchlistPage() {
   const [filter, setFilter] = useState('all');
+  const { watchedIds } = useWatchlist();
 
   const filteredAlerts = useMemo(() => {
-    if (filter === 'unread') return policyAlerts.filter(a => a.isUnread);
-    if (filter === 'urgent') return policyAlerts.filter(a => a.severity === 'urgent');
-    return policyAlerts;
-  }, [filter]);
+    const relevant = policyAlerts.filter(a => watchedIds.has(a.policyId));
+    if (filter === 'unread') return relevant.filter(a => a.isUnread);
+    if (filter === 'urgent') return relevant.filter(a => a.severity === 'urgent');
+    return relevant;
+  }, [filter, watchedIds]);
 
-  const unreadCount = policyAlerts.filter(a => a.isUnread).length;
-  const urgentCount = policyAlerts.filter(a => a.severity === 'urgent').length;
-  const totalWatched = watchlist.length;
+  const unreadCount = policyAlerts.filter(a => a.isUnread && watchedIds.has(a.policyId)).length;
+  const urgentCount = policyAlerts.filter(a => a.severity === 'urgent' && watchedIds.has(a.policyId)).length;
+  const totalWatched = watchedIds.size;
   const activityThisWeek = policyAlerts.filter(a => {
+    if (!watchedIds.has(a.policyId)) return false;
     const d = new Date(a.date);
-    const now = new Date('2026-04-10');
+    const now = new Date('2026-04-12');
     const days = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
     return days <= 7;
   }).length;

@@ -1,5 +1,9 @@
 // Sparkline data is just an array of numbers; we render small SVGs from these.
 
+import { donors } from './donors';
+import { policies } from './policies';
+import { watchlist } from './watchlist';
+
 export interface KPIMetric {
   id: string;
   label: string;
@@ -10,32 +14,36 @@ export interface KPIMetric {
   surface: 'people' | 'policy' | 'peers' | 'cross';
 }
 
+const activeDonorCount = donors.filter((d) => d.givingStatus !== 'Inactive' && d.givingStatus !== 'Cold').length;
+const lifetimeTotal = donors.reduce((sum, d) => sum + (d.lifetimeGiving || 0), 0);
+const lifetimeFormatted = lifetimeTotal >= 1000 ? `$${(lifetimeTotal / 1000).toFixed(1)}K` : `$${lifetimeTotal.toLocaleString()}`;
+
 export const kpiMetrics: KPIMetric[] = [
   {
     id: 'active-donors',
     label: 'Active donors',
-    value: '347',
+    value: activeDonorCount.toString(),
     delta: 6.2,
     deltaLabel: 'vs. 30 days ago',
-    trend: [298, 305, 312, 318, 322, 331, 338, 341, 343, 347],
+    trend: [5, 5, 6, 6, 7, 7, 7, 8, 8, activeDonorCount],
     surface: 'people',
   },
   {
     id: 'lifetime-revenue',
     label: 'Lifetime revenue',
-    value: '$2.41M',
+    value: lifetimeFormatted,
     delta: 4.8,
     deltaLabel: 'vs. 30 days ago',
-    trend: [2.21, 2.24, 2.27, 2.29, 2.32, 2.34, 2.36, 2.38, 2.39, 2.41],
+    trend: [100, 105, 110, 115, 120, 125, 128, 130, 133, lifetimeTotal / 1000],
     surface: 'people',
   },
   {
     id: 'tracked-policies',
     label: 'Tracked policies',
-    value: '6',
+    value: policies.length.toString(),
     delta: 50,
-    deltaLabel: '4 watchlist + 2 monitor',
-    trend: [4, 4, 5, 5, 5, 6, 6, 6, 6, 6],
+    deltaLabel: `${watchlist.length} watchlist + ${policies.length - watchlist.length} monitor`,
+    trend: [4, 4, 5, 5, 5, 6, 6, 6, 6, policies.length],
     surface: 'policy',
   },
   {
@@ -127,12 +135,12 @@ export interface ActivityItem {
 }
 
 export const recentActivity: ActivityItem[] = [
-  { id: 'a1', type: 'gift', title: 'Gift received: $2,500', description: 'Maya Patel \u2014 Annual fund', actor: 'Stripe', timestamp: '2026-04-09T14:22:00', link: '/people/donors/maya-patel' },
-  { id: 'a2', type: 'policy', title: 'Hearing scheduled', description: 'Right-to-Counsel public testimony April 22', actor: 'Policy radar', timestamp: '2026-04-08T09:15:00', link: '/policy/right-to-counsel' },
-  { id: 'a3', type: 'email', title: 'Email opened', description: 'Samir Gupta \u2014 March policy digest', actor: 'Mailchimp', timestamp: '2026-04-07T16:48:00', link: '/people/donors/samir-gupta' },
-  { id: 'a4', type: 'peer', title: 'Peer campaign noted', description: 'Bronx Housing emergency aid \u2014 230% above sector avg', actor: 'Peer signals', timestamp: '2026-04-07T11:02:00', link: '/peers/campaigns' },
-  { id: 'a5', type: 'meeting', title: 'Meeting logged', description: 'Quarterly review with Horizon Family Foundation', actor: 'Noah Stein', timestamp: '2026-04-03T15:30:00', link: '/people/accounts/horizon-foundation' },
-  { id: 'a6', type: 'team', title: 'Saved view created', description: 'Leah Kim created "At-risk this quarter"', actor: 'Leah Kim', timestamp: '2026-04-02T10:14:00' },
+  { id: 'a1', type: 'gift', title: 'Gift received: $2,500', description: 'Maya Patel \u2014 Annual fund contribution', actor: 'Salesforce sync', timestamp: '2026-04-11T14:22:00', link: '/people/donors/maya-patel' },
+  { id: 'a2', type: 'policy', title: 'Hearing scheduled', description: 'Right-to-Counsel public testimony April 22 \u2014 submission deadline in 3 days', actor: 'Policy radar', timestamp: '2026-04-11T09:15:00', link: '/policy/right-to-counsel' },
+  { id: 'a3', type: 'email', title: 'Email opened', description: 'Samir Gupta opened the March policy digest \u2014 his 3rd open this month', actor: 'Mailchimp', timestamp: '2026-04-10T16:48:00', link: '/people/donors/samir-gupta' },
+  { id: 'a4', type: 'peer', title: 'Peer campaign flagged', description: 'Bronx Housing emergency aid campaign \u2014 230% above sector avg. Saved by Leah Kim.', actor: 'Peer signals', timestamp: '2026-04-10T11:02:00', link: '/peers/bronx-housing' },
+  { id: 'a5', type: 'meeting', title: 'Meeting logged', description: 'Quarterly review with Priya Narang at Horizon Family Foundation \u2014 renewal timeline discussed', actor: 'Noah Stein', timestamp: '2026-04-09T15:30:00', link: '/people/donors/priya-narang' },
+  { id: 'a6', type: 'team', title: 'Saved view created', description: 'Leah Kim created "At-risk this quarter" \u2014 4 donors matched', actor: 'Leah Kim', timestamp: '2026-04-08T10:14:00' },
 ];
 
 export interface FundraisingMonth {

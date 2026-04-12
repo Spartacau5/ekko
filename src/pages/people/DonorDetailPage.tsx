@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { donors, TimelineEvent as TLEvent } from '../../data/donors';
 import { donorGroups } from '../../data/groups';
-import { actionsForEntity, ActionItem } from '../../data/actions';
+import { ActionItem } from '../../data/actions';
+import { useActions } from '../../lib/ActionContext';
 import { notesForEntity } from '../../data/notes';
 import {
   Button, Chip, SegmentedControl, useToast,
@@ -12,6 +13,7 @@ import {
 } from '../../components/ui';
 import { linksFor } from '../../data/demoFlows';
 import { useRole } from '../../lib/RoleContext';
+import { useRecent } from '../../lib/RecentContext';
 import { useMaturity } from '../../lib/MaturityContext';
 import { DonorDetailDay0Page } from '../day0/DonorDetailDay0Page';
 import { motionDurations, motionEasings } from '../../lib/motion';
@@ -45,10 +47,16 @@ function DonorDetailDayXPage() {
   const [isFavorited, setIsFavorited] = useState(false);
   const toast = useToast();
   const { activeMember, hasCapability } = useRole();
+  const { actions: allActions, updateStatus, updateOwner, addAction } = useActions();
+  const { trackVisit } = useRecent();
 
   const donor = donors.find((d) => d.id === id);
 
-  const linkedActions = useMemo(() => (id ? actionsForEntity('donor', id) : []), [id]);
+  React.useEffect(() => {
+    if (donor) trackVisit({ type: 'donor', id: donor.id, label: donor.name, path: `/people/donors/${donor.id}` });
+  }, [donor?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const linkedActions = useMemo(() => allActions.filter((a) => a.entity?.type === 'donor' && a.entity?.id === id), [allActions, id]);
   const donorNotes = useMemo(() => (id ? notesForEntity('donor', id) : []), [id]);
   const canAssign = hasCapability('assignActions');
 
@@ -208,6 +216,7 @@ function DonorDetailDayXPage() {
                     action={a}
                     canEdit={canAssign}
                     onStatusChange={(actionId, next) => {
+                      updateStatus(actionId, next);
                       toast.show({
                         type: next === 'completed' ? 'success' : 'info',
                         title:
@@ -215,7 +224,8 @@ function DonorDetailDayXPage() {
                           next === 'in_progress' ? 'Task started' : 'Task reopened',
                       });
                     }}
-                    onOwnerChange={() => {
+                    onOwnerChange={(actionId, ownerId) => {
+                      updateOwner(actionId, ownerId);
                       toast.show({ type: 'success', title: 'Task reassigned' });
                     }}
                     onOpenDrawer={(action) => {
@@ -442,7 +452,10 @@ function DonorDetailDayXPage() {
               <p className="eyebrow-plain">Suggested next step</p>
             </div>
             <div className="p-5">
-              <p className="text-sm text-primary leading-relaxed mb-4">{donor.suggestedNextAction}</p>
+              <p className="text-sm text-primary leading-relaxed mb-2">{donor.suggestedNextAction}</p>
+              {donor.suggestedReason && (
+                <p className="text-[12px] text-muted leading-relaxed mb-4 italic">{donor.suggestedReason}</p>
+              )}
               <div className="flex flex-col gap-2">
                 <Button
                   size="sm"
@@ -523,6 +536,11 @@ function DonorDetailDayXPage() {
         defaultTitle={`Follow up with ${donor.name}`}
         defaultContext={donor.suggestedNextAction}
         onCreate={(payload) => {
+          addAction(
+            { ...payload, entity: payload.entity || { type: 'donor', id: donor.id, label: donor.name, link: `/people/donors/${donor.id}` } },
+            activeMember.id,
+            ['executive', 'fundraising'],
+          );
           toast.show({
             type: 'success',
             title: 'Follow-up created',
@@ -534,6 +552,14 @@ function DonorDetailDayXPage() {
         action={drawerAction}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        onStatusChange={(id, next) => {
+          updateStatus(id, next);
+          toast.show({ type: next === 'completed' ? 'success' : 'info', title: next === 'completed' ? 'Task completed' : 'Status updated' });
+        }}
+        onOwnerChange={(id, ownerId) => {
+          updateOwner(id, ownerId);
+          toast.show({ type: 'success', title: 'Task reassigned' });
+        }}
         canEdit={canAssign}
       />
     </>

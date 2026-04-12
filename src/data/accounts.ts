@@ -221,7 +221,7 @@ export const accounts: Account[] = [
     lastGift: 12000,
     lastGiftDate: '2026-02-20',
     nextRenewal: '2027-02-01',
-    accountOwner: 'Sofia Reyes',
+    accountOwner: 'Ana Rodriguez',
     contacts: [
       { name: 'Father Mark Sullivan', role: 'Outreach Director', email: 'frmark@stmarksbrooklyn.org', isPrimary: true },
     ],
@@ -251,7 +251,7 @@ export const accounts: Account[] = [
     lastGift: 80000,
     lastGiftDate: '2026-01-30',
     nextRenewal: '2026-06-30',
-    accountOwner: 'Sofia Reyes',
+    accountOwner: 'Ana Rodriguez',
     contacts: [
       { name: 'Marcus Williams', role: 'Program Director', email: 'mwilliams@nyc.gov', isPrimary: true },
       { name: 'Alicia Torres', role: 'Grants Manager', email: 'atorres@nyc.gov', isPrimary: false },

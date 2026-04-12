@@ -42,7 +42,7 @@ export const donorGroups: DonorGroup[] = [
     memberCount: 87,
     totalLifetime: 612000,
     avgGift: 1240,
-    createdBy: 'Sofia Reyes',
+    createdBy: 'Ana Rodriguez',
     createdDate: '2025-05-22',
     lastUpdated: '2026-03-30',
     tags: ['event', 'stewardship', 'mid-major'],

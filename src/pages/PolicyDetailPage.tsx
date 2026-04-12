@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { policies, Stakeholder } from '../data/policies';
 import { watchlist } from '../data/watchlist';
-import { actionsForEntity, ActionItem } from '../data/actions';
+import { ActionItem } from '../data/actions';
+import { useActions } from '../lib/ActionContext';
 import { notesForEntity } from '../data/notes';
 import { watchlistGroups } from '../data/workspace';
 import {
@@ -12,6 +13,8 @@ import {
 } from '../components/ui';
 import { linksFor } from '../data/demoFlows';
 import { useRole } from '../lib/RoleContext';
+import { useRecent } from '../lib/RecentContext';
+import { useWatchlist } from '../lib/WatchlistContext';
 import { useMaturity } from '../lib/MaturityContext';
 import { PolicyDetailDay0Page } from './day0/PolicyDetailDay0Page';
 import { roleMeta } from '../data/team';
@@ -29,15 +32,22 @@ function PolicyDetailDayXPage() {
   const { id } = useParams<{ id: string }>();
   const policy = policies.find((p) => p.id === id);
   const watchItem = watchlist.find((w) => w.policyId === id);
-  const [isWatching, setIsWatching] = useState(!!watchItem);
+  const { isWatched, toggleWatched } = useWatchlist();
+  const isWatching = id ? isWatched(id) : false;
   const [composerOpen, setComposerOpen] = useState(false);
   const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const toast = useToast();
-  const { hasCapability, activeRole } = useRole();
+  const { hasCapability, activeRole, activeMember } = useRole();
+  const { actions: allActions, updateStatus, updateOwner, addAction } = useActions();
+  const { trackVisit } = useRecent();
   const canAssign = hasCapability('assignActions');
 
-  const linkedActions = useMemo(() => (id ? actionsForEntity('policy', id) : []), [id]);
+  React.useEffect(() => {
+    if (policy) trackVisit({ type: 'policy', id: policy.id, label: policy.title, path: `/policy/${policy.id}` });
+  }, [policy?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const linkedActions = useMemo(() => allActions.filter((a) => a.entity?.type === 'policy' && a.entity?.id === id), [allActions, id]);
   const linkedNotes = useMemo(() => (id ? notesForEntity('policy', id) : []), [id]);
   const memberWatchlists = useMemo(
     () => (id ? watchlistGroups.filter((g) => g.policyIds.includes(id)) : []),
@@ -92,8 +102,8 @@ function PolicyDetailDayXPage() {
               <WatchlistToggle
                 watching={isWatching}
                 onToggle={() => {
+                  if (id) toggleWatched(id);
                   const next = !isWatching;
-                  setIsWatching(next);
                   toast.show({
                     type: next ? 'success' : 'info',
                     title: next ? 'Added to watchlist' : 'Removed from watchlist',
@@ -161,6 +171,7 @@ function PolicyDetailDayXPage() {
                     action={a}
                     canEdit={canAssign}
                     onStatusChange={(actionId, next) => {
+                      updateStatus(actionId, next);
                       toast.show({
                         type: next === 'completed' ? 'success' : 'info',
                         title:
@@ -168,7 +179,8 @@ function PolicyDetailDayXPage() {
                           next === 'in_progress' ? 'Task started' : 'Task reopened',
                       });
                     }}
-                    onOwnerChange={() => {
+                    onOwnerChange={(actionId, ownerId) => {
+                      updateOwner(actionId, ownerId);
                       toast.show({ type: 'success', title: 'Task reassigned' });
                     }}
                     onOpenDrawer={(action) => {
@@ -370,6 +382,11 @@ function PolicyDetailDayXPage() {
         defaultTitle={policy.recommendedAction}
         defaultContext={`Linked to ${policy.title}. ${policy.summary}`}
         onCreate={(payload) => {
+          addAction(
+            { ...payload, entity: payload.entity || { type: 'policy', id: policy.id, label: policy.title, link: `/policy/${policy.id}` } },
+            activeMember.id,
+            ['executive', 'policy'],
+          );
           toast.show({
             type: 'success',
             title: 'Action assigned',
@@ -381,6 +398,14 @@ function PolicyDetailDayXPage() {
         action={drawerAction}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        onStatusChange={(id, next) => {
+          updateStatus(id, next);
+          toast.show({ type: next === 'completed' ? 'success' : 'info', title: next === 'completed' ? 'Task completed' : 'Status updated' });
+        }}
+        onOwnerChange={(id, ownerId) => {
+          updateOwner(id, ownerId);
+          toast.show({ type: 'success', title: 'Task reassigned' });
+        }}
         canEdit={canAssign}
       />
     </>

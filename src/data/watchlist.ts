@@ -24,7 +24,7 @@ export const watchlist: WatchlistItem[] = [
   {
     policyId: 'right-to-counsel',
     addedDate: '2026-01-15',
-    addedBy: 'Sofia Reyes',
+    addedBy: 'ana-rodriguez',
     notes: 'Top priority. Coordinate with advocacy team on testimony prep.',
     alertsEnabled: true,
     lastAlertDate: '2026-04-08',
@@ -33,7 +33,7 @@ export const watchlist: WatchlistItem[] = [
   {
     policyId: 'rental-assistance-reporting',
     addedDate: '2025-12-20',
-    addedBy: 'Sofia Reyes',
+    addedBy: 'marcus-bell',
     notes: 'Operations and finance must complete workflow audit before May 2026.',
     alertsEnabled: true,
     lastAlertDate: '2026-04-05',
@@ -42,7 +42,7 @@ export const watchlist: WatchlistItem[] = [
   {
     policyId: 'anti-eviction-funding',
     addedDate: '2026-03-15',
-    addedBy: 'Sofia Reyes',
+    addedBy: 'tessa-moore',
     notes: 'Apply ASAP. Application window closes May 15.',
     alertsEnabled: true,
     lastAlertDate: '2026-04-09',
@@ -51,7 +51,7 @@ export const watchlist: WatchlistItem[] = [
   {
     policyId: 'tenant-data-privacy',
     addedDate: '2026-03-18',
-    addedBy: 'Sofia Reyes',
+    addedBy: 'noah-stein',
     notes: 'Monitor. Legal team to review draft language.',
     alertsEnabled: true,
     lastAlertDate: '2026-04-02',
