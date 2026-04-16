@@ -120,7 +120,7 @@ export const priorityTasks: PriorityTask[] = [
     source: 'people',
     dueLabel: 'Due in 60 days',
     priority: 'medium',
-    link: '/people/accounts/horizon-foundation',
+    link: '/people/donors',
   },
 ];
 

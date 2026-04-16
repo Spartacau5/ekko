@@ -9,7 +9,7 @@ import { notesForEntity } from '../../data/notes';
 import {
   Button, Chip, SegmentedControl, useToast,
   TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview, Avatar,
-  LinkedInsightSection, NarrativeSpineBadge,
+  LinkedInsightSection, NarrativeSpineBadge, PinButton,
 } from '../../components/ui';
 import { linksFor } from '../../data/demoFlows';
 import { useRole } from '../../lib/RoleContext';
@@ -44,7 +44,6 @@ function DonorDetailDayXPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState('');
   const [showNoteComposer, setShowNoteComposer] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
   const toast = useToast();
   const { activeMember, hasCapability } = useRole();
   const { actions: allActions, updateStatus, updateOwner, addAction } = useActions();
@@ -126,25 +125,7 @@ function DonorDetailDayXPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                const next = !isFavorited;
-                setIsFavorited(next);
-                toast.show({
-                  type: next ? 'success' : 'info',
-                  title: next ? 'Favorited' : 'Removed from favorites',
-                  description: donor.name,
-                });
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium border rounded-sm
-                transition-colors duration-150 ease-out
-                ${isFavorited
-                  ? 'bg-accent-soft border-accent text-primary'
-                  : 'bg-surface border-border-subtle text-secondary hover:border-border-default hover:text-primary'}`}
-            >
-              {isFavorited ? '★ Favorited' : '☆ Favorite'}
-            </button>
+            <PinButton type="donor" id={donor.id} entityLabel={donor.name} />
             <Button variant="secondary"><Mail size={14} className="mr-2" />Email</Button>
             <Button
               variant="secondary"

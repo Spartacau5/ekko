@@ -32,6 +32,7 @@ export { AssignOwnerControl } from './AssignOwnerControl';
 export { TaskCard } from './TaskCard';
 export { InternalNotePreview } from './InternalNotePreview';
 export { PinnedModuleCard } from './PinnedModuleCard';
+export { PinButton } from './PinButton';
 export { SaveViewModal } from './SaveViewModal';
 export { FollowUpComposer } from './FollowUpComposer';
 export { ActionDrawer } from './ActionDrawer';

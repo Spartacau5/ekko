@@ -10,6 +10,7 @@ import { DemoFlowProvider } from './lib/DemoFlowContext';
 import { ActionProvider } from './lib/ActionContext';
 import { RecentProvider } from './lib/RecentContext';
 import { WatchlistProvider } from './lib/WatchlistContext';
+import { PinProvider } from './lib/PinContext';
 import { WalkthroughStrip } from './components/layout/WalkthroughStrip';
 import { motionDurations, motionEasings } from './lib/motion';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -19,8 +20,6 @@ import { DonorsListPage } from './pages/people/DonorsListPage';
 import { DonorDetailPage } from './pages/people/DonorDetailPage';
 import { GroupsListPage } from './pages/people/GroupsListPage';
 import { GroupDetailPage } from './pages/people/GroupDetailPage';
-import { AccountsListPage } from './pages/people/AccountsListPage';
-import { AccountDetailPage } from './pages/people/AccountDetailPage';
 import { PolicyPage } from './pages/PolicyPage';
 import { PolicyDetailPage } from './pages/PolicyDetailPage';
 import { PolicyWatchlistPage } from './pages/PolicyWatchlistPage';
@@ -102,6 +101,7 @@ function App() {
        <RoleProvider>
         <ActionProvider>
         <WatchlistProvider>
+        <PinProvider>
         <RecentProvider>
         <DemoFlowProvider>
         <TourProvider>
@@ -124,8 +124,8 @@ function App() {
                 <Route path="donors/:id" element={<DonorDetailPage />} />
                 <Route path="groups" element={<GroupsListPage />} />
                 <Route path="groups/:id" element={<GroupDetailPage />} />
-                <Route path="accounts" element={<AccountsListPage />} />
-                <Route path="accounts/:id" element={<AccountDetailPage />} />
+                <Route path="accounts" element={<Navigate to="/people/donors" replace />} />
+                <Route path="accounts/:id" element={<Navigate to="/people/donors" replace />} />
               </Route>
 
               {/* Policy surface */}
@@ -144,6 +144,7 @@ function App() {
         </TourProvider>
         </DemoFlowProvider>
         </RecentProvider>
+        </PinProvider>
         </WatchlistProvider>
         </ActionProvider>
        </RoleProvider>

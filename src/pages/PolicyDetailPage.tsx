@@ -9,7 +9,7 @@ import { watchlistGroups } from '../data/workspace';
 import {
   Button, Chip, WatchlistToggle, useToast,
   TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview, ScopeBadge,
-  LinkedInsightSection, NarrativeSpineBadge,
+  LinkedInsightSection, NarrativeSpineBadge, PinButton,
 } from '../components/ui';
 import { linksFor } from '../data/demoFlows';
 import { useRole } from '../lib/RoleContext';
@@ -99,6 +99,7 @@ function PolicyDetailDayXPage() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
+              <PinButton type="policy" id={policy.id} entityLabel={policy.title} />
               <WatchlistToggle
                 watching={isWatching}
                 onToggle={() => {
