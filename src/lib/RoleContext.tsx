@@ -16,7 +16,7 @@ interface RoleContextValue {
 
 const RoleContext = createContext<RoleContextValue | null>(null);
 
-const ROLE_ORDER: Role[] = ['executive', 'fundraising', 'policy', 'program', 'operations'];
+const ROLE_ORDER: Role[] = ['executive', 'fundraising', 'communications', 'policy', 'program', 'operations'];
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [activeRole, setActiveRoleState] = useState<Role>('executive');

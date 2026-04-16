@@ -69,6 +69,12 @@ const roleModules: Record<Role, ModuleConfig> = {
     surfaceOrder: ['people', 'peers', 'policy'],
     showFundraising: true,
   },
+  communications: {
+    glanceTitle: 'Communications at a glance',
+    glanceFocus: 'Donor messaging, campaign storytelling, outreach',
+    surfaceOrder: ['people', 'peers', 'policy'],
+    showFundraising: true,
+  },
   policy: {
     glanceTitle: 'Policy at a glance',
     glanceFocus: 'Watchlist, hearings, and advocacy actions',

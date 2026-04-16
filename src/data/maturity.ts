@@ -426,6 +426,10 @@ export const day0Glance: Record<Role, MaturityGlance> = {
     headline: 'Get your donor view connected',
     body: 'Importing Salesforce will unlock at-risk donor detection, suggested next steps, and full giving timelines.',
   },
+  communications: {
+    headline: 'Get your donor view connected',
+    body: 'Importing Salesforce will unlock messaging opportunities, campaign storytelling cues, and full donor context.',
+  },
   policy: {
     headline: 'Choose what to monitor',
     body: 'Pick tracked policy topics to start receiving live alerts on hearings, amendments, and votes.',

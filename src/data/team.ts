@@ -5,6 +5,7 @@
 export type Role =
   | 'executive'
   | 'fundraising'
+  | 'communications'
   | 'policy'
   | 'program'
   | 'operations';
@@ -31,6 +32,13 @@ export const roleMeta: Record<Role, RoleMeta> = {
     short: 'Development',
     description: 'Donor relationships, retention, campaign performance',
     focus: 'Sees donor risk, next steps, and fundraising trends first.',
+  },
+  communications: {
+    id: 'communications',
+    label: 'Communications Specialist',
+    short: 'Communications',
+    description: 'Donor messaging, campaign storytelling, stakeholder comms',
+    focus: 'Sees donor messaging opportunities and campaign storytelling cues first.',
   },
   policy: {
     id: 'policy',
@@ -89,6 +97,17 @@ export const teamMembers: TeamMember[] = [
     joinedDate: '2022-09-12',
     initials: 'LK',
     bio: 'Owns the major-gifts pipeline, donor stewardship, and annual campaigns.',
+  },
+  {
+    id: 'priya-shah',
+    name: 'Priya Shah',
+    role: 'communications',
+    title: 'Communications Specialist',
+    email: 'priya@rivergate.org',
+    phone: '(212) 555-0165',
+    joinedDate: '2023-01-09',
+    initials: 'PS',
+    bio: 'Shapes donor messaging, campaign storytelling, and stakeholder comms.',
   },
   {
     id: 'noah-stein',
@@ -176,6 +195,18 @@ export const rolePermissions: Record<Role, Record<Capability, boolean>> = {
     manageBilling: true,
   },
   fundraising: {
+    viewAll: true,
+    editDonors: true,
+    assignActions: true,
+    exportData: true,
+    manageWatchlist: true,
+    manageTeam: false,
+    manageIntegrations: false,
+    managePeerSharing: false,
+    manageAi: false,
+    manageBilling: false,
+  },
+  communications: {
     viewAll: true,
     editDonors: true,
     assignActions: true,
