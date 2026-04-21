@@ -18,7 +18,12 @@ export function PeopleLayout() {
   const isDetailPage =
     /^\/people\/(donors|groups)\/[^/]+$/.test(location.pathname);
 
-  if (isDetailPage) {
+  // The simplified Donors + Groups list pages now render their own page
+  // headers, so skip the outer "People" shell on both routes.
+  const isDonorsList = location.pathname === '/people/donors';
+  const isGroupsList = location.pathname === '/people/groups';
+
+  if (isDetailPage || isDonorsList || isGroupsList) {
     return <Outlet />;
   }
 

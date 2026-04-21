@@ -5,9 +5,18 @@ export interface PeerOrg {
   geography: string;
   orgSize: string;
   revenueBand: string;
+  orgType: string;
   recentCampaigns: { theme: string; channels: string[] }[];
   benchmarkStat: { label: string; value: string };
   optInStatus: 'Opted in' | 'Pending' | 'Not opted in';
+  // Detail-page KPI strip numbers.
+  donorCount: number;
+  donorCountUpdatedDaysAgo: number;
+  campaignsSharedLast2Months: number;
+  performanceScore: number; // 0-100
+  trackedPoliciesCount: number;
+  // Funds-raised dataset used on the benchmark card.
+  fundsRaisedYtd: { yours: number; theirs: number; avg: number; top: number };
 }
 
 export const peerOrgs: PeerOrg[] = [
@@ -18,12 +27,19 @@ export const peerOrgs: PeerOrg[] = [
     geography: 'Bronx, NY',
     orgSize: 'Mid-size (35 staff)',
     revenueBand: '$3M\u2013$7M',
+    orgType: 'Nonprofit',
     recentCampaigns: [
       { theme: 'Emergency tenant aid awareness', channels: ['Email', 'Social media', 'Community events'] },
       { theme: 'Right-to-counsel advocacy push', channels: ['Direct mail', 'Email', 'Press'] },
     ],
     benchmarkStat: { label: 'Email open rate', value: '34%' },
     optInStatus: 'Opted in',
+    donorCount: 162,
+    donorCountUpdatedDaysAgo: 2,
+    campaignsSharedLast2Months: 2,
+    performanceScore: 84,
+    trackedPoliciesCount: 4,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 5_400_000, avg: 5_400_000, top: 6_400_000 },
   },
   {
     id: 'queens-tenant',
@@ -38,6 +54,13 @@ export const peerOrgs: PeerOrg[] = [
     ],
     benchmarkStat: { label: 'Donor retention rate', value: '62%' },
     optInStatus: 'Opted in',
+    orgType: 'Nonprofit',
+    donorCount: 98,
+    donorCountUpdatedDaysAgo: 5,
+    campaignsSharedLast2Months: 1,
+    performanceScore: 71,
+    trackedPoliciesCount: 2,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 2_100_000, avg: 5_400_000, top: 6_400_000 },
   },
   {
     id: 'harbor-family',
@@ -52,6 +75,13 @@ export const peerOrgs: PeerOrg[] = [
     ],
     benchmarkStat: { label: 'Donation conversion rate', value: '4.2%' },
     optInStatus: 'Opted in',
+    orgType: 'Nonprofit',
+    donorCount: 245,
+    donorCountUpdatedDaysAgo: 1,
+    campaignsSharedLast2Months: 3,
+    performanceScore: 78,
+    trackedPoliciesCount: 3,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 7_200_000, avg: 5_400_000, top: 8_100_000 },
   },
   {
     id: 'east-river',
@@ -66,6 +96,13 @@ export const peerOrgs: PeerOrg[] = [
     ],
     benchmarkStat: { label: 'Average gift size', value: '$128' },
     optInStatus: 'Pending',
+    orgType: 'Nonprofit',
+    donorCount: 132,
+    donorCountUpdatedDaysAgo: 9,
+    campaignsSharedLast2Months: 2,
+    performanceScore: 68,
+    trackedPoliciesCount: 5,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 5_900_000, avg: 5_400_000, top: 6_400_000 },
   },
   {
     id: 'citywide-shelter',
@@ -80,6 +117,13 @@ export const peerOrgs: PeerOrg[] = [
     ],
     benchmarkStat: { label: 'Email open rate', value: '29%' },
     optInStatus: 'Opted in',
+    orgType: 'Nonprofit',
+    donorCount: 412,
+    donorCountUpdatedDaysAgo: 3,
+    campaignsSharedLast2Months: 4,
+    performanceScore: 82,
+    trackedPoliciesCount: 6,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 12_800_000, avg: 5_400_000, top: 14_200_000 },
   },
   {
     id: 'metro-neighborhood',
@@ -94,6 +138,13 @@ export const peerOrgs: PeerOrg[] = [
     ],
     benchmarkStat: { label: 'Recurring donor growth', value: '+18% YoY' },
     optInStatus: 'Not opted in',
+    orgType: 'Nonprofit',
+    donorCount: 74,
+    donorCountUpdatedDaysAgo: 14,
+    campaignsSharedLast2Months: 0,
+    performanceScore: 58,
+    trackedPoliciesCount: 2,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 3_100_000, avg: 5_400_000, top: 6_400_000 },
   },
   {
     id: 'northern-homes',
@@ -108,6 +159,13 @@ export const peerOrgs: PeerOrg[] = [
     ],
     benchmarkStat: { label: 'Website conversion rate', value: '3.1%' },
     optInStatus: 'Opted in',
+    orgType: 'Nonprofit',
+    donorCount: 56,
+    donorCountUpdatedDaysAgo: 4,
+    campaignsSharedLast2Months: 1,
+    performanceScore: 74,
+    trackedPoliciesCount: 3,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 2_900_000, avg: 5_400_000, top: 6_400_000 },
   },
   {
     id: 'brookfield-resilience',
@@ -122,6 +180,13 @@ export const peerOrgs: PeerOrg[] = [
     ],
     benchmarkStat: { label: 'Donor retention rate', value: '58%' },
     optInStatus: 'Pending',
+    orgType: 'Nonprofit',
+    donorCount: 118,
+    donorCountUpdatedDaysAgo: 6,
+    campaignsSharedLast2Months: 2,
+    performanceScore: 69,
+    trackedPoliciesCount: 3,
+    fundsRaisedYtd: { yours: 4_400_000, theirs: 5_100_000, avg: 5_400_000, top: 6_400_000 },
   },
 ];
 

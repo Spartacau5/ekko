@@ -10,8 +10,11 @@ import { DemoFlowProvider } from './lib/DemoFlowContext';
 import { ActionProvider } from './lib/ActionContext';
 import { RecentProvider } from './lib/RecentContext';
 import { WatchlistProvider } from './lib/WatchlistContext';
+import { PolicyReadProvider } from './lib/PolicyReadContext';
+import { PolicyFollowProvider } from './lib/PolicyFollowContext';
+import { DonorsProvider } from './lib/DonorsContext';
+import { GroupsProvider } from './lib/GroupsContext';
 import { PinProvider } from './lib/PinContext';
-import { WalkthroughStrip } from './components/layout/WalkthroughStrip';
 import { motionDurations, motionEasings } from './lib/motion';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -22,10 +25,10 @@ import { GroupsListPage } from './pages/people/GroupsListPage';
 import { GroupDetailPage } from './pages/people/GroupDetailPage';
 import { PolicyPage } from './pages/PolicyPage';
 import { PolicyDetailPage } from './pages/PolicyDetailPage';
-import { PolicyWatchlistPage } from './pages/PolicyWatchlistPage';
 import { PeersPage } from './pages/PeersPage';
 import { PeerDetailPage } from './pages/PeerDetailPage';
 import { CampaignLibraryPage } from './pages/CampaignLibraryPage';
+import { CampaignDetailPage } from './pages/CampaignDetailPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 // Resets scroll on route change. Lives inside Router.
@@ -101,13 +104,16 @@ function App() {
        <RoleProvider>
         <ActionProvider>
         <WatchlistProvider>
+        <PolicyReadProvider>
+        <PolicyFollowProvider>
+        <DonorsProvider>
+        <GroupsProvider>
         <PinProvider>
         <RecentProvider>
         <DemoFlowProvider>
         <TourProvider>
           <ScrollToTop />
           <MaturityURLHydrator />
-          <WalkthroughStrip />
           <Routes>
             {/* Phase 4.5: maturity prefix routes — hydrator rewrites to canonical path */}
             <Route path="/day-0/*" element={<MaturityPrefixCatchAll />} />
@@ -130,12 +136,14 @@ function App() {
 
               {/* Policy surface */}
               <Route path="/policy" element={<PolicyPage />} />
-              <Route path="/policy/watchlist" element={<PolicyWatchlistPage />} />
+              <Route path="/policy/watchlist" element={<Navigate to="/policy" replace />} />
               <Route path="/policy/:id" element={<PolicyDetailPage />} />
 
               {/* Peers surface */}
-              <Route path="/peers" element={<PeersPage />} />
+              <Route path="/peers" element={<Navigate to="/peers/organizations" replace />} />
+              <Route path="/peers/organizations" element={<PeersPage />} />
               <Route path="/peers/campaigns" element={<CampaignLibraryPage />} />
+              <Route path="/peers/campaigns/:id" element={<CampaignDetailPage />} />
               <Route path="/peers/:id" element={<PeerDetailPage />} />
 
               <Route path="/settings" element={<SettingsPage />} />
@@ -145,6 +153,10 @@ function App() {
         </DemoFlowProvider>
         </RecentProvider>
         </PinProvider>
+        </GroupsProvider>
+        </DonorsProvider>
+        </PolicyFollowProvider>
+        </PolicyReadProvider>
         </WatchlistProvider>
         </ActionProvider>
        </RoleProvider>

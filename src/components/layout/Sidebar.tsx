@@ -43,7 +43,16 @@ const NAV: NavItem[] = [
       { label: 'Groups', path: '/people/groups' },
     ],
   },
-  { label: 'Peers',   path: '/peers',     icon: <BarChart3 size={18} strokeWidth={1.8} /> },
+  {
+    label: 'Peers',
+    path: '/peers',
+    icon: <BarChart3 size={18} strokeWidth={1.8} />,
+    alwaysExpanded: true,
+    children: [
+      { label: 'Organizations', path: '/peers/organizations' },
+      { label: 'Campaigns', path: '/peers/campaigns' },
+    ],
+  },
 ];
 
 type HelpAction = 'tour' | 'docs' | 'support';
@@ -79,7 +88,7 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
   const toggle = (path: string) => setExpanded((p) => ({ ...p, [path]: !p[path] }));
 
   return (
-    <aside className="w-[240px] shrink-0 bg-[#1a1a1a] text-[#e8e6e1] flex flex-col min-h-screen sticky top-0 h-screen">
+    <aside className="w-[240px] shrink-0 bg-[#1a1a1a] text-[#e8e6e1] flex flex-col h-screen">
       <div className="px-5 pt-5 pb-8">
         <Link to="/dashboard" className="flex items-center gap-2.5 no-underline" aria-label="Ekko">
           <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center shadow-[inset_0_-1px_0_rgba(17,17,17,0.08)]">

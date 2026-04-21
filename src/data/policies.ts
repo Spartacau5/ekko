@@ -14,6 +14,16 @@ export interface PolicyTimelineEvent {
   description?: string;
 }
 
+export interface RelatedDonorLink {
+  donorId: string;
+  strength: 'Strong' | 'Medium' | 'Low';
+}
+
+export interface RelatedPolicyLink {
+  policyId: string;
+  reason: string;
+}
+
 export interface Policy {
   id: string;
   title: string;
@@ -21,12 +31,15 @@ export interface Policy {
   topic: string;
   status: PolicyStatus;
   effectiveDate: string;
+  lastUpdate: string;
   impactLevel: ImpactLevel;
   teams: string[];
   summary: string;
   recommendedAction: string;
   stakeholders: Stakeholder[];
   timeline: PolicyTimelineEvent[];
+  relatedDonors?: RelatedDonorLink[];
+  relatedPolicyIds?: string[];
 }
 
 export const policies: Policy[] = [
@@ -37,10 +50,17 @@ export const policies: Policy[] = [
     topic: 'Tenant protection',
     status: 'Under review',
     effectiveDate: 'June 2026',
+    lastUpdate: '2026-04-10',
     impactLevel: 'High opportunity',
     teams: ['Advocacy', 'Programs', 'Communications'],
     summary: 'Expansion could increase legal support eligibility for vulnerable tenants in Brooklyn, Queens, and Bronx. This would directly align with Rivergate\'s mission area and could open new program funding channels.',
-    recommendedAction: 'Prepare explainer for donors and residents',
+    recommendedAction: 'Prepare explainer for donors and residents. Highlight income eligibility expansion and how it strengthens existing tenant protection programs.',
+    relatedDonors: [
+      { donorId: 'maya-patel', strength: 'Strong' },
+      { donorId: 'amira-hassan', strength: 'Medium' },
+      { donorId: 'priya-narang', strength: 'Low' },
+    ],
+    relatedPolicyIds: ['housing-tax-credit', 'anti-eviction-funding'],
     stakeholders: [
       { name: 'NYC Council Housing Committee', stance: 'supportive' },
       { name: 'Tenant Rights Coalition', stance: 'strong ally' },
@@ -60,10 +80,16 @@ export const policies: Policy[] = [
     topic: 'Affordable housing finance',
     status: 'Proposed',
     effectiveDate: 'Q3 2026',
+    lastUpdate: '2026-04-09',
     impactLevel: 'Medium opportunity',
     teams: ['Leadership', 'Partnerships'],
     summary: 'Changes may improve funding conditions for community housing projects. Revised credit structure could incentivize more investment in Rivergate\'s target neighborhoods.',
-    recommendedAction: 'Brief leadership and coalition partners',
+    recommendedAction: 'Brief leadership and coalition partners. Align talking points with the finance committee\'s draft revision before the comment period closes.',
+    relatedDonors: [
+      { donorId: 'priya-narang', strength: 'Strong' },
+      { donorId: 'samir-gupta', strength: 'Medium' },
+    ],
+    relatedPolicyIds: ['right-to-counsel', 'zoning-reform'],
     stakeholders: [
       { name: 'State Housing Finance Agency', stance: 'mixed' },
       { name: 'Tenant Rights Coalition', stance: 'strong ally' },
@@ -81,10 +107,16 @@ export const policies: Policy[] = [
     topic: 'Compliance',
     status: 'Approved',
     effectiveDate: 'May 2026',
+    lastUpdate: '2026-04-03',
     impactLevel: 'High risk',
     teams: ['Operations', 'Finance'],
     summary: 'New reporting requirements may increase administrative load for organizations receiving federal rental assistance funds. Compliance updates needed before May deadline.',
-    recommendedAction: 'Audit internal reporting workflow now',
+    recommendedAction: 'Audit internal reporting workflow now. Assign a compliance lead and confirm your reporting templates match HUD\'s April guidance before the May deadline.',
+    relatedDonors: [
+      { donorId: 'priya-narang', strength: 'Strong' },
+      { donorId: 'daniel-cho', strength: 'Medium' },
+    ],
+    relatedPolicyIds: ['tenant-data-privacy'],
     stakeholders: [
       { name: 'State Housing Finance Agency', stance: 'mixed' },
       { name: "Mayor's Office of Housing Recovery", stance: 'supportive' },
@@ -103,10 +135,17 @@ export const policies: Policy[] = [
     topic: 'Emergency aid',
     status: 'Passed',
     effectiveDate: 'Immediate',
+    lastUpdate: '2026-03-28',
     impactLevel: 'High opportunity',
     teams: ['Programs', 'Outreach'],
     summary: 'Creates near-term opportunity to support at-risk households. Emergency funds available for organizations providing direct tenant services in qualifying neighborhoods.',
-    recommendedAction: 'Launch outreach campaign this week',
+    recommendedAction: 'Launch outreach campaign this week. Applications close May 15 — prioritize neighborhoods where Rivergate already has intake workflows.',
+    relatedDonors: [
+      { donorId: 'maya-patel', strength: 'Strong' },
+      { donorId: 'luis-martinez', strength: 'Strong' },
+      { donorId: 'jordan-rivera', strength: 'Medium' },
+    ],
+    relatedPolicyIds: ['right-to-counsel'],
     stakeholders: [
       { name: 'NYC Council Housing Committee', stance: 'supportive' },
       { name: "Mayor's Office of Housing Recovery", stance: 'supportive' },
@@ -125,11 +164,17 @@ export const policies: Policy[] = [
     jurisdiction: 'State',
     topic: 'Privacy',
     status: 'In committee',
-    effectiveDate: 'Unknown',
+    effectiveDate: 'Effective date TBD',
+    lastUpdate: '2026-04-10',
     impactLevel: 'Medium risk',
     teams: ['Operations', 'Legal'],
-    summary: 'Could limit how tenant data is stored and shared. May require changes to Rivergate\'s data management practices and third-party data sharing agreements.',
-    recommendedAction: 'Monitor closely and prepare data handling review',
+    summary: 'Could limit how tenant data is stored and shared. May require changes to data management practices and third-party data sharing agreements.',
+    recommendedAction: 'Monitor closely and prepare a data handling review. Identify every third-party vendor that touches tenant records before the bill advances out of committee.',
+    relatedDonors: [
+      { donorId: 'samir-gupta', strength: 'Medium' },
+      { donorId: 'daniel-cho', strength: 'Low' },
+    ],
+    relatedPolicyIds: ['rental-assistance-reporting'],
     stakeholders: [
       { name: 'Tenant Rights Coalition', stance: 'strong ally' },
       { name: 'Property Owners Association', stance: 'opposed' },
@@ -146,11 +191,17 @@ export const policies: Policy[] = [
     jurisdiction: 'Regional',
     topic: 'Land use',
     status: 'Draft',
-    effectiveDate: 'Unknown',
+    effectiveDate: 'Effective date TBD',
+    lastUpdate: '2026-04-01',
     impactLevel: 'Mixed impact',
     teams: ['Advocacy', 'Executive'],
     summary: 'May affect long-term housing development strategy. Proposed changes to residential zoning could create new opportunities but also raise density concerns in target communities.',
-    recommendedAction: 'Create stakeholder map and scenario summary',
+    recommendedAction: 'Create a stakeholder map and scenario summary. Share with advocacy and executive teams so positions are aligned before scoping sessions begin.',
+    relatedDonors: [
+      { donorId: 'samir-gupta', strength: 'Medium' },
+      { donorId: 'helen-brooks', strength: 'Low' },
+    ],
+    relatedPolicyIds: ['housing-tax-credit'],
     stakeholders: [
       { name: 'Regional Land Use Board', stance: 'uncertain' },
       { name: "Mayor's Office of Housing Recovery", stance: 'supportive' },

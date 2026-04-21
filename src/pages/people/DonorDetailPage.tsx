@@ -55,7 +55,14 @@ function DonorDetailDayXPage() {
     if (donor) trackVisit({ type: 'donor', id: donor.id, label: donor.name, path: `/people/donors/${donor.id}` });
   }, [donor?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const linkedActions = useMemo(() => allActions.filter((a) => a.entity?.type === 'donor' && a.entity?.id === id), [allActions, id]);
+  // On Day X we start every donor detail with NO open follow-ups; only
+  // actions the user creates this session (addAction produces ids starting
+  // with "act-user-") appear here. Seeded dashboard actions stay on the
+  // Tasks panel where they help orient the landing view.
+  const linkedActions = useMemo(
+    () => allActions.filter((a) => a.entity?.type === 'donor' && a.entity?.id === id && a.id.startsWith('act-user-')),
+    [allActions, id],
+  );
   const donorNotes = useMemo(() => (id ? notesForEntity('donor', id) : []), [id]);
   const canAssign = hasCapability('assignActions');
 
@@ -417,15 +424,7 @@ function DonorDetailDayXPage() {
 
         {/* Right: side panels */}
         <div className="col-span-4 flex flex-col gap-6">
-          {/* Phase 5: cross-surface connective tissue — the donor story ties
-              into a policy moment and a peer campaign. Promoted to the top
-              of the side rail so the "why this donor matters right now" read
-              happens before the suggested next step. */}
-          {id && linksFor('donor', id).length > 0 && (
-            <LinkedInsightSection insights={linksFor('donor', id)} />
-          )}
-
-          {/* Suggested next step */}
+          {/* Suggested next step — primary CTA for this donor. */}
           <div className="relative bg-surface border border-border-subtle rounded-md overflow-hidden" data-walkthrough-focus="Suggested next step">
             <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />
             <div className="px-5 py-3.5 bg-accent-soft/35 border-b border-border-subtle flex items-center gap-2">
@@ -461,6 +460,12 @@ function DonorDetailDayXPage() {
               </div>
             </div>
           </div>
+
+          {/* Cross-surface connective tissue. Items are read-only links here;
+              the primary action lives in "Suggested next step" above. */}
+          {id && linksFor('donor', id).length > 0 && (
+            <LinkedInsightSection insights={linksFor('donor', id)} />
+          )}
 
           {/* Contact */}
           <div className="bg-surface border border-border-subtle rounded-md">

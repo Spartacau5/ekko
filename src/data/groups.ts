@@ -14,6 +14,14 @@ export interface DonorGroup {
   memberIds: string[];
   growthLast90: number; // % change
   engagementScore: number; // 0-100
+  // Deltas shown on the detail-header KPI strip ("Compared to last 3 month").
+  membersDelta: number;
+  lifetimeDelta: number;
+  avgGiftDelta: number;
+  engagementDelta: number;
+  // 4-point giving series for Jan/Feb/Mar/Apr in $ units.
+  givingTrend: number[];
+  recommendedAction: string;
 }
 
 export const donorGroups: DonorGroup[] = [
@@ -33,6 +41,12 @@ export const donorGroups: DonorGroup[] = [
     memberIds: ['maya-patel', 'samir-gupta', 'luis-martinez'],
     growthLast90: 8,
     engagementScore: 84,
+    membersDelta: 8,
+    lifetimeDelta: 4.2,
+    avgGiftDelta: 1.2,
+    engagementDelta: 3,
+    givingTrend: [5200, 8400, 6800, 20400],
+    recommendedAction: 'Send tailored update on tenant protection policy wins. This group of donors highly engaged with policy content recently.',
   },
   {
     id: 'spring-gala-2025',
@@ -50,6 +64,12 @@ export const donorGroups: DonorGroup[] = [
     memberIds: ['maya-patel', 'priya-narang', 'helen-brooks'],
     growthLast90: 0,
     engagementScore: 71,
+    membersDelta: 2,
+    lifetimeDelta: 6.4,
+    avgGiftDelta: -0.5,
+    engagementDelta: 1,
+    givingTrend: [18000, 16500, 19200, 21500],
+    recommendedAction: 'Invite to the Q2 stewardship dinner. Gala attendees convert to major donors at a higher rate when re-engaged in person within 12 months.',
   },
   {
     id: 'lapsed-recovery',
@@ -67,6 +87,12 @@ export const donorGroups: DonorGroup[] = [
     memberIds: ['daniel-cho'],
     growthLast90: -12,
     engagementScore: 22,
+    membersDelta: -3,
+    lifetimeDelta: -8.1,
+    avgGiftDelta: -4.0,
+    engagementDelta: -5,
+    givingTrend: [3200, 2400, 1800, 1200],
+    recommendedAction: 'Launch a short-form impact email with a low-commitment ask. Lapsed donors respond best to a single story and a $25 ask before larger campaigns.',
   },
   {
     id: 'foundation-partners',
@@ -84,6 +110,12 @@ export const donorGroups: DonorGroup[] = [
     memberIds: ['priya-narang'],
     growthLast90: 4,
     engagementScore: 91,
+    membersDelta: 0,
+    lifetimeDelta: 9.5,
+    avgGiftDelta: 4.1,
+    engagementDelta: 2,
+    givingTrend: [42000, 48000, 52000, 78000],
+    recommendedAction: 'Schedule Q2 portfolio reviews. Foundation funders expect quarterly strategic updates — skipping this cadence is the top reason grants fail to renew.',
   },
   {
     id: 'corporate-csr',
@@ -101,6 +133,12 @@ export const donorGroups: DonorGroup[] = [
     memberIds: ['helen-brooks'],
     growthLast90: 22,
     engagementScore: 58,
+    membersDelta: 15,
+    lifetimeDelta: 18.0,
+    avgGiftDelta: 2.8,
+    engagementDelta: 6,
+    givingTrend: [6400, 7200, 9800, 12500],
+    recommendedAction: 'Send a concise partnership concept note with 2-3 volunteer integrations. Mid-stage corporate prospects close faster on concrete proposals than cold decks.',
   },
   {
     id: 'monthly-givers',
@@ -118,6 +156,12 @@ export const donorGroups: DonorGroup[] = [
     memberIds: ['jordan-rivera', 'luis-martinez'],
     growthLast90: 6,
     engagementScore: 67,
+    membersDelta: 4,
+    lifetimeDelta: 2.9,
+    avgGiftDelta: 0.4,
+    engagementDelta: 1,
+    givingTrend: [11200, 11800, 12100, 12800],
+    recommendedAction: 'Surface volunteer nights and ambassador toolkits. Sustainers convert to lifetime advocates when given a second, non-monetary way to participate.',
   },
   {
     id: 'policy-briefing-list',
@@ -135,6 +179,12 @@ export const donorGroups: DonorGroup[] = [
     memberIds: ['maya-patel', 'samir-gupta'],
     growthLast90: 14,
     engagementScore: 79,
+    membersDelta: 9,
+    lifetimeDelta: 5.6,
+    avgGiftDelta: 1.5,
+    engagementDelta: 4,
+    givingTrend: [14500, 17200, 16800, 24100],
+    recommendedAction: 'Deliver a focused brief on the Right-to-Counsel expansion. This list opened the last policy email at 3x the org average — capitalize before it cools.',
   },
   {
     id: 'first-time-2026',
@@ -152,5 +202,11 @@ export const donorGroups: DonorGroup[] = [
     memberIds: [],
     growthLast90: 38,
     engagementScore: 52,
+    membersDelta: 33,
+    lifetimeDelta: 100,
+    avgGiftDelta: 0,
+    engagementDelta: 2,
+    givingTrend: [900, 3400, 5800, 8300],
+    recommendedAction: 'Trigger the 3-step welcome series now. First-time donors who complete onboarding in the first 30 days are 4x more likely to give a second time.',
   },
 ];

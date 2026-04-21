@@ -1,32 +1,23 @@
-// Phase 4.5 — Day 0 Donors list.
-// Light, sample-driven, oriented toward "import your real CRM data". No saved
-// views, no bulk actions, no filter modal. The point of the page is to show
-// the user what a donor record will look like once they connect Salesforce,
-// and to make connecting feel like the obvious next step.
+// Day 0 Donors list.
+// Mirrors the Day X shell: "Donors" title, zeroed stats strip, and a single
+// setup panel where the user connects a CRM (Salesforce) to populate the table.
 
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Database, Mail, Phone } from 'lucide-react';
+import { ArrowRight, Database, Mail, Phone, Plus } from 'lucide-react';
 import { useMaturity } from '../../lib/MaturityContext';
 import {
   donorsForMaturity,
   integrationsForMaturity,
-  previewsForSurface,
 } from '../../data/maturity';
-import {
-  ConnectionPromptCard,
-  ValuePreviewCard,
-  EducationalEmptyState,
-  Chip,
-} from '../../components/ui';
+import { ConnectionPromptCard } from '../../components/ui';
 import { motionDurations, motionEasings } from '../../lib/motion';
 
 export function DonorsListDay0Page() {
   const { activeMaturity } = useMaturity();
-  const donors = donorsForMaturity(activeMaturity);
+  const sampleDonors = donorsForMaturity(activeMaturity);
   const integrations = integrationsForMaturity(activeMaturity);
-  const peoplePreviews = previewsForSurface('people');
   const salesforce = integrations.find((i) => i.id === 'salesforce')!;
 
   return (
@@ -34,111 +25,116 @@ export function DonorsListDay0Page() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
-      className="space-y-6"
     >
-      <EducationalEmptyState
-        eyebrow="Day 0 — People"
-        title="Sample donors are loaded so you can see how People works."
-        description="Connect Salesforce to replace these placeholders with your real donor records. Once imported, you'll get full giving history, engagement timelines, persona insights, and at-risk detection."
-        bullets={[
-          'Each donor gets a giving timeline assembled from CRM, email, and meeting data',
-          'Risk scoring flags donors who are quietly disengaging before they lapse',
-          'Suggested next steps are tailored to each donor\u2019s persona and stage',
-        ]}
-        primary={{ label: 'Connect Salesforce', to: '/settings' }}
-        secondary={{ label: 'See sample donors below', onClick: () => {
-          const el = document.getElementById('sample-donors');
-          el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } }}
-        icon={<Database size={15} />}
-      />
+      <div className="mb-6">
+        <h1 className="page-title">Donors</h1>
+        <p className="text-[14px] text-secondary mt-1.5 max-w-2xl">
+          Check and edit all donors in one place.
+        </p>
+      </div>
 
-      {/* Connection prompt — single, prominent */}
-      <section className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-4">
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <Day0StatCard label="Total Donors" value="0" />
+        <Day0StatCard label="Inactive Donors" value="0" />
+        <Day0StatCard label="Lapsed Donors" value="0" />
+        <Day0StatCard label="New Donors" value="0" sublabel="Last 7 days" />
+      </div>
+
+      <section className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-4 mb-6">
         <ConnectionPromptCard integration={salesforce} />
         <div className="bg-surface border border-border-subtle rounded-md p-5">
-          <p className="text-[11px] font-medium text-muted uppercase tracking-wider">What unlocks</p>
-          <h3 className="text-[15px] font-semibold text-primary mt-1">Once you connect Salesforce</h3>
-          <ul className="mt-3 space-y-2">
-            <UnlockBullet text="1,200+ donor records imported with gift history" />
-            <UnlockBullet text="Risk model runs nightly — flagged donors appear here" />
-            <UnlockBullet text="Saved views, bulk actions, and segments become available" />
-            <UnlockBullet text="Full filter set (donor type, stage, owner, geography)" />
+          <div className="flex items-center gap-2 mb-1">
+            <Database size={14} className="text-secondary" />
+            <h3 className="text-[15px] font-semibold text-primary">Once Salesforce is connected</h3>
+          </div>
+          <p className="text-[12px] text-muted mb-3 leading-relaxed">
+            Ekko imports your donor records and starts running the risk model overnight. Filters, bulk
+            actions, and detailed profiles all light up once data lands.
+          </p>
+          <ul className="space-y-2">
+            <UnlockBullet text="Donor records imported with giving history" />
+            <UnlockBullet text="Relationship state (Active / At-risk / Lapsed / Inactive) computed" />
+            <UnlockBullet text="Risk model flags donors before they lapse" />
+            <UnlockBullet text="Search, filters, and bulk actions unlock automatically" />
           </ul>
         </div>
       </section>
 
-      {/* Sample donor list */}
-      <section id="sample-donors">
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <p className="text-[11px] font-medium text-muted uppercase tracking-wider">Sample data</p>
-            <h2 className="text-[18px] font-serif font-semibold text-primary leading-tight mt-1">
-              {donors.length} sample donors
-            </h2>
-            <p className="text-[12px] text-secondary mt-1">Click any donor to see how a connected profile feels.</p>
+      <section id="sample-donors" className="bg-surface border border-border-subtle rounded-md">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle bg-surface-muted/30">
+          <div className="flex items-center gap-2">
+            <p className="text-[13px] font-semibold text-primary">Sample donors</p>
+            <span className="inline-flex items-center px-1.5 h-[20px] text-[11px] font-medium border border-info/35 bg-info-soft text-info rounded-sm">
+              Preview
+            </span>
           </div>
-          <Chip variant="info" label="Sample" />
+          <button
+            type="button"
+            disabled
+            className="inline-flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium bg-surface-muted/50 border border-border-subtle rounded-sm text-muted cursor-not-allowed"
+          >
+            <Plus size={12} /> Add Donor
+          </button>
         </div>
 
-        <div className="bg-surface border border-border-subtle rounded-md overflow-hidden">
-          <table className="w-full text-[13px]">
-            <thead className="bg-surface-muted/40 border-b border-border-subtle">
-              <tr className="text-left">
-                <th className="px-4 py-2.5 font-medium text-muted text-[11px] uppercase tracking-wider">Name</th>
-                <th className="px-4 py-2.5 font-medium text-muted text-[11px] uppercase tracking-wider">Type</th>
-                <th className="px-4 py-2.5 font-medium text-muted text-[11px] uppercase tracking-wider">Persona</th>
-                <th className="px-4 py-2.5 font-medium text-muted text-[11px] uppercase tracking-wider">Contact</th>
-                <th className="px-4 py-2.5 w-10" aria-label="Open" />
+        <table className="w-full text-[13px]">
+          <thead className="border-b border-border-subtle bg-surface-muted/20">
+            <tr className="text-left">
+              <th className="px-5 py-2.5 font-semibold text-muted text-[11px] uppercase tracking-wider">Name</th>
+              <th className="px-5 py-2.5 font-semibold text-muted text-[11px] uppercase tracking-wider">Type</th>
+              <th className="px-5 py-2.5 font-semibold text-muted text-[11px] uppercase tracking-wider">Persona</th>
+              <th className="px-5 py-2.5 font-semibold text-muted text-[11px] uppercase tracking-wider">Contact</th>
+              <th className="w-10" aria-label="Open" />
+            </tr>
+          </thead>
+          <tbody>
+            {sampleDonors.map((d) => (
+              <tr
+                key={d.id}
+                className="border-b border-border-subtle last:border-b-0 hover:bg-surface-muted/30 transition-colors"
+              >
+                <td className="px-5 py-3">
+                  <Link
+                    to={`/people/donors/${d.id}`}
+                    className="text-primary font-medium no-underline hover:underline underline-offset-2 decoration-border-default"
+                  >
+                    {d.name}
+                  </Link>
+                </td>
+                <td className="px-5 py-3 text-secondary">{d.donorType}</td>
+                <td className="px-5 py-3 text-secondary">{d.persona}</td>
+                <td className="px-5 py-3 text-muted">
+                  <div className="flex items-center gap-3 text-[12px]">
+                    <span className="inline-flex items-center gap-1"><Mail size={11} /> {d.email}</span>
+                    <span className="inline-flex items-center gap-1"><Phone size={11} /> {d.phone}</span>
+                  </div>
+                </td>
+                <td className="px-2 py-3">
+                  <Link to={`/people/donors/${d.id}`} className="text-muted hover:text-primary inline-flex">
+                    <ArrowRight size={14} />
+                  </Link>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {donors.map((d) => (
-                <tr key={d.id} className="border-b border-border-subtle last:border-b-0 hover:bg-surface-muted/30 transition-colors duration-150">
-                  <td className="px-4 py-3">
-                    <Link to={`/people/donors/${d.id}`} className="text-primary font-medium no-underline hover:underline">
-                      {d.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-secondary">{d.donorType}</td>
-                  <td className="px-4 py-3 text-secondary">{d.persona}</td>
-                  <td className="px-4 py-3 text-muted">
-                    <div className="flex items-center gap-3 text-[12px]">
-                      <span className="inline-flex items-center gap-1"><Mail size={11} /> {d.email}</span>
-                      <span className="inline-flex items-center gap-1"><Phone size={11} /> {d.phone}</span>
-                    </div>
-                  </td>
-                  <td className="px-2 py-3">
-                    <Link to={`/people/donors/${d.id}`} className="text-muted hover:text-primary inline-flex">
-                      <ArrowRight size={14} />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Value previews */}
-      <section>
-        <p className="text-[11px] font-medium text-muted uppercase tracking-wider">What you'll unlock</p>
-        <h2 className="text-[18px] font-serif font-semibold text-primary leading-tight mt-1">
-          Once your CRM is connected
-        </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          {peoplePreviews.map((p) => (
-            <ValuePreviewCard
-              key={p.id}
-              title={p.title}
-              description={p.description}
-              unlockedBy={p.unlockedBy}
-              exampleStat={p.exampleStat}
-            />
-          ))}
+            ))}
+          </tbody>
+        </table>
+        <div className="px-5 py-3 border-t border-border-subtle bg-surface-muted/30 text-[12px] text-muted">
+          Showing {sampleDonors.length} sample donors — connect Salesforce to replace with real records.
         </div>
       </section>
     </motion.div>
+  );
+}
+
+function Day0StatCard({ label, value, sublabel }: { label: string; value: string; sublabel?: string }) {
+  return (
+    <div className="bg-surface border border-border-subtle rounded-md p-5 opacity-70">
+      <div className="flex items-baseline justify-between gap-2 mb-3">
+        <p className="text-[13px] font-medium text-secondary">{label}</p>
+        {sublabel && <span className="text-[11px] text-muted">{sublabel}</span>}
+      </div>
+      <p className="metric-display text-primary">{value}</p>
+    </div>
   );
 }
 

@@ -1,228 +1,334 @@
-import React, { useState, useMemo } from 'react';
+// Merged Campaigns page — peer campaigns + our campaigns in one grid.
+// Replaces the former Campaign library + the "Campaign intelligence" tab
+// on Peers. Filters: Source / Type / Performance / More (channels).
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { peerCampaigns, PeerCampaign, CampaignTheme, CampaignChannel } from '../data/campaigns';
-import {
-  PageHeader, Chip, SearchBar, Button, SegmentedControl, Modal, Checkbox, EmptyState, useToast,
-} from '../components/ui';
-import {
-  Filter, Star, TrendingUp, Megaphone, BookOpen, ArrowLeft,
-} from 'lucide-react';
+import { ChevronDown, Filter, Info, Search } from 'lucide-react';
+import { peerCampaigns, PeerCampaign, CampaignSource, CampaignTheme, CampaignChannel } from '../data/campaigns';
+import { useMaturity } from '../lib/MaturityContext';
+import { CampaignsDay0Page } from './day0/CampaignsDay0Page';
+import { Checkbox } from '../components/ui';
 
-const themeOptions = [
-  { value: 'all', label: 'All themes' },
-  { value: 'favorites', label: 'Favorites' },
-  { value: 'high-performing', label: 'High-performing' },
+const SOURCE_OPTIONS: CampaignSource[] = ['Peer organizations', 'Our campaigns'];
+const TYPE_OPTIONS: CampaignTheme[] = [
+  'Emergency aid',
+  'Tenant rights',
+  'Housing policy',
+  'Year-end appeal',
+  'Capital campaign',
+  'Volunteer drive',
+  'Stewardship',
+  'Awareness',
+  'Recurring acquisition',
+  'Family services',
 ];
-
-const themeFilterValues: CampaignTheme[] = [
-  'Emergency aid', 'Tenant rights', 'Housing policy', 'Year-end appeal',
-  'Capital campaign', 'Volunteer drive', 'Stewardship', 'Awareness',
-  'Recurring acquisition', 'Family services',
-];
-
-const channelFilterValues: CampaignChannel[] = [
-  'Email', 'Direct mail', 'Social media', 'SMS', 'Press', 'Events', 'Phone', 'Door-to-door', 'Webinars', 'Partner network',
+const PERFORMANCE_OPTIONS = ['High (>100% vs avg)', 'On par (80–100%)', 'Below avg (<80%)'];
+const CHANNEL_OPTIONS: CampaignChannel[] = [
+  'Email',
+  'Direct mail',
+  'Social media',
+  'SMS',
+  'Press',
+  'Events',
+  'Phone',
+  'Door-to-door',
+  'Webinars',
+  'Partner network',
+  'Community events',
 ];
 
 export function CampaignLibraryPage() {
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [advFilters, setAdvFilters] = useState<{ themes: string[]; channels: string[] }>({ themes: [], channels: [] });
-  const toast = useToast();
+  const { activeMaturity } = useMaturity();
+  if (activeMaturity === 'day0') return <CampaignsDay0Page />;
+  return <CampaignsDayXPage />;
+}
 
-  const toggleTheme = (t: string) => {
-    setAdvFilters(f => ({
-      ...f,
-      themes: f.themes.includes(t) ? f.themes.filter(x => x !== t) : [...f.themes, t],
-    }));
-  };
-  const toggleChannel = (c: string) => {
-    setAdvFilters(f => ({
-      ...f,
-      channels: f.channels.includes(c) ? f.channels.filter(x => x !== c) : [...f.channels, c],
-    }));
-  };
-  const clearAdv = () => setAdvFilters({ themes: [], channels: [] });
-  const advCount = advFilters.themes.length + advFilters.channels.length;
+function CampaignsDayXPage() {
+  const [search, setSearch] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<string[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [perfFilter, setPerfFilter] = useState<string[]>([]);
+  const [channelFilter, setChannelFilter] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
-    return peerCampaigns.filter(c => {
-      if (filter === 'favorites' && !c.isFavorite) return false;
-      if (filter === 'high-performing' && c.performanceVsAvg < 100) return false;
-      if (search && !c.title.toLowerCase().includes(search.toLowerCase()) && !c.topMessage.toLowerCase().includes(search.toLowerCase()) && !c.orgName.toLowerCase().includes(search.toLowerCase())) return false;
-      if (advFilters.themes.length && !advFilters.themes.includes(c.theme)) return false;
-      if (advFilters.channels.length && !c.channels.some(ch => advFilters.channels.includes(ch))) return false;
+    return peerCampaigns.filter((c) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (
+          !c.title.toLowerCase().includes(q) &&
+          !c.orgName.toLowerCase().includes(q) &&
+          !c.topMessage.toLowerCase().includes(q)
+        )
+          return false;
+      }
+      if (sourceFilter.length && !sourceFilter.includes(c.source)) return false;
+      if (typeFilter.length && !typeFilter.includes(c.theme)) return false;
+      if (perfFilter.length) {
+        const match = perfFilter.some((bucket) => {
+          if (bucket === 'High (>100% vs avg)') return c.performanceVsAvg > 100;
+          if (bucket === 'On par (80–100%)') return c.performanceVsAvg >= 80 && c.performanceVsAvg <= 100;
+          if (bucket === 'Below avg (<80%)') return c.performanceVsAvg < 80;
+          return false;
+        });
+        if (!match) return false;
+      }
+      if (channelFilter.length && !c.channels.some((ch) => channelFilter.includes(ch))) return false;
       return true;
     });
-  }, [search, filter, advFilters]);
+  }, [search, sourceFilter, typeFilter, perfFilter, channelFilter]);
 
-  const stats = {
-    total: peerCampaigns.length,
-    favorites: peerCampaigns.filter(c => c.isFavorite).length,
-    highPerforming: peerCampaigns.filter(c => c.performanceVsAvg >= 100).length,
-    avgPerf: Math.round(peerCampaigns.reduce((sum, c) => sum + c.performanceVsAvg, 0) / peerCampaigns.length),
-  };
+  const filtersDirty =
+    sourceFilter.length > 0 || typeFilter.length > 0 || perfFilter.length > 0 || channelFilter.length > 0;
+
+  function clearAll() {
+    setSourceFilter([]);
+    setTypeFilter([]);
+    setPerfFilter([]);
+    setChannelFilter([]);
+  }
 
   return (
     <>
-      <Link to="/peers" className="inline-flex items-center gap-1 text-[13px] text-secondary hover:text-primary mb-4">
-        <ArrowLeft size={14} /> Back to peers
-      </Link>
-
-      <PageHeader
-        title="Campaign intelligence"
-        subtitle="What’s working in your sector — anonymized peer campaigns"
-        serif
-      />
-
-      {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total campaigns" value={stats.total.toString()} icon={<BookOpen size={14} />} />
-        <StatCard label="High-performing" value={stats.highPerforming.toString()} icon={<TrendingUp size={14} />} sublabel="above sector avg" />
-        <StatCard label="Saved as favorite" value={stats.favorites.toString()} icon={<Star size={14} />} />
-        <StatCard label="Avg performance" value={`+${stats.avgPerf - 100}%`} icon={<Megaphone size={14} />} sublabel="vs sector baseline" />
+      <div className="mb-6">
+        <h1 className="page-title flex items-center gap-2">
+          Campaigns
+        </h1>
+        <p className="text-[14px] text-secondary mt-1.5 max-w-2xl flex items-center gap-1.5">
+          Check what campaigns similar organizations are hosting and your previous campaigns.
+          <span title="Combines peer campaign intelligence with your own campaign history."><Info size={13} className="text-muted" /></span>
+        </p>
       </div>
 
-      {/* View + filters */}
-      <div className="flex items-center gap-3 mb-4">
-        <SegmentedControl options={themeOptions} value={filter} onChange={setFilter} />
-        <div className="flex-1 max-w-md">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search campaigns by title, message, or org..." />
+      <div className="bg-surface border border-border-subtle rounded-md p-5 mb-6">
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search campaigns..."
+            className="w-full h-10 pl-9 pr-3 bg-surface border border-border-subtle rounded-sm text-[13px] text-primary placeholder:text-muted
+              focus:outline-none focus:ring-1 focus:ring-primary/15 focus:border-border-default"
+          />
         </div>
-        <Button variant="secondary" onClick={() => setFilterModalOpen(true)}>
-          <Filter size={14} className="mr-2" />
-          Filters {advCount > 0 && <span className="ml-1.5 text-[12px] bg-accent text-primary px-1.5 rounded-sm">{advCount}</span>}
-        </Button>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <MultiFilterPill
+            label="Source"
+            options={SOURCE_OPTIONS}
+            selected={sourceFilter}
+            onToggle={(v) => setSourceFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onClear={() => setSourceFilter([])}
+          />
+          <MultiFilterPill
+            label="Type"
+            options={TYPE_OPTIONS}
+            selected={typeFilter}
+            onToggle={(v) => setTypeFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onClear={() => setTypeFilter([])}
+          />
+          <MultiFilterPill
+            label="Performance"
+            options={PERFORMANCE_OPTIONS}
+            selected={perfFilter}
+            onToggle={(v) => setPerfFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onClear={() => setPerfFilter([])}
+          />
+          <MorePill
+            channels={channelFilter}
+            onToggle={(v) => setChannelFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onClear={() => setChannelFilter([])}
+          />
+          {filtersDirty && (
+            <button
+              onClick={clearAll}
+              className="ml-1 text-[12px] text-secondary hover:text-primary border-b border-transparent hover:border-primary/40 pb-px"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
 
-      {advCount > 0 && (
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {advFilters.themes.map(t => <Chip key={`t-${t}`} label={t} onRemove={() => toggleTheme(t)} variant="info" />)}
-          {advFilters.channels.map(c => <Chip key={`c-${c}`} label={c} onRemove={() => toggleChannel(c)} />)}
-          <button onClick={clearAdv} className="text-[13px] text-secondary hover:text-primary underline">Clear all</button>
-        </div>
-      )}
-
-      {/* Campaign cards */}
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={<Megaphone size={32} />}
-          title="No campaigns match your filters"
-          description="Try adjusting your filters or search query."
-          action={{ label: 'Clear filters', onClick: () => { clearAdv(); setSearch(''); setFilter('all'); } }}
-        />
+        <div className="bg-surface border border-border-subtle rounded-md py-16 text-center text-[13px] text-muted">
+          No campaigns match these filters.
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          {filtered.map(c => <CampaignCard key={c.id} campaign={c} />)}
+          {filtered.map((c) => <CampaignCard key={c.id} campaign={c} />)}
         </div>
       )}
-
-      <Modal
-        open={filterModalOpen}
-        onClose={() => setFilterModalOpen(false)}
-        title="Filter campaigns"
-        width="max-w-2xl"
-        footer={
-          <>
-            <Button variant="ghost" onClick={clearAdv}>Clear all</Button>
-            <Button onClick={() => {
-              setFilterModalOpen(false);
-              if (advCount > 0) {
-                toast.show({
-                  type: 'success',
-                  title: `${advCount} ${advCount === 1 ? 'filter' : 'filters'} applied`,
-                  description: `Showing ${filtered.length} of ${peerCampaigns.length} campaigns`,
-                });
-              }
-            }}>Apply filters</Button>
-          </>
-        }
-      >
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-          <div>
-            <h4 className="text-[13px] font-semibold text-primary mb-2">Theme</h4>
-            <div className="flex flex-col gap-2">
-              {themeFilterValues.map(t => (
-                <Checkbox key={t} label={t} checked={advFilters.themes.includes(t)} onChange={() => toggleTheme(t)} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <h4 className="text-[13px] font-semibold text-primary mb-2">Channel</h4>
-            <div className="flex flex-col gap-2">
-              {channelFilterValues.map(c => (
-                <Checkbox key={c} label={c} checked={advFilters.channels.includes(c)} onChange={() => toggleChannel(c)} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </Modal>
     </>
   );
 }
 
 function CampaignCard({ campaign }: { campaign: PeerCampaign }) {
-  const perfVariant = campaign.performanceVsAvg >= 150 ? 'success' : campaign.performanceVsAvg >= 100 ? 'success' : 'default';
-  const perfLabel = `${campaign.performanceVsAvg > 100 ? '+' : ''}${(campaign.performanceVsAvg - 100).toFixed(0)}% vs avg`;
-
   return (
-    <div className="bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors flex flex-col">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Chip label={campaign.theme} variant="info" />
-            {campaign.isFavorite && <Star size={13} className="text-accent fill-accent" />}
+    <Link
+      to={`/peers/campaigns/${campaign.id}`}
+      className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors no-underline"
+    >
+      <h3 className="text-[15px] font-semibold text-primary leading-snug mb-1">{campaign.title}</h3>
+      <p className="text-[13px] text-secondary mb-3">{campaign.orgName}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {campaign.channels.slice(0, 4).map((ch) => (
+          <span
+            key={ch}
+            className="inline-flex items-center px-2 h-[22px] text-[11px] font-medium leading-none bg-surface-muted text-secondary border border-border-subtle rounded-full"
+          >
+            {ch}
+          </span>
+        ))}
+      </div>
+    </Link>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Filter pills
+// ─────────────────────────────────────────────────────────────────────────────
+
+function usePopover() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  return { open, setOpen, ref };
+}
+
+function PillTrigger({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-sm border text-[12px] font-medium transition-colors duration-150
+        ${active
+          ? 'bg-primary text-surface border-primary'
+          : 'bg-surface text-primary border-border-subtle hover:border-border-default'
+        }`}
+    >
+      <span className={active ? 'text-surface' : 'text-secondary'}>{label}</span>
+      <span className={active ? 'text-surface font-semibold' : 'text-primary font-semibold'}>{value}</span>
+      <ChevronDown size={12} className={active ? 'text-surface/70' : 'text-muted'} />
+    </button>
+  );
+}
+
+function MultiFilterPill({
+  label,
+  options,
+  selected,
+  onToggle,
+  onClear,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (v: string) => void;
+  onClear: () => void;
+}) {
+  const { open, setOpen, ref } = usePopover();
+  const active = selected.length > 0;
+  const valueLabel = selected.length === 0 ? 'All' : selected.length === 1 ? selected[0] : `${selected.length} selected`;
+  return (
+    <div ref={ref} className="relative">
+      <PillTrigger label={label} value={valueLabel} active={active} onClick={() => setOpen((o) => !o)} />
+      {open && (
+        <div className="absolute left-0 mt-1.5 z-20 bg-surface border border-border-default rounded-sm shadow-md min-w-[260px] p-3">
+          <div className="flex flex-col gap-2 mb-2 max-h-[280px] overflow-y-auto">
+            {options.map((opt) => (
+              <Checkbox key={opt} label={opt} checked={selected.includes(opt)} onChange={() => onToggle(opt)} />
+            ))}
           </div>
-          <h3 className="text-[16px] leading-[22px] font-semibold text-primary mb-1">{campaign.title}</h3>
-          <Link to={`/peers/${campaign.orgId}`} className="text-[13px] text-secondary hover:text-primary no-underline">
-            From {campaign.orgName}
-          </Link>
+          {active && (
+            <button
+              onClick={() => {
+                onClear();
+                setOpen(false);
+              }}
+              className="text-[12px] text-secondary hover:text-primary"
+            >
+              Clear
+            </button>
+          )}
         </div>
-        <Chip label={perfLabel} variant={perfVariant} />
-      </div>
-
-      {/* Top message */}
-      <div className="mb-3 px-3 py-2.5 bg-surface-muted border-l-2 border-border-default">
-        <p className="text-[13px] text-primary italic leading-relaxed line-clamp-3">"{campaign.topMessage}"</p>
-      </div>
-
-      {/* Notable tactic */}
-      <div className="mb-3">
-        <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-1">Notable tactic</p>
-        <p className="text-[13px] text-secondary leading-relaxed line-clamp-2">{campaign.notableTactic}</p>
-      </div>
-
-      {/* Outcome */}
-      <div className="mb-3">
-        <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-1">Outcome</p>
-        <p className="text-[13px] text-secondary leading-relaxed line-clamp-2">{campaign.outcome}</p>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-auto pt-3 border-t border-border-subtle flex items-center justify-between">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {campaign.channels.slice(0, 3).map(ch => (
-            <span key={ch} className="text-[12px] text-muted">{ch}</span>
-          ))}
-          {campaign.channels.length > 3 && <span className="text-[12px] text-muted">+{campaign.channels.length - 3}</span>}
-        </div>
-        <div className="text-[12px] text-muted">{campaign.dateRange}</div>
-      </div>
+      )}
     </div>
   );
 }
 
-function StatCard({ label, value, icon, sublabel }: { label: string; value: string; icon: React.ReactNode; sublabel?: string }) {
+function MorePill({
+  channels,
+  onToggle,
+  onClear,
+}: {
+  channels: string[];
+  onToggle: (v: string) => void;
+  onClear: () => void;
+}) {
+  const { open, setOpen, ref } = usePopover();
+  const active = channels.length > 0;
   return (
-    <div className="bg-surface border border-border-subtle rounded-md p-5">
-      <div className="flex items-center gap-1.5 mb-3">
-        <span className="text-muted">{icon}</span>
-        <p className="eyebrow-plain">{label}</p>
-      </div>
-      <p className="metric-display">{value}</p>
-      {sublabel && <p className="text-[11px] text-muted mt-2 pt-2 border-t border-border-subtle">{sublabel}</p>}
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-sm border text-[12px] font-medium transition-colors duration-150
+          ${active
+            ? 'bg-primary text-surface border-primary'
+            : 'bg-surface text-secondary border-border-subtle hover:border-border-default'
+          }`}
+      >
+        <Filter size={12} className={active ? 'text-surface/80' : 'text-muted'} />
+        More
+        {active && <span className="font-semibold">({channels.length})</span>}
+      </button>
+      {open && (
+        <div className="absolute left-0 mt-1.5 z-20 bg-surface border border-border-default rounded-sm shadow-md min-w-[240px] p-3">
+          <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">Channels</p>
+          <div className="flex flex-col gap-2 mb-2 max-h-[280px] overflow-y-auto">
+            {CHANNEL_OPTIONS.map((opt) => (
+              <Checkbox key={opt} label={opt} checked={channels.includes(opt)} onChange={() => onToggle(opt)} />
+            ))}
+          </div>
+          {active && (
+            <button
+              onClick={() => {
+                onClear();
+                setOpen(false);
+              }}
+              className="text-[12px] text-secondary hover:text-primary"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -283,6 +283,11 @@ export interface LinkedInsight {
   toRoute: string;
   reason: string;       // human-readable: why this is linked
   badge?: string;       // optional small chip
+  /**
+   * Short, imperative next step tied to this insight. Surfaced as a CTA
+   * button on detail pages (e.g. "Draft email", "Add to brief").
+   */
+  suggestedAction?: string;
 }
 
 // The narrative spine: Jordan Rivera ↔ Right-to-Counsel ↔ Bronx Housing.
@@ -297,6 +302,7 @@ export const linkedInsights: LinkedInsight[] = [
     toRoute: '/policy/right-to-counsel',
     reason: 'Jordan has clicked on three tenant-rights updates this quarter and gave $250 after the last RTC vote.',
     badge: 'Hearing in 12 days',
+    suggestedAction: 'Brief Jordan before hearing',
   },
   // Jordan ↔ Bronx campaign
   {
@@ -306,6 +312,7 @@ export const linkedInsights: LinkedInsight[] = [
     toRoute: '/peers/bronx-housing',
     reason: 'Bronx Housing\u2019s outperforming campaign messaging is the recommended hook for Jordan\u2019s re-engagement email.',
     badge: '230% vs sector',
+    suggestedAction: 'Borrow messaging for re-engagement email',
   },
   // RTC ↔ donors who care
   {
@@ -315,6 +322,7 @@ export const linkedInsights: LinkedInsight[] = [
     toRoute: '/people/donors/jordan-rivera',
     reason: 'Recurring donor, tenant-rights interest. At risk — re-engagement is overdue.',
     badge: 'At risk',
+    suggestedAction: 'Draft re-engagement email',
   },
   {
     fromType: 'policy', fromId: 'right-to-counsel',
@@ -323,6 +331,7 @@ export const linkedInsights: LinkedInsight[] = [
     toRoute: '/people/donors/maya-patel',
     reason: 'Major donor — explicitly named tenant protection as a giving priority on her last call with Leah.',
     badge: 'Major donor',
+    suggestedAction: 'Schedule policy briefing call',
   },
   // RTC ↔ Bronx (coalition partner)
   {
@@ -331,6 +340,7 @@ export const linkedInsights: LinkedInsight[] = [
     toLabel: 'Bronx Housing Justice Network',
     toRoute: '/peers/bronx-housing',
     reason: 'Coalition partner on the right-to-counsel coalition letter. Their advocacy push is running in parallel.',
+    suggestedAction: 'Coordinate joint statement',
   },
   // Bronx ↔ RTC
   {
@@ -339,7 +349,8 @@ export const linkedInsights: LinkedInsight[] = [
     toLabel: 'NYC Right-to-Counsel Expansion',
     toRoute: '/policy/right-to-counsel',
     reason: 'Bronx Housing\u2019s right-to-counsel campaign aligns with our advocacy moment. Hearing April 22.',
-    badge: 'Active campaign',
+    badge: 'Campaign inspiration',
+    suggestedAction: 'Add to advocacy brief',
   },
   // Bronx ↔ Jordan
   {
@@ -348,7 +359,8 @@ export const linkedInsights: LinkedInsight[] = [
     toLabel: 'Jordan Rivera',
     toRoute: '/people/donors/jordan-rivera',
     reason: 'Their winning emergency-aid creative is the recommended messaging hook for Jordan\u2019s re-engagement.',
-    badge: 'Use this hook',
+    badge: 'Hook for reactivated',
+    suggestedAction: 'Borrow creative for Jordan',
   },
 ];
 

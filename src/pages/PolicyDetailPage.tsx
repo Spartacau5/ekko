@@ -1,26 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { policies, Stakeholder } from '../data/policies';
-import { watchlist } from '../data/watchlist';
-import { ActionItem } from '../data/actions';
-import { useActions } from '../lib/ActionContext';
+import { ArrowLeft, Bell, BellRing, Plus, Sparkles } from 'lucide-react';
+import { policies, Stakeholder, Policy } from '../data/policies';
+import { donors } from '../data/donors';
 import { notesForEntity } from '../data/notes';
-import { watchlistGroups } from '../data/workspace';
-import {
-  Button, Chip, WatchlistToggle, useToast,
-  TaskCard, FollowUpComposer, ActionDrawer, InternalNotePreview, ScopeBadge,
-  LinkedInsightSection, NarrativeSpineBadge, PinButton,
-} from '../components/ui';
-import { linksFor } from '../data/demoFlows';
-import { useRole } from '../lib/RoleContext';
+import { useToast, InternalNotePreview, Button, ComposeNoteModal, FollowUpComposer } from '../components/ui';
 import { useRecent } from '../lib/RecentContext';
-import { useWatchlist } from '../lib/WatchlistContext';
+import { usePolicyRead } from '../lib/PolicyReadContext';
+import { usePolicyFollow } from '../lib/PolicyFollowContext';
 import { useMaturity } from '../lib/MaturityContext';
+import { useActions } from '../lib/ActionContext';
+import { useRole } from '../lib/RoleContext';
 import { PolicyDetailDay0Page } from './day0/PolicyDetailDay0Page';
-import { roleMeta } from '../data/team';
-import {
-  ArrowLeft, Clock, MapPin, AlertCircle, Users, Sparkles, ExternalLink, Bell, Plus, Folder,
-} from 'lucide-react';
 
 export function PolicyDetailPage() {
   const { activeMaturity } = useMaturity();
@@ -31,28 +22,23 @@ export function PolicyDetailPage() {
 function PolicyDetailDayXPage() {
   const { id } = useParams<{ id: string }>();
   const policy = policies.find((p) => p.id === id);
-  const watchItem = watchlist.find((w) => w.policyId === id);
-  const { isWatched, toggleWatched } = useWatchlist();
-  const isWatching = id ? isWatched(id) : false;
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [drawerAction, setDrawerAction] = useState<ActionItem | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const toast = useToast();
-  const { hasCapability, activeRole, activeMember } = useRole();
-  const { actions: allActions, updateStatus, updateOwner, addAction } = useActions();
   const { trackVisit } = useRecent();
-  const canAssign = hasCapability('assignActions');
+  const { markRead } = usePolicyRead();
+  const { isFollowing, toggleFollowing } = usePolicyFollow();
+  const { activeMember } = useRole();
+  const { addAction } = useActions();
+  const toast = useToast();
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
 
-  React.useEffect(() => {
-    if (policy) trackVisit({ type: 'policy', id: policy.id, label: policy.title, path: `/policy/${policy.id}` });
+  useEffect(() => {
+    if (policy) {
+      trackVisit({ type: 'policy', id: policy.id, label: policy.title, path: `/policy/${policy.id}` });
+      markRead(policy.id);
+    }
   }, [policy?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const linkedActions = useMemo(() => allActions.filter((a) => a.entity?.type === 'policy' && a.entity?.id === id), [allActions, id]);
   const linkedNotes = useMemo(() => (id ? notesForEntity('policy', id) : []), [id]);
-  const memberWatchlists = useMemo(
-    () => (id ? watchlistGroups.filter((g) => g.policyIds.includes(id)) : []),
-    [id]
-  );
 
   if (!policy) {
     return (
@@ -63,202 +49,125 @@ function PolicyDetailDayXPage() {
     );
   }
 
-  const isOpportunity = policy.impactLevel.toLowerCase().includes('opportunity');
-  const isRisk = policy.impactLevel.toLowerCase().includes('risk');
-  const impactVariant = isOpportunity ? 'success' : isRisk ? 'danger' : 'warning';
+  const isHighRisk = policy.impactLevel === 'High risk';
 
-  // Compute alignment metrics
-  const supportive = policy.stakeholders.filter(s => s.stance === 'supportive' || s.stance === 'strong ally').length;
-  const mixed = policy.stakeholders.filter(s => s.stance === 'mixed' || s.stance === 'uncertain').length;
-  const opposed = policy.stakeholders.filter(s => s.stance === 'opposed').length;
+  // Collapse mixed + uncertain into a single Uncertain bucket per the new design.
+  const supportive = policy.stakeholders.filter((s) => s.stance === 'supportive' || s.stance === 'strong ally');
+  const uncertain = policy.stakeholders.filter((s) => s.stance === 'mixed' || s.stance === 'uncertain');
+  const opposed = policy.stakeholders.filter((s) => s.stance === 'opposed');
   const total = policy.stakeholders.length;
-  const alignmentPct = total > 0 ? Math.round((supportive / total) * 100) : 0;
+
+  const relatedDonorRows = (policy.relatedDonors ?? [])
+    .map((link) => {
+      const donor = donors.find((d) => d.id === link.donorId);
+      return donor ? { donor, strength: link.strength } : null;
+    })
+    .filter((x): x is { donor: typeof donors[number]; strength: 'Strong' | 'Medium' | 'Low' } => x !== null);
+
+  const relatedPolicies = (policy.relatedPolicyIds ?? [])
+    .map((pid) => policies.find((p) => p.id === pid))
+    .filter((p): p is Policy => Boolean(p));
 
   return (
     <>
-      <Link to="/policy" className="inline-flex items-center gap-1 text-[13px] text-secondary hover:text-primary mb-4">
+      <Link to="/policy" className="inline-flex items-center gap-1 text-[13px] text-secondary hover:text-primary mb-4 no-underline">
         <ArrowLeft size={14} /> Back to policy
       </Link>
 
-      {/* Header */}
-      <div className="bg-surface border border-border-subtle rounded-md p-6 mb-6">
-        <div className="flex items-start justify-between gap-6 mb-4">
-          <div className="flex-1">
-            <p className="eyebrow mb-2">Policy</p>
-            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-              <Chip label={policy.jurisdiction} variant="info" />
-              <Chip label={policy.topic} variant="default" />
-              <Chip label={policy.status} variant="default" />
-              <Chip label={policy.impactLevel} variant={impactVariant} />
-            </div>
-            <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-              <h1 className="page-title">{policy.title}</h1>
-              <NarrativeSpineBadge id={policy.id} />
-            </div>
-            <p className="text-[15px] text-secondary leading-relaxed max-w-3xl">{policy.summary}</p>
+      <header className="bg-surface border border-border-subtle rounded-md p-6 mb-6">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isHighRisk && (
+              <span className="inline-flex items-center px-2 h-[22px] text-[11px] font-medium leading-none border rounded-full bg-danger-soft text-danger border-danger/30">
+                High Risk
+              </span>
+            )}
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-2">
-              <PinButton type="policy" id={policy.id} entityLabel={policy.title} />
-              <WatchlistToggle
-                watching={isWatching}
-                onToggle={() => {
-                  if (id) toggleWatched(id);
-                  const next = !isWatching;
-                  toast.show({
-                    type: next ? 'success' : 'info',
-                    title: next ? 'Added to watchlist' : 'Removed from watchlist',
-                    description: policy.title,
-                  });
-                }}
-              />
-              <Button variant="secondary"><ExternalLink size={14} className="mr-2" />Source</Button>
-            </div>
-            <Button
-              onClick={() => setComposerOpen(true)}
-              disabled={!canAssign}
-            >
-              <Plus size={14} className="mr-1.5" />
-              Assign action
-            </Button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = toggleFollowing(policy.id);
+              toast.show({
+                type: next ? 'success' : 'info',
+                title: next ? 'Notifications on' : 'Notifications off',
+                description: next
+                  ? `You'll be alerted when ${policy.title} changes status, gets amended, or has a new hearing.`
+                  : `You'll no longer receive updates for ${policy.title}.`,
+              });
+            }}
+            className={`inline-flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium border rounded-sm transition-colors
+              ${isFollowing(policy.id)
+                ? 'bg-accent-soft text-primary border-accent/50'
+                : 'bg-surface text-secondary border-border-subtle hover:border-border-default hover:text-primary'
+              }`}
+          >
+            {isFollowing(policy.id) ? <BellRing size={12} /> : <Bell size={12} />}
+            {isFollowing(policy.id) ? 'Following' : 'Notify me'}
+          </button>
         </div>
+        <h1 className="page-title mb-2">{policy.title}</h1>
+        <p className="text-[14px] text-secondary leading-relaxed max-w-3xl">{policy.summary}</p>
 
-        <div className="grid grid-cols-4 gap-6 pt-5 border-t border-border-subtle">
-          <DetailItem icon={<Clock size={13} />} label="Effective" value={policy.effectiveDate} />
-          <DetailItem icon={<MapPin size={13} />} label="Jurisdiction" value={policy.jurisdiction} />
-          <DetailItem icon={<AlertCircle size={13} />} label="Status" value={policy.status} />
-          <DetailItem icon={<Users size={13} />} label="Teams affected" value={policy.teams.join(', ')} />
+        <div className="grid grid-cols-4 gap-6 mt-6 pt-5 border-t border-border-subtle">
+          <DetailStat label="Effective" value={policy.effectiveDate} />
+          <DetailStat label="Jurisdiction" value={policy.jurisdiction} />
+          <DetailStat label="Status" value={policy.status} />
+          <DetailStat label="Opportunity & Risk" value={policy.impactLevel} />
         </div>
-      </div>
+      </header>
 
-      {/* Two column */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Left */}
         <div className="col-span-8 flex flex-col gap-6">
-          {/* Open actions on this policy */}
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25 flex items-start justify-between gap-4">
-              <div>
-                <p className="eyebrow mb-1.5">Actions</p>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-[15px] font-semibold text-primary tracking-tight">Active follow-ups</h2>
-                  <Chip
-                    label={`${linkedActions.filter(a => a.status !== 'completed').length} active`}
-                    variant={linkedActions.some(a => a.priority === 'urgent') ? 'danger' : 'default'}
-                  />
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setComposerOpen(true)}
-                disabled={!canAssign}
-              >
-                <Plus size={13} className="mr-1" /> New action
-              </Button>
-            </div>
-            <div className="p-3 flex flex-col gap-2">
-              {linkedActions.length === 0 ? (
-                <div className="px-2 py-6 text-center">
-                  <p className="text-[13px] text-secondary">
-                    No follow-ups assigned yet. {!canAssign && `${roleMeta[activeRole].label} can view but cannot assign on this policy.`}
-                  </p>
-                </div>
-              ) : (
-                linkedActions.map((a) => (
-                  <TaskCard
-                    key={a.id}
-                    action={a}
-                    canEdit={canAssign}
-                    onStatusChange={(actionId, next) => {
-                      updateStatus(actionId, next);
-                      toast.show({
-                        type: next === 'completed' ? 'success' : 'info',
-                        title:
-                          next === 'completed' ? 'Task completed' :
-                          next === 'in_progress' ? 'Task started' : 'Task reopened',
-                      });
-                    }}
-                    onOwnerChange={(actionId, ownerId) => {
-                      updateOwner(actionId, ownerId);
-                      toast.show({ type: 'success', title: 'Task reassigned' });
-                    }}
-                    onOpenDrawer={(action) => {
-                      setDrawerAction(action);
-                      setDrawerOpen(true);
-                    }}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Timeline */}
-          <div className="bg-surface border border-border-subtle rounded-md" data-walkthrough-focus="Stakeholders + timeline">
-            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25">
-              <p className="eyebrow mb-1.5">History</p>
-              <h2 className="text-[15px] font-semibold text-primary tracking-tight">Policy timeline</h2>
-              <p className="text-[12px] text-muted mt-0.5">Recent changes, hearings, and milestones</p>
-            </div>
+          <Section
+            title="Policy Timeline"
+            subtitle="Recent changes, hearings, and milestones"
+          >
             <div className="px-5 py-2">
               {policy.timeline.map((event, idx) => (
-                <PolicyTimelineEvent key={idx} event={event} isLast={idx === policy.timeline.length - 1} />
+                <TimelineEvent key={idx} event={event} isLast={idx === policy.timeline.length - 1} />
               ))}
             </div>
-          </div>
+          </Section>
 
-          {/* Stakeholder map */}
-          <div className="bg-surface border border-border-subtle rounded-md" data-walkthrough-focus="Stakeholders">
-            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25">
-              <p className="eyebrow mb-1.5">Coalition</p>
-              <h2 className="text-[15px] font-semibold text-primary tracking-tight">Stakeholder map</h2>
-              <p className="text-[12px] text-muted mt-0.5">Who supports, opposes, or is uncertain</p>
-            </div>
-
-            {/* Alignment bar */}
+          <Section
+            title="Stakeholder Map"
+            subtitle="Who supports, opposes, or is uncertain"
+          >
             <div className="px-5 pt-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[13px] font-medium text-primary">Stakeholder alignment</span>
-                <span className="text-[13px] text-muted">{supportive} of {total} aligned</span>
-              </div>
-              <div className="flex gap-1 h-2 rounded-sm overflow-hidden">
-                {Array.from({ length: supportive }).map((_, i) => (
-                  <div key={`s${i}`} className="flex-1 bg-success" />
-                ))}
-                {Array.from({ length: mixed }).map((_, i) => (
-                  <div key={`m${i}`} className="flex-1 bg-warning" />
-                ))}
-                {Array.from({ length: opposed }).map((_, i) => (
-                  <div key={`o${i}`} className="flex-1 bg-danger" />
-                ))}
+              <div className="flex gap-1 h-2 rounded-sm overflow-hidden bg-surface-muted">
+                {supportive.length > 0 && (
+                  <div className="bg-success" style={{ flex: supportive.length }} />
+                )}
+                {uncertain.length > 0 && (
+                  <div className="bg-warning" style={{ flex: uncertain.length }} />
+                )}
+                {opposed.length > 0 && (
+                  <div className="bg-danger" style={{ flex: opposed.length }} />
+                )}
               </div>
               <div className="flex items-center gap-4 mt-2 text-[12px] text-muted">
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 bg-success rounded-sm" />Supportive ({supportive})</span>
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 bg-warning rounded-sm" />Mixed ({mixed})</span>
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 bg-danger rounded-sm" />Opposed ({opposed})</span>
+                <span className="flex items-center gap-1.5"><Swatch color="success" />Supportive ({supportive.length})</span>
+                <span className="flex items-center gap-1.5"><Swatch color="warning" />Uncertain ({uncertain.length})</span>
+                <span className="flex items-center gap-1.5"><Swatch color="danger" />Opposed ({opposed.length})</span>
               </div>
             </div>
-
-            <div className="p-5 flex flex-col gap-3">
+            <div className="p-5 flex flex-col">
               {policy.stakeholders.map((s) => (
                 <StakeholderRow key={s.name} stakeholder={s} />
               ))}
+              {total === 0 && <p className="text-[13px] text-muted">No stakeholders mapped yet.</p>}
             </div>
-          </div>
+          </Section>
 
-          {/* Internal discussion / notes */}
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-4 border-b border-border-subtle bg-surface-muted/25 flex items-start justify-between gap-4">
-              <div>
-                <p className="eyebrow mb-1.5">Team</p>
-                <h2 className="text-[15px] font-semibold text-primary tracking-tight">Internal discussion</h2>
-                <p className="text-[12px] text-muted mt-0.5">Notes from the team</p>
-              </div>
-              <Button variant="ghost" size="sm">
-                <Plus size={13} className="mr-1" /> Note
+          <Section
+            title="Internal Discussion"
+            subtitle="Notes from the team"
+            action={
+              <Button variant="ghost" size="sm" onClick={() => setNoteOpen(true)}>
+                <Plus size={13} className="mr-1" /> Add Note
               </Button>
-            </div>
+            }
+          >
             <div className="px-5 divide-y divide-border-subtle">
               {linkedNotes.length === 0 ? (
                 <div className="py-6 text-center">
@@ -268,109 +177,85 @@ function PolicyDetailDayXPage() {
                 linkedNotes.map((n) => <InternalNotePreview key={n.id} note={n} />)
               )}
             </div>
-          </div>
+          </Section>
         </div>
 
-        {/* Side */}
         <div className="col-span-4 flex flex-col gap-6">
-          {/* Phase 5: cross-surface connective tissue */}
-          {id && linksFor('policy', id).length > 0 && (
-            <div data-walkthrough-focus="Linked donors">
-              <LinkedInsightSection insights={linksFor('policy', id)} />
-            </div>
-          )}
-
-          {/* Recommended action */}
-          <div className="relative bg-surface border border-border-subtle rounded-md overflow-hidden" data-walkthrough-focus="Recommended action">
+          <div className="relative bg-surface border border-border-subtle rounded-md overflow-hidden">
             <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />
-            <div className="px-5 py-3.5 bg-accent-soft/35 border-b border-border-subtle flex items-center gap-2">
-              <Sparkles size={13} className="text-primary" />
-              <p className="eyebrow-plain">Recommended action</p>
-            </div>
             <div className="p-5">
-              <p className="text-sm text-primary leading-relaxed mb-4">{policy.recommendedAction}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={14} className="text-primary" />
+                <h3 className="text-[15px] font-semibold text-primary tracking-tight">Recommended Action</h3>
+              </div>
+              <p className="text-[13px] text-primary leading-relaxed mb-4">{policy.recommendedAction}</p>
               <Button
+                variant="secondary"
                 size="sm"
-                className="w-full justify-center"
                 onClick={() => setComposerOpen(true)}
-                disabled={!canAssign}
               >
-                Turn into follow-up
+                Assign to Team
               </Button>
-              {!canAssign && (
-                <p className="text-[11px] text-muted mt-2 text-center">
-                  {roleMeta[activeRole].label}s can view but not assign on this policy.
-                </p>
+            </div>
+          </div>
+
+          <div className="bg-surface border border-border-subtle rounded-md">
+            <div className="px-5 py-4 border-b border-border-subtle">
+              <h3 className="text-[15px] font-semibold text-primary tracking-tight">Related Donors</h3>
+            </div>
+            <div className="px-5 divide-y divide-border-subtle">
+              {relatedDonorRows.length === 0 ? (
+                <p className="text-[13px] text-muted py-4">No related donors yet.</p>
+              ) : (
+                relatedDonorRows.map(({ donor, strength }) => (
+                  <Link
+                    key={donor.id}
+                    to={`/people/donors/${donor.id}`}
+                    className="flex items-center justify-between gap-3 py-3 no-underline group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-surface-muted border border-border-subtle flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-medium text-primary truncate group-hover:underline underline-offset-2 decoration-border-default">
+                          {donor.name}
+                        </p>
+                        <p className="text-[11px] text-muted">{strength}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))
               )}
             </div>
           </div>
 
-          {/* Impact panel */}
           <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
-              <p className="eyebrow-plain">Impact assessment</p>
+            <div className="px-5 py-4 border-b border-border-subtle">
+              <h3 className="text-[15px] font-semibold text-primary tracking-tight">Related Policy</h3>
             </div>
-            <div className="p-5 flex flex-col gap-4">
-              <ImpactRow label="Opportunity / risk" value={policy.impactLevel} variant={impactVariant} />
-              <ImpactRow label="Urgency" value={policy.effectiveDate === 'Immediate' ? 'Immediate' : 'Near-term'} />
-              <ImpactRow label="Stakeholder alignment" value={`${alignmentPct}% (${supportive}/${total})`} />
-              <ImpactRow label="Mission relevance" value="High — directly affects core programs" />
-            </div>
-          </div>
-
-          {/* Watchlist info */}
-          {watchItem && (
-            <div className="bg-surface border border-border-subtle rounded-md">
-              <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25 flex items-center gap-1.5">
-                <Bell size={11} className="text-accent-hover" />
-                <p className="eyebrow-plain">On watchlist</p>
-              </div>
-              <div className="p-5 flex flex-col gap-3">
-                <div className="text-[12px] text-muted">
-                  Added by <span className="text-primary font-medium">{watchItem.addedBy}</span> on{' '}
-                  {new Date(watchItem.addedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </div>
-                {watchItem.notes && (
-                  <p className="text-[13px] text-secondary italic leading-relaxed">"{watchItem.notes}"</p>
-                )}
-                <div className="flex items-center justify-between text-[12px] text-muted pt-2 border-t border-border-subtle">
-                  <span>{watchItem.alertCount} alerts received</span>
-                  <span>Last alert {watchItem.lastAlertDate ? new Date(watchItem.lastAlertDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '\u2014'}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Member watchlists */}
-          {memberWatchlists.length > 0 && (
-            <div className="bg-surface border border-border-subtle rounded-md">
-              <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25 flex items-center gap-1.5">
-                <Folder size={11} className="text-muted" />
-                <p className="eyebrow-plain">Member of watchlists</p>
-              </div>
-              <div className="p-5 flex flex-col gap-3">
-                {memberWatchlists.map((wl) => (
-                  <div key={wl.id} className="flex items-start justify-between gap-3 pb-3 border-b border-border-subtle last:border-0 last:pb-0">
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-medium text-primary">{wl.name}</p>
-                      <p className="text-[12px] text-muted leading-snug">{wl.description}</p>
-                    </div>
-                    <ScopeBadge scope={wl.shareLevel} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Teams */}
-          <div className="bg-surface border border-border-subtle rounded-md">
-            <div className="px-5 py-3 border-b border-border-subtle bg-surface-muted/25">
-              <p className="eyebrow-plain">Teams to notify</p>
-            </div>
-            <div className="p-5 flex flex-wrap gap-2">
-              {policy.teams.map((team) => (
-                <Chip key={team} label={team} variant="default" />
-              ))}
+            <div className="px-5 divide-y divide-border-subtle">
+              {relatedPolicies.length === 0 ? (
+                <p className="text-[13px] text-muted py-4">No related policies yet.</p>
+              ) : (
+                relatedPolicies.map((rp) => {
+                  const isOpp = rp.impactLevel.toLowerCase().includes('opportunity');
+                  const isRisk = rp.impactLevel.toLowerCase().includes('risk');
+                  const dotColor = isOpp ? 'bg-success' : isRisk ? 'bg-danger' : 'bg-warning';
+                  return (
+                    <Link
+                      key={rp.id}
+                      to={`/policy/${rp.id}`}
+                      className="block py-3 no-underline group"
+                    >
+                      <p className="text-[13px] font-medium text-primary group-hover:underline underline-offset-2 decoration-border-default mb-1 line-clamp-2">
+                        {rp.title}
+                      </p>
+                      <p className="text-[11px] text-muted flex items-center gap-1.5">
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${dotColor}`} /> {rp.status}
+                      </p>
+                    </Link>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -379,107 +264,137 @@ function PolicyDetailDayXPage() {
       <FollowUpComposer
         open={composerOpen}
         onClose={() => setComposerOpen(false)}
-        defaultEntity={{ type: 'policy', id: policy.id, label: policy.title, link: `/policy/${policy.id}` }}
         defaultTitle={policy.recommendedAction}
-        defaultContext={`Linked to ${policy.title}. ${policy.summary}`}
+        defaultContext={`Linked to policy: ${policy.title}. ${policy.summary}`}
+        defaultEntity={{ type: 'policy', id: policy.id, label: policy.title, link: `/policy/${policy.id}` }}
         onCreate={(payload) => {
           addAction(
-            { ...payload, entity: payload.entity || { type: 'policy', id: policy.id, label: policy.title, link: `/policy/${policy.id}` } },
+            {
+              ...payload,
+              entity:
+                payload.entity ?? {
+                  type: 'policy',
+                  id: policy.id,
+                  label: policy.title,
+                  link: `/policy/${policy.id}`,
+                },
+            },
             activeMember.id,
             ['executive', 'policy'],
           );
-          toast.show({
-            type: 'success',
-            title: 'Action assigned',
-            description: payload.title,
-          });
+          toast.show({ type: 'success', title: 'Assigned to team', description: payload.title });
         }}
       />
-      <ActionDrawer
-        action={drawerAction}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onStatusChange={(id, next) => {
-          updateStatus(id, next);
-          toast.show({ type: next === 'completed' ? 'success' : 'info', title: next === 'completed' ? 'Task completed' : 'Status updated' });
+
+      <ComposeNoteModal
+        open={noteOpen}
+        onClose={() => setNoteOpen(false)}
+        entityLabel={policy.title}
+        onSubmit={(body) => {
+          toast.show({ type: 'success', title: 'Note added', description: body.slice(0, 60) });
+          setNoteOpen(false);
         }}
-        onOwnerChange={(id, ownerId) => {
-          updateOwner(id, ownerId);
-          toast.show({ type: 'success', title: 'Task reassigned' });
-        }}
-        canEdit={canAssign}
       />
     </>
   );
 }
 
-function DetailItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Section({
+  title,
+  subtitle,
+  action,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-surface border border-border-subtle rounded-md">
+      <div className="px-5 py-4 border-b border-border-subtle flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-[15px] font-semibold text-primary tracking-tight">{title}</h2>
+          {subtitle && <p className="text-[12px] text-muted mt-0.5">{subtitle}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function DetailStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="eyebrow-plain mb-1.5 flex items-center gap-1.5">
-        <span className="text-muted">{icon}</span> {label}
-      </p>
+      <p className="eyebrow-plain mb-1.5">{label}</p>
       <p className="text-[13px] text-primary">{value}</p>
     </div>
   );
 }
 
-function ImpactRow({ label, value, variant }: { label: string; value: string; variant?: any }) {
-  return (
-    <div>
-      <p className="eyebrow-plain mb-1.5">{label}</p>
-      {variant ? <Chip label={value} variant={variant} /> : <p className="text-[13px] text-primary">{value}</p>}
-    </div>
-  );
+function Swatch({ color }: { color: 'success' | 'warning' | 'danger' }) {
+  const bg = color === 'success' ? 'bg-success' : color === 'warning' ? 'bg-warning' : 'bg-danger';
+  return <span className={`inline-block w-2 h-2 rounded-sm ${bg}`} />;
 }
 
 function StakeholderRow({ stakeholder }: { stakeholder: Stakeholder }) {
-  const variantMap: any = {
-    supportive: 'success',
-    'strong ally': 'success',
-    mixed: 'warning',
-    uncertain: 'warning',
-    opposed: 'danger',
-  };
-  // Mock influence (low/medium/high) based on name
-  const influence = stakeholder.name.includes('Council') || stakeholder.name.includes('Mayor') ? 'High' : stakeholder.name.includes('Coalition') || stakeholder.name.includes('Agency') ? 'Medium' : 'Medium';
+  const isSupportive = stakeholder.stance === 'supportive' || stakeholder.stance === 'strong ally';
+  const isOpposed = stakeholder.stance === 'opposed';
+  const variant = isSupportive ? 'success' : isOpposed ? 'danger' : 'warning';
+  const label = isSupportive ? 'Supportive' : isOpposed ? 'Opposed' : 'Uncertain';
+  const influence =
+    stakeholder.name.includes('Council') || stakeholder.name.includes('Mayor')
+      ? 'High'
+      : stakeholder.name.includes('Network') || stakeholder.name.includes('Board')
+      ? 'Low'
+      : 'Medium';
+  const chipStyle =
+    variant === 'success'
+      ? 'bg-success-soft text-success border-success/30'
+      : variant === 'danger'
+      ? 'bg-danger-soft text-danger border-danger/30'
+      : 'bg-warning-soft text-warning border-warning/30';
 
   return (
     <div className="flex items-center justify-between py-3 border-b border-border-subtle last:border-0 first:pt-0">
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className="w-10 h-10 rounded-sm bg-surface-muted border border-border-subtle flex items-center justify-center flex-shrink-0">
-          <Users size={15} className="text-secondary" />
-        </div>
+        <div className="w-8 h-8 rounded-sm bg-surface-muted border border-border-subtle flex-shrink-0" />
         <div className="min-w-0">
-          <p className="text-sm font-medium text-primary truncate">{stakeholder.name}</p>
-          <p className="text-[12px] text-muted">Influence: {influence}</p>
+          <p className="text-[13px] font-medium text-primary truncate">{stakeholder.name}</p>
+          <p className="text-[11px] text-muted">Influence: {influence}</p>
         </div>
       </div>
-      <Chip label={stakeholder.stance} variant={variantMap[stakeholder.stance] || 'default'} />
+      <span
+        className={`inline-flex items-center px-2 h-[22px] text-[11px] font-medium leading-none border rounded-full ${chipStyle}`}
+      >
+        {label}
+      </span>
     </div>
   );
 }
 
-function PolicyTimelineEvent({ event, isLast }: { event: any; isLast: boolean }) {
+function TimelineEvent({ event, isLast }: { event: { date: string; title: string; description?: string }; isLast: boolean }) {
   const date = new Date(event.date);
   const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
   return (
     <div className="flex gap-4 py-3">
       <div className="flex flex-col items-center flex-shrink-0">
-        <div className="w-2.5 h-2.5 rounded-full bg-accent border-2 border-surface ring-1 ring-border-default mt-1.5" />
+        <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
         {!isLast && <div className="flex-1 w-px bg-border-subtle min-h-4 mt-1" />}
       </div>
       <div className="flex-1 pb-3">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-medium text-primary">{event.title}</p>
+          <p className="text-[13px] font-semibold text-primary">{event.title}</p>
           <span className="text-[12px] text-muted whitespace-nowrap">{formattedDate}</span>
         </div>
         {event.description && (
-          <p className="text-[13px] text-secondary mt-0.5">{event.description}</p>
+          <p className="text-[12px] text-secondary mt-0.5">
+            {event.description}{' '}
+            <button className="text-primary underline underline-offset-2">Source</button>
+          </p>
         )}
       </div>
     </div>
   );
 }
-

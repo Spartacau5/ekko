@@ -50,3 +50,6 @@ export { MatureInsightsPanel } from './MatureInsightsPanel';
 export { DemoPathCard } from './DemoPathCard';
 export { MaturityComparisonStrip } from './MaturityComparisonStrip';
 export { LinkedInsightCard, LinkedInsightSection, NarrativeSpineBadge } from './LinkedInsightCard';
+export { ComposeEmailModal } from './ComposeEmailModal';
+export { ComposeNoteModal } from './ComposeNoteModal';
+export { AddDonorModal } from './AddDonorModal';

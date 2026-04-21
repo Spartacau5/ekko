@@ -49,7 +49,7 @@ const KPI_LINKS: Record<string, string> = {
   'active-donors':    '/people/donors',
   'lifetime-revenue': '/people/donors',
   'tracked-policies': '/policy',
-  'avg-engagement':   '/peers',
+  'avg-engagement':   '/peers/organizations',
 };
 
 // "Today" is static for the prototype so demo numbers stay stable.
@@ -207,7 +207,6 @@ function DashboardDayXPage() {
           eyebrow="Your work"
           title="Tasks"
           subtitle={buildTasksSubtitle(urgentCount, openTasks.length, inProgressCount)}
-          viewAllLink="/settings"
           bodyHeight={420}
           flushBody
         >
@@ -254,7 +253,6 @@ function DashboardDayXPage() {
         eyebrow="Activity"
         title="Recent activities"
         subtitle="Last 24 hours"
-        viewAllLink="/settings"
         bodyHeight={320}
         flushBody
       >

@@ -2,6 +2,7 @@ export type DonorType = 'Individual major donor' | 'Recurring donor' | 'Prospect
 export type GivingStatus = 'Active' | 'At risk' | 'Warm' | 'Inactive' | 'Cold';
 export type RiskLevel = 'Low' | 'Medium' | 'High';
 export type Stage = 'Growing' | 'Slipping' | 'Early' | 'Lapsed' | 'Stewardship' | 'Stable' | 'Evaluation' | 'Unqualified';
+export type Relationship = 'Active' | 'At-risk' | 'Lapsed' | 'Inactive';
 
 export interface TimelineEvent {
   date: string;
@@ -15,6 +16,7 @@ export interface Donor {
   name: string;
   donorType: DonorType;
   givingStatus: GivingStatus;
+  relationship: Relationship;
   persona: string;
   interests: string[];
   lastEngagement: string;
@@ -27,6 +29,7 @@ export interface Donor {
   lastGift?: number | string;
   email: string;
   phone: string;
+  createdAt: string;
   timeline: TimelineEvent[];
 }
 
@@ -36,6 +39,8 @@ export const donors: Donor[] = [
     name: 'Maya Patel',
     donorType: 'Individual major donor',
     givingStatus: 'Active',
+    relationship: 'Active',
+    createdAt: '2024-09-12',
     persona: 'Policy-minded civic supporter',
     interests: ['Tenant rights', 'Community safety'],
     lastEngagement: 'Attended donor breakfast 6 days ago',
@@ -63,6 +68,8 @@ export const donors: Donor[] = [
     name: 'Jordan Rivera',
     donorType: 'Recurring donor',
     givingStatus: 'At risk',
+    relationship: 'At-risk',
+    createdAt: '2023-05-02',
     persona: 'Neighborhood loyalist',
     interests: ['Mutual aid', 'Local families'],
     lastEngagement: 'No opens in 45 days',
@@ -90,6 +97,8 @@ export const donors: Donor[] = [
     name: 'Amira Hassan',
     donorType: 'Prospective donor',
     givingStatus: 'Warm',
+    relationship: 'Active',
+    createdAt: '2026-04-10',
     persona: 'Values-first connector',
     interests: ['Youth programs', 'Housing justice'],
     lastEngagement: 'Downloaded annual report',
@@ -111,6 +120,8 @@ export const donors: Donor[] = [
     name: 'Daniel Cho',
     donorType: 'Lapsed donor',
     givingStatus: 'Inactive',
+    relationship: 'Lapsed',
+    createdAt: '2022-11-18',
     persona: 'Outcome-focused professional',
     interests: ['Data transparency', 'Measurable impact'],
     lastEngagement: 'Last donated 14 months ago',
@@ -136,6 +147,8 @@ export const donors: Donor[] = [
     name: 'Priya Narang',
     donorType: 'Foundation contact',
     givingStatus: 'Active',
+    relationship: 'Active',
+    createdAt: '2023-01-15',
     persona: 'Strategic partner',
     interests: ['Systems change', 'Coalition work'],
     lastEngagement: 'Met last week',
@@ -161,6 +174,8 @@ export const donors: Donor[] = [
     name: 'Luis Martinez',
     donorType: 'Recurring donor',
     givingStatus: 'Active',
+    relationship: 'Active',
+    createdAt: '2025-02-01',
     persona: 'Community-first giver',
     interests: ['Tenant support', 'Legal aid'],
     lastEngagement: 'Clicked email yesterday',
@@ -184,6 +199,8 @@ export const donors: Donor[] = [
     name: 'Helen Brooks',
     donorType: 'Corporate contact',
     givingStatus: 'Warm',
+    relationship: 'Active',
+    createdAt: '2026-04-08',
     persona: 'CSR evaluator',
     interests: ['Community partnership', 'Employee volunteerism'],
     lastEngagement: 'Opened sponsorship deck',
@@ -205,6 +222,8 @@ export const donors: Donor[] = [
     name: 'Samir Gupta',
     donorType: 'Major donor',
     givingStatus: 'Active',
+    relationship: 'Active',
+    createdAt: '2024-03-22',
     persona: 'Research-driven backer',
     interests: ['Policy reform', 'Housing data'],
     lastEngagement: 'Read policy digest',
@@ -230,6 +249,8 @@ export const donors: Donor[] = [
     name: 'Erin Wallace',
     donorType: 'Small donor',
     givingStatus: 'Active',
+    relationship: 'Active',
+    createdAt: '2026-04-06',
     persona: 'Story-led supporter',
     interests: ['Family services', 'Neighborhood stories'],
     lastEngagement: 'Shared campaign post',
@@ -252,6 +273,8 @@ export const donors: Donor[] = [
     name: 'Omar El-Sayed',
     donorType: 'Prospective donor',
     givingStatus: 'Cold',
+    relationship: 'Inactive',
+    createdAt: '2025-12-05',
     persona: 'Analytical evaluator',
     interests: ['Affordable housing', 'Program efficiency'],
     lastEngagement: 'Visited donation page only',

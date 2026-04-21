@@ -5,18 +5,17 @@ import { useMaturity } from '../../lib/MaturityContext';
 import { Avatar } from '../ui/Avatar';
 import { RoleSwitcher } from './RoleSwitcher';
 import { MaturityStateSwitcher } from './MaturityStateSwitcher';
-import { WalkthroughLauncher } from './WalkthroughLauncher';
 import { SetupProgress } from './SetupProgress';
 
 // Sticky top bar for the app shell. Left side holds the global search; the
-// right side carries the demo-mode dev affordances (role / maturity / tour)
+// right side carries the demo-mode dev affordances (role / maturity)
 // alongside the notification bell and the active member's avatar.
 
 export function TopBar() {
   const { activeMember } = useRole();
   const { activeMaturity } = useMaturity();
   return (
-    <header className="h-16 bg-surface border-b border-border-subtle flex items-center gap-4 px-6 sticky top-0 z-30">
+    <header className="h-16 bg-surface border-b border-border-subtle flex items-center gap-4 px-6 shrink-0 z-30">
       <div className="flex-1 max-w-[720px] relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
         <input
@@ -30,8 +29,6 @@ export function TopBar() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <WalkthroughLauncher />
-        <div className="w-px h-5 bg-border-subtle mx-1" />
         <MaturityStateSwitcher />
         <div className="w-px h-5 bg-border-subtle mx-1" />
         <RoleSwitcher />

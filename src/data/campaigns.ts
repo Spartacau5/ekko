@@ -1,5 +1,6 @@
-export type CampaignChannel = 'Email' | 'Direct mail' | 'Social media' | 'SMS' | 'Press' | 'Events' | 'Phone' | 'Door-to-door' | 'Webinars' | 'Partner network';
+export type CampaignChannel = 'Email' | 'Direct mail' | 'Social media' | 'SMS' | 'Press' | 'Events' | 'Phone' | 'Door-to-door' | 'Webinars' | 'Partner network' | 'Community events';
 export type CampaignTheme = 'Emergency aid' | 'Tenant rights' | 'Housing policy' | 'Year-end appeal' | 'Capital campaign' | 'Volunteer drive' | 'Stewardship' | 'Awareness' | 'Recurring acquisition' | 'Family services';
+export type CampaignSource = 'Peer organizations' | 'Our campaigns';
 
 export interface PeerCampaign {
   id: string;
@@ -17,6 +18,7 @@ export interface PeerCampaign {
   notableTactic: string;
   outcome: string;
   isFavorite: boolean;
+  source: CampaignSource;
 }
 
 export const peerCampaigns: PeerCampaign[] = [
@@ -36,6 +38,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Used resident-narrated short videos in social posts; increased CTR by 4x compared to typical asks.',
     outcome: 'Raised $87K against $50K goal. Acquired 142 new donors.',
     isFavorite: true,
+    source: 'Peer organizations',
   },
   {
     id: 'queens-rental-nav',
@@ -53,6 +56,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Partnered with local laundromats and bodegas for QR-code flyer distribution.',
     outcome: 'Connected 1,840 households to rental assistance. $2.1M in aid disbursed.',
     isFavorite: false,
+    source: 'Peer organizations',
   },
   {
     id: 'harbor-back-to-school',
@@ -70,6 +74,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Used direct-from-family thank-you videos sent to top donors as stewardship moments.',
     outcome: 'Funded 2,400 back-to-school kits. $312K raised, 8% above goal.',
     isFavorite: true,
+    source: 'Peer organizations',
   },
   {
     id: 'east-river-zoning',
@@ -87,6 +92,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Built an interactive map showing how zoning reform would affect specific blocks.',
     outcome: 'Mobilized 2,300 hearing attendees. Increased policy newsletter signups by 38%.',
     isFavorite: true,
+    source: 'Peer organizations',
   },
   {
     id: 'citywide-cold-weather',
@@ -104,6 +110,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Triggered urgency with real-time temperature data in email subject lines.',
     outcome: 'Raised $215K in 18 days. 92% of gifts came within 4 days of cold snap.',
     isFavorite: false,
+    source: 'Peer organizations',
   },
   {
     id: 'metro-land-trust',
@@ -121,6 +128,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Hosted three neighborhood walking tours led by long-time residents.',
     outcome: 'Recruited 18 new community land trust members. Strong qualitative engagement.',
     isFavorite: false,
+    source: 'Peer organizations',
   },
   {
     id: 'northern-data-transparency',
@@ -138,6 +146,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Released a data-visualization tool for public use; got picked up by 4 major outlets.',
     outcome: 'Tool used by 12K unique visitors. Featured in The City and Curbed NY.',
     isFavorite: true,
+    source: 'Peer organizations',
   },
   {
     id: 'brookfield-storm-prep',
@@ -155,6 +164,7 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Door-knocked 2,400 units in target zones; hand-delivered preparedness kits.',
     outcome: 'Reached 6,800 tenants. 84% completed at least one preparedness step within 30 days.',
     isFavorite: false,
+    source: 'Peer organizations',
   },
   {
     id: 'bronx-right-to-counsel',
@@ -172,6 +182,61 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Coordinated with 12 partner orgs for a synchronized op-ed in NYC outlets.',
     outcome: 'Council scheduled bill hearing 6 weeks ahead of timeline. Coverage in 5 outlets.',
     isFavorite: true,
+    source: 'Peer organizations',
+  },
+  {
+    id: 'ours-spring-stewardship',
+    title: 'Spring Stewardship Mailer',
+    orgName: 'Rivergate',
+    orgId: 'rivergate',
+    theme: 'Stewardship',
+    channels: ['Direct mail', 'Email'],
+    duration: '4 weeks',
+    dateRange: 'Mar 2026',
+    audienceDescription: 'Major donors + lifetime $2.5K+ donors',
+    performanceVsAvg: 118,
+    estimatedReach: 860,
+    topMessage: 'Your gift last year opened a door for a family that had nowhere else to turn. Here\'s what happened next.',
+    notableTactic: 'Paired each mailer with a hand-written note from the program lead; 12% renewal bump vs last year.',
+    outcome: 'Retention on major donor segment: 91% vs 82% baseline. Raised $148K.',
+    isFavorite: true,
+    source: 'Our campaigns',
+  },
+  {
+    id: 'ours-q1-policy-digest',
+    title: 'Q1 Policy Digest Renewal Push',
+    orgName: 'Rivergate',
+    orgId: 'rivergate',
+    theme: 'Housing policy',
+    channels: ['Email'],
+    duration: '3 weeks',
+    dateRange: 'Feb 2026',
+    audienceDescription: 'Policy Briefing List — 62 engaged supporters',
+    performanceVsAvg: 134,
+    estimatedReach: 620,
+    topMessage: 'The policies we\u2019re tracking don\u2019t move without eyes on them. Here\u2019s where your dollars go this quarter.',
+    notableTactic: 'Opened with a Right-to-Counsel update; tied the ask to a concrete hearing date.',
+    outcome: 'Re-engaged 18 lapsing policy donors. Conversion 2.4x baseline.',
+    isFavorite: false,
+    source: 'Our campaigns',
+  },
+  {
+    id: 'ours-volunteer-spring',
+    title: 'Volunteer Recruitment — Spring',
+    orgName: 'Rivergate',
+    orgId: 'rivergate',
+    theme: 'Volunteer drive',
+    channels: ['Email', 'Social media', 'Community events'],
+    duration: '6 weeks',
+    dateRange: 'Mar \u2013 Apr 2026',
+    audienceDescription: 'Small donors + newsletter subscribers',
+    performanceVsAvg: 92,
+    estimatedReach: 2300,
+    topMessage: 'Neighbors helping neighbors. Two hours a month makes the whole system work.',
+    notableTactic: 'Featured two volunteer-to-donor case studies; used open house events as conversion point.',
+    outcome: 'Added 44 active volunteers. 6 converted to recurring donors in first month.',
+    isFavorite: false,
+    source: 'Our campaigns',
   },
   {
     id: 'citywide-corporate-match',
@@ -189,5 +254,6 @@ export const peerCampaigns: PeerCampaign[] = [
     notableTactic: 'Live match counter on website created urgency throughout the campaign.',
     outcome: 'Raised $480K matched ($960K total). Engaged 6 new corporate partners.',
     isFavorite: false,
+    source: 'Peer organizations',
   },
 ];

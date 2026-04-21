@@ -18,7 +18,7 @@ export function InternalNotePreview({ note, defaultExpanded = false }: InternalN
   const date = new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+    <div className="flex items-start gap-3 py-4">
       <Avatar member={author} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-0.5 flex-wrap">

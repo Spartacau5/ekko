@@ -1,367 +1,400 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronDown, Filter, Search } from 'lucide-react';
 import { useMaturity } from '../lib/MaturityContext';
 import { PeersDay0Page } from './day0/PeersDay0Page';
-import { peerOrgs, benchmarkData, PeerOrg } from '../data/peers';
-import { isPeerTracked } from '../data/workspace';
-import { Button, Chip, SearchBar, Modal, Checkbox, PageHeader, Tabs, NarrativeSpineBadge, useToast } from '../components/ui';
-import { Filter, TrendingUp, TrendingDown, Lock, Building, BarChart3, BookOpen, ArrowUpRight, Star } from 'lucide-react';
+import { peerOrgs, PeerOrg } from '../data/peers';
+import { Checkbox } from '../components/ui';
 
-const filterOptions = {
-  missionArea: ['Tenant rights', 'Affordable housing', 'Family services', 'Homelessness', 'Community organizing', 'Housing research', 'Disaster preparedness'],
-  geography: ['Bronx', 'Queens', 'Brooklyn', 'Manhattan', 'Citywide', 'Upstate'],
-  orgSize: ['Small', 'Mid-size', 'Large'],
-  revenueBand: ['$1M\u2013$3M', '$2M\u2013$5M', '$3M\u2013$7M', '$5M\u2013$10M', '$10M\u2013$20M'],
-  channel: ['Email', 'Social media', 'Direct mail', 'Press', 'Community events', 'Text', 'In-person'],
-  optInStatus: ['Opted in', 'Pending', 'Not opted in'],
-};
+type OptInFilter = 'All' | 'Opted in' | 'Pending' | 'Not opted in';
 
-const tabs = [
-  { id: 'orgs', label: 'Peer organizations', count: peerOrgs.length },
-  { id: 'campaigns', label: 'Campaign intelligence' },
-  { id: 'benchmarks', label: 'Benchmarks' },
+const SIZE_OPTIONS = ['Small', 'Mid-size', 'Large'];
+const MISSION_OPTIONS = [
+  'Tenant rights and legal advocacy',
+  'Tenant services and housing education',
+  'Family housing and child welfare',
+  'Affordable housing development',
+  'Homelessness prevention and shelter',
+  'Community organizing and neighborhood development',
+  'Housing research and policy innovation',
+  'Disaster preparedness and housing resilience',
 ];
+const REVENUE_OPTIONS = ['$1M–$3M', '$2M–$4M', '$2M–$5M', '$3M–$7M', '$4M–$7M', '$4M–$8M', '$5M–$10M', '$10M–$20M'];
+const GEOGRAPHY_OPTIONS = ['Bronx', 'Queens', 'Brooklyn', 'Manhattan', 'Lower East Side', 'Citywide', 'Upstate'];
 
 export function PeersPage() {
   const { activeMaturity } = useMaturity();
   if (activeMaturity === 'day0') return <PeersDay0Page />;
-  return <PeersDayXPage />;
+  return <OrganizationsDayXPage />;
 }
 
-function PeersDayXPage() {
-  const [activeTab, setActiveTab] = useState('orgs');
+function OrganizationsDayXPage() {
   const [search, setSearch] = useState('');
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [filters, setFilters] = useState<Record<string, string[]>>({
-    missionArea: [],
-    geography: [],
-    orgSize: [],
-    optInStatus: [],
-  });
-
-  const toggleFilter = (key: string, value: string) => {
-    setFilters((f) => ({
-      ...f,
-      [key]: f[key].includes(value) ? f[key].filter((v) => v !== value) : [...f[key], value],
-    }));
-  };
-  const clearFilters = () => setFilters({ missionArea: [], geography: [], orgSize: [], optInStatus: [] });
-  const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+  const [sizeFilter, setSizeFilter] = useState<string[]>([]);
+  const [missionFilter, setMissionFilter] = useState<string[]>([]);
+  const [optInFilter, setOptInFilter] = useState<OptInFilter>('All');
+  const [revenueFilter, setRevenueFilter] = useState<string[]>([]);
+  const [geographyFilter, setGeographyFilter] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
     return peerOrgs.filter((p) => {
-      if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.missionArea.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filters.optInStatus.length && !filters.optInStatus.includes(p.optInStatus)) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (!p.name.toLowerCase().includes(q) && !p.missionArea.toLowerCase().includes(q)) return false;
+      }
+      if (sizeFilter.length && !sizeFilter.some((s) => p.orgSize.startsWith(s))) return false;
+      if (missionFilter.length && !missionFilter.includes(p.missionArea)) return false;
+      if (optInFilter !== 'All' && p.optInStatus !== optInFilter) return false;
+      if (revenueFilter.length && !revenueFilter.includes(p.revenueBand)) return false;
+      if (geographyFilter.length && !geographyFilter.some((g) => p.geography.includes(g))) return false;
       return true;
     });
-  }, [search, filters]);
+  }, [search, sizeFilter, missionFilter, optInFilter, revenueFilter, geographyFilter]);
+
+  const filtersDirty =
+    sizeFilter.length > 0 ||
+    missionFilter.length > 0 ||
+    optInFilter !== 'All' ||
+    revenueFilter.length > 0 ||
+    geographyFilter.length > 0;
+
+  function clearAll() {
+    setSizeFilter([]);
+    setMissionFilter([]);
+    setOptInFilter('All');
+    setRevenueFilter([]);
+    setGeographyFilter([]);
+  }
 
   return (
     <>
-      <PageHeader
-        title="Peers"
-        subtitle="Benchmark, learn from, and share intelligence with similar organizations"
-        serif
-        actions={
-          <Link
-            to="/peers/campaigns"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border-default rounded-sm text-sm font-medium text-primary no-underline hover:bg-surface-muted transition-colors"
-          >
-            <BookOpen size={14} />
-            Campaign library
-          </Link>
-        }
-      />
+      <div className="mb-6">
+        <h1 className="page-title">Organizations</h1>
+        <p className="text-[14px] text-secondary mt-1.5 max-w-2xl">
+          Compare your performance against similar organizations to see where you stand.
+        </p>
+      </div>
 
-      {/* Consent banner — editorial, printed, with a left rule */}
-      <div className="relative bg-info-soft/55 border border-info/30 rounded-md pl-5 pr-4 py-3.5 mb-6 flex items-start gap-3">
-        <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-[2px] bg-info" />
-        <Lock size={15} className="text-info mt-0.5 flex-shrink-0" />
-        <div className="flex-1">
-          <p className="eyebrow-plain mb-1">Data sharing</p>
-          <p className="text-[13px] font-semibold text-primary tracking-tight">Aggregated only — anonymized benchmarks</p>
-          <p className="text-[12px] text-secondary mt-1 leading-relaxed">
-            Rivergate shares anonymized benchmark metrics with peer orgs. No donor or stakeholder details are shared. <button className="text-primary font-semibold border-b border-primary/40 hover:border-primary pb-px">Manage sharing →</button>
-          </p>
+      <div className="bg-surface border border-border-subtle rounded-md p-5 mb-6">
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search peer organizations..."
+            className="w-full h-10 pl-9 pr-3 bg-surface border border-border-subtle rounded-sm text-[13px] text-primary placeholder:text-muted
+              focus:outline-none focus:ring-1 focus:ring-primary/15 focus:border-border-default"
+          />
         </div>
-      </div>
 
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-
-      {/* Benchmark snapshot bar (always visible) */}
-      <div className="grid grid-cols-3 gap-4 mt-6 mb-6">
-        <BenchmarkChartCard
-          title="Email open rate"
-          yours={benchmarkData.emailOpenRate.yours}
-          peer={benchmarkData.emailOpenRate.peerAverage}
-          top={benchmarkData.emailOpenRate.topQuartile}
-          suffix="%"
-        />
-        <BenchmarkChartCard
-          title="Donation conversion"
-          yours={benchmarkData.donationConversion.yours}
-          peer={benchmarkData.donationConversion.peerAverage}
-          top={benchmarkData.donationConversion.topQuartile}
-          suffix="%"
-        />
-        <BenchmarkChartCard
-          title="Donor retention"
-          yours={benchmarkData.donorRetention.yours}
-          peer={benchmarkData.donorRetention.peerAverage}
-          top={benchmarkData.donorRetention.topQuartile}
-          suffix="%"
-        />
-      </div>
-
-      {activeTab === 'orgs' && (
-        <>
-          {/* Filters */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 max-w-md">
-              <SearchBar value={search} onChange={setSearch} placeholder="Search peer organizations..." />
-            </div>
-            <Button variant="secondary" onClick={() => setFilterModalOpen(true)}>
-              <Filter size={14} className="mr-2" />
-              Filters {activeFilterCount > 0 && <span className="ml-1.5 text-[12px] bg-accent text-primary px-1.5 rounded-sm">{activeFilterCount}</span>}
-            </Button>
-          </div>
-
-          {activeFilterCount > 0 && (
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              {Object.entries(filters).map(([key, values]) =>
-                values.map((v) => (
-                  <Chip key={`${key}-${v}`} label={v} onRemove={() => toggleFilter(key, v)} />
-                ))
-              )}
-              <button onClick={clearFilters} className="text-[13px] text-secondary hover:text-primary underline">
-                Clear all
-              </button>
-            </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <MultiFilterPill
+            label="Size"
+            options={SIZE_OPTIONS}
+            selected={sizeFilter}
+            onToggle={(v) => setSizeFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onClear={() => setSizeFilter([])}
+          />
+          <MultiFilterPill
+            label="Mission Area"
+            options={MISSION_OPTIONS}
+            selected={missionFilter}
+            onToggle={(v) => setMissionFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onClear={() => setMissionFilter([])}
+          />
+          <SingleFilterPill
+            label="Opt-in Status"
+            options={['All', 'Opted in', 'Pending', 'Not opted in']}
+            value={optInFilter}
+            onChange={(v) => setOptInFilter(v as OptInFilter)}
+          />
+          <MorePill
+            revenue={revenueFilter}
+            geography={geographyFilter}
+            onToggleRevenue={(v) => setRevenueFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onToggleGeography={(v) => setGeographyFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+            onClearAll={() => {
+              setRevenueFilter([]);
+              setGeographyFilter([]);
+            }}
+          />
+          {filtersDirty && (
+            <button
+              onClick={clearAll}
+              className="ml-1 text-[12px] text-secondary hover:text-primary border-b border-transparent hover:border-primary/40 pb-px"
+            >
+              Clear all
+            </button>
           )}
+        </div>
+      </div>
 
-          {/* Peer org grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {filtered.map((peer) => <PeerOrgCard key={peer.id} peer={peer} />)}
+      <div className="flex flex-col gap-4">
+        {filtered.length === 0 ? (
+          <div className="bg-surface border border-border-subtle rounded-md py-16 text-center text-[13px] text-muted">
+            No peer organizations match these filters.
           </div>
-        </>
-      )}
-
-      {activeTab === 'campaigns' && (
-        <div className="grid grid-cols-2 gap-4">
-          {peerOrgs.flatMap(p => p.recentCampaigns.map((c, i) => ({ ...c, org: p.name, key: `${p.id}-${i}` }))).slice(0, 6).map((campaign) => (
-            <CampaignInsightCard key={campaign.key} campaign={campaign} />
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'benchmarks' && (
-        <div className="bg-surface border border-border-subtle rounded-md p-6">
-          <h3 className="text-[15px] font-semibold text-primary mb-4">Top messaging themes this quarter</h3>
-          <div className="flex flex-col gap-3">
-            {benchmarkData.topMessagingThemes.map((theme) => {
-              const max = Math.max(...benchmarkData.topMessagingThemes.map(t => t.mentions));
-              const pct = (theme.mentions / max) * 100;
-              return (
-                <div key={theme.theme}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-primary">{theme.theme}</span>
-                    <span className="text-[13px] text-muted">{theme.mentions} peer orgs</span>
-                  </div>
-                  <div className="h-2 bg-surface-muted rounded-sm overflow-hidden">
-                    <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <Modal
-        open={filterModalOpen}
-        onClose={() => setFilterModalOpen(false)}
-        title="Filter peer organizations"
-        width="max-w-2xl"
-        footer={
-          <>
-            <Button variant="ghost" onClick={clearFilters}>Clear all</Button>
-            <Button onClick={() => setFilterModalOpen(false)}>Apply filters</Button>
-          </>
-        }
-      >
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-          <FilterGroup title="Mission area" options={filterOptions.missionArea} selected={filters.missionArea || []} onToggle={(v) => toggleFilter('missionArea', v)} />
-          <FilterGroup title="Geography" options={filterOptions.geography} selected={filters.geography || []} onToggle={(v) => toggleFilter('geography', v)} />
-          <FilterGroup title="Org size" options={filterOptions.orgSize} selected={filters.orgSize || []} onToggle={(v) => toggleFilter('orgSize', v)} />
-          <FilterGroup title="Opt-in status" options={filterOptions.optInStatus} selected={filters.optInStatus || []} onToggle={(v) => toggleFilter('optInStatus', v)} />
-        </div>
-      </Modal>
+        ) : (
+          filtered.map((peer) => <PeerRow key={peer.id} peer={peer} />)
+        )}
+      </div>
     </>
   );
 }
 
-function FilterGroup({ title, options, selected, onToggle }: { title: string; options: string[]; selected: string[]; onToggle: (v: string) => void }) {
-  return (
-    <div>
-      <h4 className="text-[13px] font-semibold text-primary mb-2">{title}</h4>
-      <div className="flex flex-col gap-2">
-        {options.map((opt) => (
-          <Checkbox key={opt} label={opt} checked={selected.includes(opt)} onChange={() => onToggle(opt)} />
-        ))}
-      </div>
-    </div>
-  );
-}
+function PeerRow({ peer }: { peer: PeerOrg }) {
+  const size = peer.orgSize.split(' (')[0];
+  const optInChipStyle =
+    peer.optInStatus === 'Opted in'
+      ? 'bg-success-soft text-success border-success/30'
+      : peer.optInStatus === 'Pending'
+      ? 'bg-warning-soft text-warning border-warning/30'
+      : 'bg-surface-muted text-secondary border-border-subtle';
 
-function BenchmarkChartCard({ title, yours, peer, top, suffix }: { title: string; yours: number; peer: number; top: number; suffix: string }) {
-  const max = Math.max(yours, peer, top) * 1.1;
-  const yoursPct = (yours / max) * 100;
-  const peerPct = (peer / max) * 100;
-  const topPct = (top / max) * 100;
-  const ahead = yours >= peer;
-
-  return (
-    <div className="bg-surface border border-border-subtle rounded-md p-5">
-      <div className="flex items-start justify-between mb-3">
-        <div className="min-w-0">
-          <p className="eyebrow-plain mb-1.5">Benchmark</p>
-          <h3 className="text-[14px] font-semibold text-primary tracking-tight">{title}</h3>
-        </div>
-        {ahead ? <TrendingUp size={14} className="text-success flex-shrink-0" /> : <TrendingDown size={14} className="text-danger flex-shrink-0" />}
-      </div>
-      <div className="flex items-baseline gap-2 mb-4">
-        <span className="metric-display">{yours}{suffix}</span>
-        <span className={`text-[12px] font-medium tabular-nums ${ahead ? 'text-success' : 'text-danger'}`}>
-          {ahead ? '+' : ''}{(yours - peer).toFixed(1)}{suffix} vs peers
-        </span>
-      </div>
-      <div className="space-y-2 pt-3 border-t border-border-subtle">
-        <BenchmarkBar label="You" value={yours} pct={yoursPct} suffix={suffix} highlighted />
-        <BenchmarkBar label="Peer avg" value={peer} pct={peerPct} suffix={suffix} />
-        <BenchmarkBar label="Top quartile" value={top} pct={topPct} suffix={suffix} dashed />
-      </div>
-    </div>
-  );
-}
-
-function BenchmarkBar({ label, value, pct, suffix, highlighted, dashed }: { label: string; value: number; pct: number; suffix: string; highlighted?: boolean; dashed?: boolean }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className={`text-[11px] ${highlighted ? 'text-primary font-medium' : 'text-muted'}`}>{label}</span>
-        <span className={`text-[11px] tabular-nums ${highlighted ? 'text-primary font-medium' : 'text-secondary'}`}>{value}{suffix}</span>
-      </div>
-      <div className="h-[6px] bg-surface-muted/70 border border-border-subtle/60 rounded-sm overflow-hidden relative">
-        {dashed ? (
-          <div className="absolute inset-y-0 left-0 border-r-[1.5px] border-dashed border-primary/60" style={{ width: `${pct}%` }} aria-hidden="true" />
-        ) : (
-          <div className={`h-full ${highlighted ? 'bg-accent' : 'bg-border-subtle'}`} style={{ width: `${pct}%` }} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function PeerOrgCard({ peer }: { peer: PeerOrg }) {
-  const optInVariant = peer.optInStatus === 'Opted in' ? 'success' : peer.optInStatus === 'Pending' ? 'warning' : 'default';
-  const toast = useToast();
-  const [tracked, setTracked] = useState(isPeerTracked(peer.id));
   return (
     <Link
       to={`/peers/${peer.id}`}
-      className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default hover:shadow-[0_1px_0_rgba(17,17,17,0.04)] transition-[border-color,box-shadow] duration-150 ease-out no-underline"
+      className="block bg-surface border border-border-subtle rounded-md p-5 hover:border-border-default transition-colors no-underline"
     >
-      <div className="flex items-start justify-between mb-3 gap-3">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-sm bg-surface border border-border-default flex items-center justify-center flex-shrink-0 shadow-[0_1px_0_rgba(17,17,17,0.04)]">
-            <Building size={18} className="text-secondary" />
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-10 h-10 rounded-sm bg-surface-muted border border-border-subtle flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-[15px] font-semibold text-primary truncate">{peer.name}</h3>
+            <span className={`inline-flex items-center px-2 h-[22px] text-[11px] font-medium leading-none border rounded-full flex-shrink-0 ${optInChipStyle}`}>
+              {peer.optInStatus}
+            </span>
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-[15px] font-semibold text-primary truncate">{peer.name}</h3>
-              <NarrativeSpineBadge id={peer.id} compact />
-            </div>
-            <p className="text-[13px] text-muted truncate">{peer.missionArea}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              const next = !tracked;
-              setTracked(next);
-              toast.show({
-                type: next ? 'success' : 'info',
-                title: next ? 'Now tracking' : 'Stopped tracking',
-                description: peer.name,
-              });
-            }}
-            className={`inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border rounded-sm
-              transition-colors duration-150
-              ${tracked
-                ? 'bg-accent-soft border-accent text-primary'
-                : 'bg-surface border-border-subtle text-secondary hover:border-border-default hover:text-primary'}`}
-          >
-            <Star size={11} className={tracked ? 'fill-accent text-primary' : ''} />
-            {tracked ? 'Tracking' : 'Track'}
-          </button>
-          <Chip label={peer.optInStatus} variant={optInVariant} />
+          <p className="text-[13px] text-secondary truncate">{peer.missionArea}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 py-3 border-y border-border-subtle text-[12px]">
-        <div>
-          <p className="text-muted">Geography</p>
-          <p className="text-primary font-medium">{peer.geography}</p>
-        </div>
-        <div>
-          <p className="text-muted">Size</p>
-          <p className="text-primary font-medium">{peer.orgSize.split(' (')[0]}</p>
-        </div>
-        <div>
-          <p className="text-muted">Revenue</p>
-          <p className="text-primary font-medium">{peer.revenueBand}</p>
-        </div>
+      <div className="grid grid-cols-4 gap-4 pb-4 border-b border-border-subtle">
+        <MetaItem label="Geography" value={peer.geography} />
+        <MetaItem label="Size" value={size} />
+        <MetaItem label="Revenue" value={peer.revenueBand} />
+        <MetaItem label="Type" value={peer.orgType} />
       </div>
 
-      <div className="pt-3">
-        <p className="text-[12px] font-medium text-muted uppercase tracking-wider mb-2">Recent campaigns</p>
-        <div className="flex flex-col gap-1.5">
+      <div className="pt-4">
+        <p className="text-[12px] font-semibold text-muted uppercase tracking-wider mb-3">Recent Campaigns</p>
+        <div className="grid grid-cols-2 gap-4">
           {peer.recentCampaigns.map((c, i) => (
-            <div key={i} className="text-[13px]">
-              <p className="text-primary">{c.theme}</p>
-              <p className="text-muted text-[12px]">{c.channels.join(' \u2022 ')}</p>
+            <div key={i}>
+              <p className="text-[13px] font-semibold text-primary leading-snug">{c.theme}</p>
+              <p className="text-[12px] text-muted mt-0.5">{c.channels.slice(0, 3).join(' · ')}</p>
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
-        <div>
-          <p className="text-[12px] text-muted">{peer.benchmarkStat.label}</p>
-          <p className="text-sm font-semibold text-primary">{peer.benchmarkStat.value}</p>
-        </div>
-        <ArrowUpRight size={14} className="text-muted" />
       </div>
     </Link>
   );
 }
 
-function CampaignInsightCard({ campaign }: { campaign: any }) {
+function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface border border-border-subtle rounded-md p-5">
-      <div className="flex items-center gap-2 mb-2">
-        <BarChart3 size={14} className="text-info" />
-        <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Campaign insight</span>
-      </div>
-      <h3 className="text-[15px] font-semibold text-primary mb-1">{campaign.theme}</h3>
-      <p className="text-[13px] text-secondary mb-3">From {campaign.org}</p>
-      <div className="flex flex-wrap gap-1.5">
-        {campaign.channels.map((channel: string) => (
-          <Chip key={channel} label={channel} variant="default" />
-        ))}
-      </div>
+    <div>
+      <p className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-[13px] text-primary font-medium">{value}</p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Filter pill primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+function usePopover() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  return { open, setOpen, ref };
+}
+
+function PillTrigger({
+  label,
+  value,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string;
+  value: string;
+  active?: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-sm border text-[12px] font-medium transition-colors duration-150
+        ${active
+          ? 'bg-primary text-surface border-primary'
+          : 'bg-surface text-primary border-border-subtle hover:border-border-default'
+        }`}
+    >
+      {icon}
+      <span className={active ? 'text-surface' : 'text-secondary'}>{label}</span>
+      <span className={active ? 'text-surface font-semibold' : 'text-primary font-semibold'}>{value}</span>
+      <ChevronDown size={12} className={active ? 'text-surface/70' : 'text-muted'} />
+    </button>
+  );
+}
+
+function SingleFilterPill({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const { open, setOpen, ref } = usePopover();
+  const active = value !== 'All';
+  return (
+    <div ref={ref} className="relative">
+      <PillTrigger label={label} value={value} active={active} onClick={() => setOpen((o) => !o)} />
+      {open && (
+        <div className="absolute left-0 mt-1.5 z-20 bg-surface border border-border-default rounded-sm shadow-md min-w-[160px] py-1">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => {
+                onChange(opt);
+                setOpen(false);
+              }}
+              className={`block w-full text-left px-3 py-1.5 text-[13px] hover:bg-surface-muted/60 ${
+                value === opt ? 'text-primary font-semibold' : 'text-secondary'
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MultiFilterPill({
+  label,
+  options,
+  selected,
+  onToggle,
+  onClear,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (v: string) => void;
+  onClear: () => void;
+}) {
+  const { open, setOpen, ref } = usePopover();
+  const active = selected.length > 0;
+  const valueLabel = selected.length === 0 ? 'All' : selected.length === 1 ? selected[0] : `${selected.length} selected`;
+  return (
+    <div ref={ref} className="relative">
+      <PillTrigger label={label} value={valueLabel} active={active} onClick={() => setOpen((o) => !o)} />
+      {open && (
+        <div className="absolute left-0 mt-1.5 z-20 bg-surface border border-border-default rounded-sm shadow-md min-w-[260px] p-3">
+          <div className="flex flex-col gap-2 mb-2 max-h-[280px] overflow-y-auto">
+            {options.map((opt) => (
+              <Checkbox key={opt} label={opt} checked={selected.includes(opt)} onChange={() => onToggle(opt)} />
+            ))}
+          </div>
+          {active && (
+            <button
+              onClick={() => {
+                onClear();
+                setOpen(false);
+              }}
+              className="text-[12px] text-secondary hover:text-primary"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MorePill({
+  revenue,
+  geography,
+  onToggleRevenue,
+  onToggleGeography,
+  onClearAll,
+}: {
+  revenue: string[];
+  geography: string[];
+  onToggleRevenue: (v: string) => void;
+  onToggleGeography: (v: string) => void;
+  onClearAll: () => void;
+}) {
+  const { open, setOpen, ref } = usePopover();
+  const active = revenue.length > 0 || geography.length > 0;
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-sm border text-[12px] font-medium transition-colors duration-150
+          ${active
+            ? 'bg-primary text-surface border-primary'
+            : 'bg-surface text-secondary border-border-subtle hover:border-border-default'
+          }`}
+      >
+        <Filter size={12} className={active ? 'text-surface/80' : 'text-muted'} />
+        More
+        {active && <span className="font-semibold">({revenue.length + geography.length})</span>}
+      </button>
+      {open && (
+        <div className="absolute left-0 mt-1.5 z-20 bg-surface border border-border-default rounded-sm shadow-md min-w-[280px] p-3">
+          <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">Revenue</p>
+          <div className="flex flex-col gap-2 mb-3">
+            {REVENUE_OPTIONS.map((opt) => (
+              <Checkbox key={opt} label={opt} checked={revenue.includes(opt)} onChange={() => onToggleRevenue(opt)} />
+            ))}
+          </div>
+          <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">Geography</p>
+          <div className="flex flex-col gap-2 mb-2">
+            {GEOGRAPHY_OPTIONS.map((opt) => (
+              <Checkbox key={opt} label={opt} checked={geography.includes(opt)} onChange={() => onToggleGeography(opt)} />
+            ))}
+          </div>
+          {active && (
+            <button
+              onClick={() => {
+                onClearAll();
+                setOpen(false);
+              }}
+              className="text-[12px] text-secondary hover:text-primary"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -27,14 +27,13 @@ const LABEL_BY_TYPE = {
 
 interface LinkedInsightCardProps {
   insight: LinkedInsight;
+  onAction?: (insight: LinkedInsight) => void;
 }
 
-export function LinkedInsightCard({ insight }: LinkedInsightCardProps) {
+export function LinkedInsightCard({ insight, onAction }: LinkedInsightCardProps) {
+  const actionLabel = insight.suggestedAction ?? `Open ${LABEL_BY_TYPE[insight.toType].toLowerCase()}`;
   return (
-    <Link
-      to={insight.toRoute}
-      className="block bg-surface border border-border-subtle rounded-sm p-3 hover:bg-surface-muted/40 hover:border-border-default transition-colors duration-150 no-underline group"
-    >
+    <div className="block bg-surface border border-border-subtle rounded-sm p-3 hover:border-border-default transition-colors duration-150">
       <div className="flex items-start gap-3">
         <div className="w-7 h-7 rounded-sm bg-surface border border-border-default flex items-center justify-center flex-shrink-0 text-secondary shadow-[0_1px_0_rgba(17,17,17,0.04)]">
           {ICON_BY_TYPE[insight.toType]}
@@ -48,12 +47,36 @@ export function LinkedInsightCard({ insight }: LinkedInsightCardProps) {
               </span>
             )}
           </div>
-          <p className="text-[13px] font-semibold text-primary mt-1 tracking-tight group-hover:underline underline-offset-2">{insight.toLabel}</p>
+          <Link
+            to={insight.toRoute}
+            className="text-[13px] font-semibold text-primary mt-1 tracking-tight hover:underline underline-offset-2 no-underline block"
+          >
+            {insight.toLabel}
+          </Link>
           <p className="text-[12px] text-secondary mt-1 leading-snug">{insight.reason}</p>
+          <div className="flex items-center gap-3 mt-3">
+            {onAction ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onAction(insight);
+                }}
+                className="inline-flex items-center h-7 px-3 text-[12px] font-medium bg-surface border border-border-default rounded-sm hover:bg-surface-muted/60 text-primary transition-colors"
+              >
+                {actionLabel}
+              </button>
+            ) : null}
+            <Link
+              to={insight.toRoute}
+              className="inline-flex items-center gap-1 text-[12px] text-secondary hover:text-primary no-underline"
+            >
+              Open <ArrowRight size={11} />
+            </Link>
+          </div>
         </div>
-        <ArrowRight size={13} className="text-muted group-hover:text-primary transition-colors duration-150 mt-1 flex-shrink-0" />
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -96,13 +119,14 @@ export function NarrativeSpineBadge({ id, label, compact = false }: NarrativeSpi
 interface LinkedInsightSectionProps {
   title?: string;
   insights: LinkedInsight[];
+  onAction?: (insight: LinkedInsight) => void;
 }
 
 // Convenience wrapper: titled section with stacked insight cards. Used in
 // the right rail of detail pages. Framed as "The story continues" to signal
 // that this is the connective tissue between People, Policy, and Peers —
 // not just another "related items" rail.
-export function LinkedInsightSection({ title, insights }: LinkedInsightSectionProps) {
+export function LinkedInsightSection({ title, insights, onAction }: LinkedInsightSectionProps) {
   if (insights.length === 0) return null;
   return (
     <section className="relative bg-surface border border-accent/45 rounded-md overflow-hidden">
@@ -120,7 +144,7 @@ export function LinkedInsightSection({ title, insights }: LinkedInsightSectionPr
       </header>
       <div className="p-3 space-y-2">
         {insights.map((i, idx) => (
-          <LinkedInsightCard key={`${i.toType}-${i.toId}-${idx}`} insight={i} />
+          <LinkedInsightCard key={`${i.toType}-${i.toId}-${idx}`} insight={i} onAction={onAction} />
         ))}
       </div>
     </section>
