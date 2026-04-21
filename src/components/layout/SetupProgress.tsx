@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { setupTasksForMaturity } from '../../data/maturity';
-import { organization } from '../../data/organization';
 import { motionDurations, motionEasings } from '../../lib/motion';
 
 // Day 0 top-bar affordance: a small progress ring + click-to-reveal checklist
@@ -15,10 +14,7 @@ export function SetupProgress() {
   const rootRef = useRef<HTMLDivElement>(null);
   const tasks = setupTasksForMaturity('day0');
   const done = tasks.filter((t) => t.status === 'done').length;
-  // The organization data carries the canonical completion number so the
-  // ring and the checklist can agree on percent even when the dropdown is
-  // not open.
-  const percent = organization.setupCompletion || Math.round((done / tasks.length) * 100);
+  const percent = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
 
   useEffect(() => {
     if (!open) return;

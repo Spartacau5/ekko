@@ -90,6 +90,21 @@ function DashboardDayXPage() {
   const urgentCount = openTasks.filter((a) => a.priority === 'urgent').length;
   const inProgressCount = myTasks.filter((a) => a.status === 'in_progress').length;
 
+  type TaskFilter = 'all' | 'urgent' | 'open' | 'in_progress';
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
+  const filteredTasks = useMemo(() => {
+    switch (taskFilter) {
+      case 'urgent':
+        return myTasks.filter((t) => t.priority === 'urgent' && t.status !== 'completed');
+      case 'open':
+        return myTasks.filter((t) => t.status === 'open');
+      case 'in_progress':
+        return myTasks.filter((t) => t.status === 'in_progress');
+      default:
+        return myTasks;
+    }
+  }, [myTasks, taskFilter]);
+
   const pinnedItems: PinnedItem[] = useMemo(() => resolvePins(pins), [pins]);
 
   const signals = useMemo(() => dashboardAlerts.slice(0, 8), []);
@@ -207,13 +222,25 @@ function DashboardDayXPage() {
           eyebrow="Your work"
           title="Tasks"
           subtitle={buildTasksSubtitle(urgentCount, openTasks.length, inProgressCount)}
+          headerRight={
+            <TaskFilterPills
+              value={taskFilter}
+              onChange={setTaskFilter}
+              counts={{
+                all: myTasks.length,
+                urgent: urgentCount,
+                open: openTasks.filter((t) => t.status === 'open').length,
+                in_progress: inProgressCount,
+              }}
+            />
+          }
           bodyHeight={420}
           flushBody
         >
           <AnimatePresence initial={false}>
-            {myTasks.length > 0 ? (
+            {filteredTasks.length > 0 ? (
               <div className="flex flex-col gap-2 p-3">
-                {myTasks.map((task) => (
+                {filteredTasks.map((task) => (
                   <TaskRow
                     key={task.id}
                     task={task}
@@ -224,7 +251,7 @@ function DashboardDayXPage() {
                 ))}
               </div>
             ) : (
-              <EmptyBody message="No tasks for this role right now." />
+              <EmptyBody message={emptyMessageForFilter(taskFilter)} />
             )}
           </AnimatePresence>
         </Panel>
@@ -288,6 +315,60 @@ function buildTasksSubtitle(urgent: number, open: number, inProgress: number): s
   if (open > 0) parts.push(`${open} open`);
   if (inProgress > 0) parts.push(`${inProgress} in progress`);
   return parts.length > 0 ? parts.join(' · ') : 'Nothing to action';
+}
+
+type TaskFilterValue = 'all' | 'urgent' | 'open' | 'in_progress';
+
+function TaskFilterPills({
+  value,
+  onChange,
+  counts,
+}: {
+  value: TaskFilterValue;
+  onChange: (v: TaskFilterValue) => void;
+  counts: { all: number; urgent: number; open: number; in_progress: number };
+}) {
+  const options: Array<{ value: TaskFilterValue; label: string; count: number }> = [
+    { value: 'all', label: 'All', count: counts.all },
+    { value: 'urgent', label: 'Urgent', count: counts.urgent },
+    { value: 'open', label: 'Open', count: counts.open },
+    { value: 'in_progress', label: 'In progress', count: counts.in_progress },
+  ];
+  return (
+    <div className="inline-flex items-center bg-surface-muted/60 border border-border-subtle rounded-sm p-0.5">
+      {options.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={`inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-sm transition-colors
+              ${active
+                ? 'bg-surface text-primary shadow-[0_1px_0_rgba(17,17,17,0.05)] border border-border-subtle'
+                : 'text-secondary hover:text-primary'
+              }`}
+          >
+            {opt.label}
+            <span className={`tabular-nums ${active ? 'text-primary' : 'text-muted'}`}>{opt.count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function emptyMessageForFilter(filter: TaskFilterValue): string {
+  switch (filter) {
+    case 'urgent':
+      return 'No urgent tasks right now.';
+    case 'open':
+      return 'No open tasks. Nicely done.';
+    case 'in_progress':
+      return 'Nothing in progress.';
+    default:
+      return 'No tasks for this role right now.';
+  }
 }
 
 // Resolve live pin records against source data (donors, policies, signals).
