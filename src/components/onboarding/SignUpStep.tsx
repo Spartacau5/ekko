@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Check, X } from 'lucide-react';
-import { EkkoMark, GoogleMark, AppleMark } from './BrandMarks';
+import { EkkoWordmark, GoogleMark, AppleMark } from './BrandMarks';
 import { AuthField, PasswordField, AuthButton, SocialButton } from './AuthField';
 
 // Sign up form for the onboarding flow. The "Sign in" link swaps the parent
@@ -31,7 +31,9 @@ export function SignUpStep({ email, password, onChange, onSubmit, onSwitchToSign
     <>
       <div className="flex flex-col gap-8 items-start w-full">
         <div className="flex flex-col gap-4 items-center w-full">
-          <EkkoMark size={40} />
+          <div className="text-brand">
+            <EkkoWordmark size={40} />
+          </div>
           <div className="text-center">
             <h1 className="font-serif text-[32px] leading-[38px] font-semibold text-primary tracking-tight">
               Welcome to Ekko
