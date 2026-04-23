@@ -105,11 +105,11 @@ export function OrganizationStep({ state, onChange, onOpenManualModal, manualOrg
                         transition-[background-color,border-color,box-shadow] duration-150 ease-out
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-border-default
                         ${selected
-                          ? 'border-accent bg-accent-soft/40 shadow-[inset_0_0_0_1px_rgba(244,190,0,0.4)]'
+                          ? 'border-brand bg-brand-soft/50 shadow-[inset_0_0_0_1px_rgba(43,0,212,0.4)]'
                           : 'border-border-subtle hover:border-border-default bg-surface'}`}
                     >
                       <div className={`w-[42px] h-[42px] rounded-lg flex items-center justify-center shrink-0 transition-colors duration-150 ${
-                        selected ? 'bg-accent-soft text-primary' : 'bg-surface-muted text-muted'
+                        selected ? 'bg-brand-soft text-brand' : 'bg-surface-muted text-muted'
                       }`}>
                         <Building2 size={20} strokeWidth={1.5} />
                       </div>
@@ -119,7 +119,7 @@ export function OrganizationStep({ state, onChange, onOpenManualModal, manualOrg
                           <div className="flex items-center gap-2 shrink-0">
                             <span
                               className={`w-5 h-5 rounded-full flex items-center justify-center transition-[opacity,background-color] duration-150 ${
-                                selected ? 'opacity-100 bg-accent text-primary' : 'opacity-0'
+                                selected ? 'opacity-100 bg-brand text-white' : 'opacity-0'
                               }`}
                               aria-hidden={!selected}
                             >
@@ -147,9 +147,9 @@ export function OrganizationStep({ state, onChange, onOpenManualModal, manualOrg
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: motionDurations.modal, ease: motionEasings.out }}
-            className="flex gap-4 items-center p-4 border border-accent bg-accent-soft/40 rounded-lg shadow-[inset_0_0_0_1px_rgba(244,190,0,0.4)]"
+            className="flex gap-4 items-center p-4 border border-brand bg-brand-soft/50 rounded-lg shadow-[inset_0_0_0_1px_rgba(43,0,212,0.4)]"
           >
-            <div className="w-[42px] h-[42px] rounded-lg bg-accent-soft flex items-center justify-center text-primary shrink-0">
+            <div className="w-[42px] h-[42px] rounded-lg bg-brand-soft flex items-center justify-center text-brand shrink-0">
               <Building2 size={20} strokeWidth={1.5} />
             </div>
             <div className="flex-1 flex flex-col gap-2 min-w-0">
@@ -158,7 +158,7 @@ export function OrganizationStep({ state, onChange, onOpenManualModal, manualOrg
                   {manualOrg.name || 'Your organization'}
                 </p>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="w-5 h-5 rounded-full bg-accent text-primary flex items-center justify-center">
+                  <span className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center">
                     <Check size={12} strokeWidth={3} />
                   </span>
                   <p className="text-[12px] leading-[14px] text-muted">EIN: {manualOrg.ein || '—'}</p>

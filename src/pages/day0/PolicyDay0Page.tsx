@@ -255,8 +255,8 @@ function TopicPickerPanel({
           type="button"
           onClick={onSubmit}
           disabled={totalCount === 0}
-          className="inline-flex items-center gap-1.5 bg-accent text-primary border border-border-default px-4 py-2 text-[13px] font-medium rounded-sm
-            hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 bg-brand text-white border border-brand px-4 py-2 text-[13px] font-medium rounded-sm
+            hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
         >
           Start tracking {totalCount > 0 && `${totalCount} ${totalCount === 1 ? 'item' : 'items'}`}
         </button>

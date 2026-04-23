@@ -90,7 +90,7 @@ export function ProfileStep({ profile, onChange, errors, showErrors }: ProfileSt
                   transition-[background-color,border-color,box-shadow] duration-150 ease-out
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-border-default
                   ${selected
-                    ? 'border-accent bg-accent-soft/30 shadow-[inset_0_0_0_1px_rgba(244,190,0,0.5)]'
+                    ? 'border-brand bg-brand-soft/40 shadow-[inset_0_0_0_1px_rgba(43,0,212,0.5)]'
                     : showErrors && !profile.roleId
                       ? 'border-danger/50 bg-danger-soft/20 hover:border-danger'
                       : 'border-border-subtle hover:border-border-default bg-surface'
@@ -108,9 +108,9 @@ export function ProfileStep({ profile, onChange, errors, showErrors }: ProfileSt
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.6 }}
                       transition={{ duration: motionDurations.chip, ease: motionEasings.out }}
-                      className="absolute top-2 right-2 w-4 h-4 rounded-full bg-accent flex items-center justify-center"
+                      className="absolute top-2 right-2 w-4 h-4 rounded-full bg-brand flex items-center justify-center"
                     >
-                      <Check size={10} strokeWidth={3} className="text-primary" />
+                      <Check size={10} strokeWidth={3} className="text-white" />
                     </motion.span>
                   )}
                 </AnimatePresence>

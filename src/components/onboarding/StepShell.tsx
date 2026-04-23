@@ -107,7 +107,7 @@ function StepNavButton({ children, onClick, variant, disabled, icon }: StepNavBu
       'bg-surface text-primary border border-border-default hover:bg-surface-muted cursor-pointer',
     primary: disabled
       ? 'bg-surface-muted text-muted border border-border-subtle cursor-not-allowed'
-      : 'bg-accent text-primary border border-border-default hover:bg-accent-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(17,17,17,0.08)]',
+      : 'bg-brand text-white border border-brand hover:bg-brand-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]',
     danger: disabled
       ? 'bg-surface-muted text-muted border border-border-subtle cursor-not-allowed'
       : 'bg-danger-soft text-danger border border-danger/50 hover:bg-danger hover:text-surface cursor-pointer',

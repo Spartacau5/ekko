@@ -9,6 +9,7 @@ import { MaturityStateSwitcher } from './MaturityStateSwitcher';
 import { WalkthroughLauncher } from './WalkthroughLauncher';
 import { useRole } from '../../lib/RoleContext';
 import { Avatar } from '../ui/Avatar';
+import { EkkoWordmark } from '../onboarding/BrandMarks';
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard' },
@@ -66,15 +67,8 @@ export function TopNav() {
         className="flex items-center gap-2.5 mr-12 no-underline group"
         aria-label="Ekko — go to dashboard"
       >
-        {/* Logo mark: serifed 'E' inside a yellow square, paired with the
-            serif wordmark. The punctuation dot on the right is Ekko's quiet
-            brand motif — a printed, editorial signal that visually rhymes
-            with the eyebrow rule used throughout the product. */}
-        <div className="w-[26px] h-[26px] bg-accent border border-border-default rounded-sm flex items-center justify-center shadow-[0_1px_0_rgba(17,17,17,0.06)]">
-          <span className="font-serif text-[15px] font-semibold text-primary leading-none -mt-[1px]">E</span>
-        </div>
-        <span className="text-[19px] font-semibold font-serif text-primary tracking-tight leading-none">
-          Ekko<span className="text-accent">.</span>
+        <span className="text-brand">
+          <EkkoWordmark size={22} />
         </span>
       </Link>
 

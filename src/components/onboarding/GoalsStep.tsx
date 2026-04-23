@@ -63,7 +63,7 @@ export function GoalsStep({ state, onChange, otherError }: GoalsStepProps) {
                 transition-[background-color,border-color,color] duration-150 ease-out
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-border-default
                 ${selected
-                  ? 'border-accent bg-accent-soft/40 text-primary shadow-[inset_0_0_0_1px_rgba(244,190,0,0.4)]'
+                  ? 'border-brand bg-brand-soft/50 text-primary shadow-[inset_0_0_0_1px_rgba(43,0,212,0.4)]'
                   : 'border-border-subtle bg-surface text-muted hover:border-border-default hover:text-secondary'}`}
             >
               {goal}

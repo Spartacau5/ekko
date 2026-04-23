@@ -6,7 +6,7 @@
   html {
     font-family: 'Inter', Arial, sans-serif;
     color: #111111;
-    background-color: #F3F1EC;
+    background-color: #F4F4F6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "ss01", "cv11", "kern";
@@ -70,7 +70,7 @@
     display: inline-block;
     width: 14px;
     height: 2px;
-    background: #F4BE00;
+    background: #F24A14;
     flex-shrink: 0;
   }
   .eyebrow-plain {
@@ -142,7 +142,7 @@
     display: block;
     width: 28px;
     height: 2px;
-    background: #F4BE00;
+    background: #F24A14;
     margin-bottom: 14px;
   }
 }
@@ -153,10 +153,10 @@
    gentle scale breath draws the eye to the section the step is about without
    disrupting the page layout. */
 @keyframes walkthrough-focus-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(244, 190, 0, 0.00), 0 0 0 0 rgba(244, 190, 0, 0.00); }
-  20%  { box-shadow: 0 0 0 3px rgba(244, 190, 0, 0.70), 0 0 0 10px rgba(244, 190, 0, 0.22); }
-  70%  { box-shadow: 0 0 0 3px rgba(244, 190, 0, 0.40), 0 0 0 14px rgba(244, 190, 0, 0.10); }
-  100% { box-shadow: 0 0 0 0 rgba(244, 190, 0, 0.00), 0 0 0 0 rgba(244, 190, 0, 0.00); }
+  0%   { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
+  20%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.60), 0 0 0 10px rgba(43, 0, 212, 0.20); }
+  70%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.35), 0 0 0 14px rgba(43, 0, 212, 0.10); }
+  100% { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
 }
 
 .walkthrough-focus-pulse {
@@ -174,10 +174,10 @@
    gentle scale breath draws the eye to the section the step is about without
    disrupting the page layout. */
 @keyframes walkthrough-focus-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(125, 94, 235, 0.00), 0 0 0 0 rgba(125, 94, 235, 0.00); }
-  20%  { box-shadow: 0 0 0 3px rgba(125, 94, 235, 0.55), 0 0 0 10px rgba(125, 94, 235, 0.18); }
-  70%  { box-shadow: 0 0 0 3px rgba(125, 94, 235, 0.35), 0 0 0 14px rgba(125, 94, 235, 0.10); }
-  100% { box-shadow: 0 0 0 0 rgba(125, 94, 235, 0.00), 0 0 0 0 rgba(125, 94, 235, 0.00); }
+  0%   { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
+  20%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.55), 0 0 0 10px rgba(43, 0, 212, 0.18); }
+  70%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.35), 0 0 0 14px rgba(43, 0, 212, 0.10); }
+  100% { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
 }
 
 .walkthrough-focus-pulse {

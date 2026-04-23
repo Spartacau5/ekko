@@ -1,18 +1,57 @@
 import React from 'react';
 
+/**
+ * Square brand tile — indigo background with a white "E". Used in tight
+ * spaces (favicons, collapsed nav, stepper headers). For wordmark lockups
+ * prefer <EkkoWordmark />.
+ */
 export function EkkoMark({ size = 40 }: { size?: number }) {
   return (
     <div
-      className="bg-accent rounded-md flex items-center justify-center shadow-[inset_0_-1px_0_rgba(17,17,17,0.08)]"
+      className="bg-brand rounded-md flex items-center justify-center"
       style={{ width: size, height: size }}
     >
       <span
-        className="font-serif font-semibold text-primary leading-none"
-        style={{ fontSize: size * 0.55 }}
+        className="font-sans font-extrabold text-white leading-none tracking-[-0.04em]"
+        style={{ fontSize: size * 0.52 }}
       >
         E
       </span>
     </div>
+  );
+}
+
+/**
+ * Full EKKO wordmark with the final O drawn as an elongated capsule.
+ * Colour inherits via `currentColor`, so pass a text color class
+ * (e.g. `text-white`, `text-brand`, `text-accent`) on the wrapper.
+ * `size` controls the cap height in px; the capsule scales with it.
+ */
+export function EkkoWordmark({
+  size = 24,
+  className = '',
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-label="Ekko"
+      className={`inline-flex items-center font-sans font-extrabold leading-none tracking-[-0.04em] ${className}`}
+      style={{ fontSize: size, color: 'currentColor' }}
+    >
+      <span>EKK</span>
+      <span
+        aria-hidden="true"
+        className="inline-block rounded-full align-middle"
+        style={{
+          width: '0.96em',
+          height: '0.72em',
+          marginLeft: '0.05em',
+          border: '0.17em solid currentColor',
+        }}
+      />
+    </span>
   );
 }
 

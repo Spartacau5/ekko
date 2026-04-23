@@ -155,7 +155,7 @@ export function AddOrgModal({ open, onClose, onSubmit }: AddOrgModalProps) {
                 onClick={() => canSubmit && onSubmit(details)}
                 className={`flex-1 flex items-center justify-center px-4 py-2 text-[16px] leading-[20px] font-medium rounded-full border transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-default
                   ${canSubmit
-                    ? 'bg-accent text-primary border-border-default hover:bg-accent-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(17,17,17,0.08)]'
+                    ? 'bg-brand text-white border-brand hover:bg-brand-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]'
                     : 'bg-surface-muted text-muted border-border-subtle cursor-not-allowed'}`}
               >
                 Done

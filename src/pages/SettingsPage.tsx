@@ -92,7 +92,7 @@ function ToggleRow({ label, description, value, onChange }: { label: string; des
         aria-pressed={value}
         className={`relative w-10 h-6 rounded-full border transition-colors flex-shrink-0
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-default focus-visible:ring-offset-2 focus-visible:ring-offset-page
-          ${value ? 'bg-accent border-border-default' : 'bg-surface-muted border-border-subtle'}`}
+          ${value ? 'bg-brand border-brand' : 'bg-surface-muted border-border-subtle'}`}
       >
         <span
           className={`absolute top-0.5 w-[18px] h-[18px] rounded-full bg-surface border border-border-default transition-all
@@ -414,7 +414,7 @@ function NotificationsTab() {
                   <div key={c} className="px-2 py-3 flex justify-center">
                     <span className={`inline-flex w-8 h-5 rounded-full border items-center
                       ${enabled
-                        ? 'bg-accent border-border-default justify-end pr-0.5'
+                        ? 'bg-brand border-brand justify-end pr-0.5'
                         : 'bg-surface-muted border-border-subtle justify-start pl-0.5'}`}
                     >
                       <span className="w-3.5 h-3.5 rounded-full bg-surface border border-border-default" />

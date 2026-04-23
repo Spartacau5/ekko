@@ -150,7 +150,7 @@ export function WalkthroughStrip() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="inline-flex items-center gap-1.5 bg-accent text-primary border border-border-default px-4 py-2 text-[13px] font-semibold rounded-sm hover:bg-accent-hover transition-colors duration-150 flex-shrink-0"
+                className="inline-flex items-center gap-1.5 bg-brand text-white border border-brand px-4 py-2 text-[13px] font-semibold rounded-sm hover:bg-brand-hover transition-colors duration-150 flex-shrink-0"
               >
                 {active.stepIndex + 1 === active.total ? (
                   <>Finish <Check size={12} /></>

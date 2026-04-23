@@ -24,7 +24,7 @@ export function Sparkline({
   width = 100,
   height = 28,
   color = '#262626',
-  fillColor = '#D6D0C7',
+  fillColor = '#D9D9E1',
   showFill = true,
   endDot = true,
   strokeWidth = 1.25,
@@ -69,8 +69,8 @@ export function Sparkline({
       />
       {endDot && (
         <>
-          {/* A yellow ring + dark center — the only place the accent lives. */}
-          <circle cx={endX} cy={endY} r={3} fill="#F4BE00" />
+          {/* Orange accent ring + dark center — the only place the accent lives. */}
+          <circle cx={endX} cy={endY} r={3} fill="#F24A14" />
           <circle cx={endX} cy={endY} r={1.5} fill={color} />
         </>
       )}

@@ -198,7 +198,7 @@ export function DocUploadModal({ open, onClose, onDone }: DocUploadModalProps) {
               </button>
               <button
                 onClick={onDone}
-                className="flex-1 flex items-center justify-center px-4 py-2 text-[16px] leading-[20px] font-medium rounded-full bg-accent text-primary border border-border-default hover:bg-accent-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(17,17,17,0.08)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-default"
+                className="flex-1 flex items-center justify-center px-4 py-2 text-[16px] leading-[20px] font-medium rounded-full bg-brand text-white border border-brand hover:bg-brand-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 Done
               </button>

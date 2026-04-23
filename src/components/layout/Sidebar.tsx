@@ -12,6 +12,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { motionDurations, motionEasings } from '../../lib/motion';
+import { EkkoWordmark } from '../onboarding/BrandMarks';
 
 // Global left-rail navigation. Dark surface, primary icon + label rows, with
 // an expandable People group that mirrors the /people/* sub-routes. Footer
@@ -90,13 +91,8 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
   return (
     <aside className="w-[240px] shrink-0 bg-[#1a1a1a] text-[#e8e6e1] flex flex-col h-screen">
       <div className="px-5 pt-5 pb-8">
-        <Link to="/dashboard" className="flex items-center gap-2.5 no-underline" aria-label="Ekko">
-          <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center shadow-[inset_0_-1px_0_rgba(17,17,17,0.08)]">
-            <span className="font-serif font-semibold text-primary text-[17px] leading-none -mt-px">E</span>
-          </div>
-          <span className="font-serif font-semibold text-[22px] tracking-tight leading-none text-white">
-            Ekko
-          </span>
+        <Link to="/dashboard" className="flex items-center no-underline text-white" aria-label="Ekko">
+          <EkkoWordmark size={24} />
         </Link>
       </div>
 

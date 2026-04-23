@@ -48,41 +48,41 @@ function WorkspacePreview() {
   return (
     <div className="w-full aspect-[701/500] relative">
       <div className="absolute inset-0 rounded-[22px] bg-[#1d1d1f] p-[10px] shadow-[0_24px_48px_rgba(17,17,17,0.12)]">
-        <div className="w-full h-full rounded-[14px] bg-[#F3F1EC] overflow-hidden flex flex-col mix-blend-luminosity">
+        <div className="w-full h-full rounded-[14px] bg-[#F4F4F6] overflow-hidden flex flex-col mix-blend-luminosity">
           {/* Top bar */}
-          <div className="h-8 border-b border-[#D6D0C7] flex items-center px-3 gap-2">
-            <div className="w-4 h-4 rounded-sm bg-[#111]" />
-            <div className="text-[9px] font-serif font-semibold text-[#111] tracking-tight">Ekko</div>
+          <div className="h-8 border-b border-[#D9D9E1] flex items-center px-3 gap-2">
+            <div className="w-4 h-4 rounded-sm bg-brand" />
+            <div className="text-[9px] font-sans font-extrabold text-[#111] tracking-tight">EKKO</div>
             <div className="flex-1" />
             <div className="flex gap-1">
-              <div className="w-8 h-3 rounded-sm bg-[#ECE8E1]" />
-              <div className="w-3 h-3 rounded-full bg-[#ECE8E1]" />
+              <div className="w-8 h-3 rounded-sm bg-[#E8E8EE]" />
+              <div className="w-3 h-3 rounded-full bg-[#E8E8EE]" />
             </div>
           </div>
           {/* Body */}
           <div className="flex-1 flex">
             {/* Sidebar */}
-            <div className="w-20 border-r border-[#D6D0C7] p-2 flex flex-col gap-1">
+            <div className="w-20 border-r border-[#D9D9E1] p-2 flex flex-col gap-1">
               {[0, 1, 2, 3, 4].map((i) => (
-                <div key={i} className={`h-3 rounded-sm ${i === 0 ? 'bg-[#111]' : 'bg-[#ECE8E1]'}`} />
+                <div key={i} className={`h-3 rounded-sm ${i === 0 ? 'bg-[#111]' : 'bg-[#E8E8EE]'}`} />
               ))}
             </div>
             {/* Main */}
             <div className="flex-1 p-3 flex flex-col gap-2">
               <div className="flex items-baseline gap-2">
                 <div className="h-3 w-24 rounded-sm bg-[#111]" />
-                <div className="h-2 w-16 rounded-sm bg-[#ECE8E1]" />
+                <div className="h-2 w-16 rounded-sm bg-[#E8E8EE]" />
               </div>
               <div className="flex gap-2">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="flex-1 h-14 rounded-md bg-surface border border-[#D6D0C7] p-1.5 flex flex-col gap-1">
-                    <div className="h-1.5 w-8 rounded-sm bg-[#ECE8E1]" />
+                  <div key={i} className="flex-1 h-14 rounded-md bg-surface border border-[#D9D9E1] p-1.5 flex flex-col gap-1">
+                    <div className="h-1.5 w-8 rounded-sm bg-[#E8E8EE]" />
                     <div className="h-3 w-10 rounded-sm bg-[#111]" />
-                    <div className="h-1 w-6 rounded-sm bg-[#ECE8E1]" />
+                    <div className="h-1 w-6 rounded-sm bg-[#E8E8EE]" />
                   </div>
                 ))}
               </div>
-              <div className="flex-1 rounded-md bg-surface border border-[#D6D0C7] p-2 flex flex-col gap-1.5">
+              <div className="flex-1 rounded-md bg-surface border border-[#D9D9E1] p-2 flex flex-col gap-1.5">
                 <div className="h-2 w-20 rounded-sm bg-[#111]" />
                 <div className="flex-1 flex items-end gap-1">
                   {[0.5, 0.7, 0.4, 0.8, 0.6, 0.9, 0.5, 0.7, 0.85, 0.6, 0.75, 0.5].map((h, i) => (
@@ -94,11 +94,11 @@ function WorkspacePreview() {
                   ))}
                 </div>
               </div>
-              <div className="h-8 rounded-md bg-surface border border-[#D6D0C7] flex items-center px-2 gap-1.5">
+              <div className="h-8 rounded-md bg-surface border border-[#D9D9E1] flex items-center px-2 gap-1.5">
                 <div className="w-4 h-4 rounded-full bg-[#111]" />
                 <div className="flex flex-col gap-0.5 flex-1">
                   <div className="h-1.5 w-16 rounded-sm bg-[#111]" />
-                  <div className="h-1 w-20 rounded-sm bg-[#ECE8E1]" />
+                  <div className="h-1 w-20 rounded-sm bg-[#E8E8EE]" />
                 </div>
                 <div className="h-3 w-10 rounded-sm bg-[#111]" />
               </div>

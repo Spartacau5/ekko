@@ -170,7 +170,7 @@ export function AddDonorModal({ open, onClose, onSubmit, ownerOptions }: AddDono
                 accountOwner,
               });
             }}
-            className="inline-flex items-center gap-1.5 h-9 px-4 text-[13px] font-medium bg-accent text-primary border border-border-default rounded-sm hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1.5 h-9 px-4 text-[13px] font-medium bg-brand text-white border border-brand rounded-sm hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Add donor
           </button>

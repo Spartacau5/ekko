@@ -259,14 +259,14 @@ function GivingChart({ data }: { data: number[] }) {
         const y = padTop + (h / yTicks) * i;
         return (
           <g key={i}>
-            <line x1={padX} x2={padX + innerW} y1={y} y2={y} stroke="#D6D0C7" strokeWidth={0.5} strokeDasharray="2 3" />
+            <line x1={padX} x2={padX + innerW} y1={y} y2={y} stroke="#D9D9E1" strokeWidth={0.5} strokeDasharray="2 3" />
             <text x={padX - 8} y={y + 3} textAnchor="end" fontSize="10" fill="#7A756E">
               {formatTick(v)}
             </text>
           </g>
         );
       })}
-      <path d={areaPath} fill="#F4BE00" fillOpacity="0.15" />
+      <path d={areaPath} fill="#2B00D4" fillOpacity="0.12" />
       <path d={linePath} stroke="#262626" strokeWidth={1.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       {points.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r={3} fill="#262626" />

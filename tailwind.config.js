@@ -4,23 +4,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        page: "#F3F1EC",
+        page: "#F4F4F6",
         surface: {
           DEFAULT: "#FFFFFF",
-          muted: "#ECE8E1",
+          muted: "#E8E8EE",
         },
         overlay: "rgba(17,17,17,0.45)",
         primary: "#111111",
-        secondary: "#5C5A57",
-        muted: "#7A756E",
+        secondary: "#5C5A64",
+        muted: "#72707A",
         border: {
           default: "#262626",
-          subtle: "#D6D0C7",
+          subtle: "#D9D9E1",
+        },
+        brand: {
+          DEFAULT: "#2B00D4",
+          hover: "#2200B0",
+          soft: "#E2DCFB",
         },
         accent: {
-          DEFAULT: "#F4BE00",
-          hover: "#D9A600",
-          soft: "#F7E59E",
+          DEFAULT: "#F24A14",
+          hover: "#D63E0E",
+          soft: "#FBE0D4",
         },
         success: {
           DEFAULT: "#0E7C66",

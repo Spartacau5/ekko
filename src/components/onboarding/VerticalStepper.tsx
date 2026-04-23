@@ -31,8 +31,8 @@ export function VerticalStepper({ steps, currentStep }: VerticalStepperProps) {
               <motion.div
                 layout
                 className={`w-8 h-8 rounded-full border flex items-center justify-center text-[16px] leading-[20px] font-semibold transition-colors duration-200
-                  ${completed ? 'bg-accent border-border-default text-primary' :
-                    current ? 'bg-surface border-border-default text-primary' :
+                  ${completed ? 'bg-brand border-brand text-white' :
+                    current ? 'bg-surface border-brand text-brand' :
                     'bg-surface border-border-subtle text-muted'}`}
                 aria-current={current ? 'step' : undefined}
               >
@@ -49,7 +49,7 @@ export function VerticalStepper({ steps, currentStep }: VerticalStepperProps) {
               {i < steps.length - 1 && (
                 <div className="h-12 w-0.5 flex items-center justify-center">
                   <div className={`w-full h-full rounded-sm transition-colors duration-200 ${
-                    completed ? 'bg-accent' : 'bg-border-subtle'
+                    completed ? 'bg-brand' : 'bg-border-subtle'
                   }`} />
                 </div>
               )}

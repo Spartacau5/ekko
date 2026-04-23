@@ -221,7 +221,7 @@ function PopoverAction({
       onClick={onClick}
       className={`inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-sm border transition-colors duration-150
         ${primary
-          ? 'bg-accent border-border-default text-primary hover:bg-accent-hover'
+          ? 'bg-brand border-brand text-white hover:bg-brand-hover'
           : 'bg-surface border-border-subtle text-primary hover:bg-surface-muted'}`}
     >
       {icon} {label}

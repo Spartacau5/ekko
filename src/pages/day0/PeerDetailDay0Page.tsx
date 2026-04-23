@@ -69,7 +69,7 @@ export function PeerDetailDay0Page() {
         <div className="mt-5 pt-5 border-t border-border-subtle">
           <Link
             to="/peers"
-            className="inline-flex items-center gap-1.5 bg-accent text-primary border border-border-default px-4 py-2 text-[13px] font-medium rounded-sm hover:bg-accent-hover transition-colors duration-150 no-underline"
+            className="inline-flex items-center gap-1.5 bg-brand text-white border border-brand px-4 py-2 text-[13px] font-medium rounded-sm hover:bg-brand-hover transition-colors duration-150 no-underline"
           >
             <ShieldCheck size={12} /> Opt in to benchmarking
           </Link>

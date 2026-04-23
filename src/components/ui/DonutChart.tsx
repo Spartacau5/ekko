@@ -39,9 +39,9 @@ export function DonutChart({
       <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="block">
           {/* Printed outer rule so the ring has a crisp edge. */}
-          <circle cx={cx} cy={cy} r={radius + thickness / 2} fill="none" stroke="#D6D0C7" strokeWidth={1} />
-          <circle cx={cx} cy={cy} r={innerRadius} fill="none" stroke="#D6D0C7" strokeWidth={1} />
-          <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#ECE8E1" strokeWidth={thickness} />
+          <circle cx={cx} cy={cy} r={radius + thickness / 2} fill="none" stroke="#D9D9E1" strokeWidth={1} />
+          <circle cx={cx} cy={cy} r={innerRadius} fill="none" stroke="#D9D9E1" strokeWidth={1} />
+          <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#E8E8EE" strokeWidth={thickness} />
           {data.map((s, i) => {
             const fraction = s.value / total;
             const dash = circumference * fraction;

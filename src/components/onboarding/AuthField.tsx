@@ -84,7 +84,7 @@ export function AuthButton({ className = '', children, disabled, ...props }: Aut
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:ring-border-default
         ${disabled
           ? 'bg-surface-muted text-muted border border-border-subtle cursor-not-allowed'
-          : 'bg-accent text-primary border border-border-default hover:bg-accent-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(17,17,17,0.08)]'}
+          : 'bg-brand text-white border border-brand hover:bg-brand-hover cursor-pointer shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]'}
         ${className}`}
       disabled={disabled}
       {...props}

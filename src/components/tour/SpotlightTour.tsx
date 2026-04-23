@@ -146,7 +146,7 @@ export function SpotlightTour({ onClose }: SpotlightTourProps) {
                 transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
                 rx={6}
                 fill="none"
-                stroke="#F4BE00"
+                stroke="#2B00D4"
                 strokeWidth={2}
                 pointerEvents="none"
               />
