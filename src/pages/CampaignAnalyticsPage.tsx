@@ -12,7 +12,6 @@ import {
   Share2,
   MousePointerClick,
   Calendar,
-  Clock,
   CheckCircle2,
   ChevronRight,
   Sparkles,

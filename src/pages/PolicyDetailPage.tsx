@@ -118,7 +118,7 @@ function PolicyDetailDayXPage() {
   const { addAction } = useActions();
   const toast = useToast();
   const [composerOpen, setComposerOpen] = useState(false);
-  const [composerTitle, setComposerTitle] = useState<string>('');
+  const [composerTitle] = useState<string>('');
   const [noteOpen, setNoteOpen] = useState(false);
   const [summaryTab, setSummaryTab] = useState<SummaryTab>('org');
   const [priority, setPriority] = useState<Priority>('high');
@@ -145,11 +145,6 @@ function PolicyDetailDayXPage() {
     .map((pid) => policies.find((p) => p.id === pid))
     .filter((p): p is Policy => Boolean(p))
     .slice(0, 2);
-
-  const openAssign = (title: string) => {
-    setComposerTitle(title);
-    setComposerOpen(true);
-  };
 
   return (
     <>
