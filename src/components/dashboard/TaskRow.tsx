@@ -41,7 +41,7 @@ export function TaskRow({ task, ownerName, onToggleComplete, onPrimaryAction }: 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: motionDurations.chip, ease: motionEasings.out }}
-      className="group flex items-start gap-3 p-3 rounded-md border border-border-subtle bg-surface hover:border-border-default transition-colors duration-150"
+      className="card-lift group flex items-start gap-3 p-3 rounded-md border border-border-subtle bg-surface hover:border-border-default"
     >
       <button
         onClick={() => onToggleComplete(task.id, completed ? 'open' : 'completed')}

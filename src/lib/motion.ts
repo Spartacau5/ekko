@@ -4,11 +4,15 @@
 export const motionDurations = {
   hover: 0.12,           // 120ms — hover/focus transitions
   chip: 0.16,            // 160ms — chip and selected state changes
-  tab: 0.18,             // 180ms — tab/content section transitions
-  modal: 0.2,            // 200ms — modal/drawer entrance
+  tab: 0.2,              // 200ms — tab/content section crossfade
+  modal: 0.25,           // 250ms — modal/drawer/dropdown slide+fade
   panel: 0.2,            // 200ms — panel expand/collapse
   tour: 0.16,            // 160ms — spotlight tooltip transitions
   toast: 0.2,            // 200ms — toast in/out
+  page: 0.3,             // 300ms — page-level fade between routes
+  success: 0.3,          // 300ms — success modal scale-in
+  draw: 0.6,             // 600ms — sparkline / chart draw-in on mount
+  nodeStagger: 0.05,     // 50ms — per-node delay in graph stagger
 } as const;
 
 export const motionEasings = {

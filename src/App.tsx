@@ -29,6 +29,9 @@ import { PeersPage } from './pages/PeersPage';
 import { PeerDetailPage } from './pages/PeerDetailPage';
 import { CampaignLibraryPage } from './pages/CampaignLibraryPage';
 import { CampaignDetailPage } from './pages/CampaignDetailPage';
+import { CampaignBuilderPage } from './pages/CampaignBuilderPage';
+import { CampaignAnalyticsPage } from './pages/CampaignAnalyticsPage';
+import { NotificationMockupPage } from './pages/NotificationMockupPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 // Resets scroll on route change. Lives inside Router.
@@ -84,10 +87,10 @@ function LayoutWrapper() {
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
           key={key}
-          initial={{ opacity: 0, y: 4 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -2 }}
-          transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: motionDurations.page, ease: motionEasings.out }}
         >
           <Outlet />
         </motion.div>
@@ -120,6 +123,10 @@ function App() {
             <Route path="/day-x/*" element={<MaturityPrefixCatchAll />} />
             <Route path="/" element={<Navigate to="/onboarding" replace />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
+
+            {/* Standalone — video cold-open lock-screen mockup. Not linked
+                from anywhere; reachable only via direct URL. */}
+            <Route path="/notification" element={<NotificationMockupPage />} />
             <Route element={<LayoutWrapper />}>
               <Route path="/dashboard" element={<DashboardPage />} />
 
@@ -145,6 +152,10 @@ function App() {
               <Route path="/peers/campaigns" element={<CampaignLibraryPage />} />
               <Route path="/peers/campaigns/:id" element={<CampaignDetailPage />} />
               <Route path="/peers/:id" element={<PeerDetailPage />} />
+
+              {/* Campaign builder — reached from dashboard advocacy task */}
+              <Route path="/campaigns/new" element={<CampaignBuilderPage />} />
+              <Route path="/campaigns/:id/analytics" element={<CampaignAnalyticsPage />} />
 
               <Route path="/settings" element={<SettingsPage />} />
             </Route>

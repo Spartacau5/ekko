@@ -1,15 +1,17 @@
+@import url('https://fonts.cdnfonts.com/css/nasalization');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
-    font-family: 'Inter', Arial, sans-serif;
-    color: #111111;
-    background-color: #F4F4F6;
+    font-family: 'Poppins', 'Inter', system-ui, Arial, sans-serif;
+    color: #020035;
+    background-color: #F2F3F4;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "ss01", "cv11", "kern";
+    font-feature-settings: "kern", "liga";
   }
 
   body {
@@ -23,8 +25,7 @@
 
   h1, h2, h3, h4 {
     margin: 0;
-    /* Slightly tighter letter-spacing on editorial headlines */
-    font-feature-settings: "ss01", "kern", "liga";
+    font-feature-settings: "kern", "liga";
   }
 
   h1 {
@@ -35,7 +36,7 @@
     margin: 0;
   }
 
-  /* Tabular numerals by default on numeric elements. */
+  /* Tabular numerals on numeric elements. */
   .num, [data-num] {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
@@ -43,97 +44,140 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Phase 6: editorial type primitives.
-   A small, deliberate set of classes that define Ekko's typography rhythm.
-   Applied incrementally across screens — not a sweeping rewrite.
+   Type primitives — Ekko's typographic rhythm.
+   Display moments use Nasalization (geometric, brand-forward); body & UI
+   use Poppins. Headings always sit in Midnight Blue (#020035).
    ───────────────────────────────────────────────────────────────────────── */
 
 @layer components {
-  /* Eyebrow — the small uppercase label that precedes editorial titles.
-     The leading vertical rule is Ekko's quiet brand motif: a 2px accent bar
-     that runs before the label and ties editorial moments together across
-     the product. Use `.eyebrow-plain` when the rule would feel redundant
-     (e.g. inside an already-accented header). */
+  /* Eyebrow — small uppercase label preceding editorial titles. */
   .eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    font-family: 'Poppins', system-ui, sans-serif;
     font-size: 10px;
     font-weight: 600;
     line-height: 1;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: #7A756E;
+    color: #6B7280;
   }
   .eyebrow::before {
     content: "";
     display: inline-block;
     width: 14px;
     height: 2px;
-    background: #F24A14;
+    background: #ED4B00;
     flex-shrink: 0;
   }
   .eyebrow-plain {
     display: inline-block;
+    font-family: 'Poppins', system-ui, sans-serif;
     font-size: 10px;
     font-weight: 600;
     line-height: 1;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: #7A756E;
+    color: #6B7280;
   }
 
-  /* Display title — the biggest editorial moment. Reserved for dashboard
-     welcomes, onboarding covers, and hero sections. */
+  /* Display title — biggest editorial moment. Nasalization. */
   .display-title {
-    font-family: "Source Serif 4", Georgia, serif;
-    font-weight: 600;
+    font-family: "Nasalization", "Poppins", system-ui, sans-serif;
+    font-weight: 400;
     font-size: 38px;
     line-height: 1.08;
-    letter-spacing: -0.012em;
-    color: #111111;
+    letter-spacing: -0.005em;
+    color: #020035;
   }
 
-  /* Page title — the default h1 for content pages. */
+  /* Page title — default h1 for content pages. Nasalization. */
   .page-title {
-    font-family: "Source Serif 4", Georgia, serif;
-    font-weight: 600;
-    font-size: 28px;
+    font-family: "Nasalization", "Poppins", system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
     line-height: 1.15;
-    letter-spacing: -0.006em;
-    color: #111111;
+    letter-spacing: -0.003em;
+    color: #020035;
   }
 
-  /* Section title — subordinate headline inside a page. Stays sans because
-     section titles sit inside dense modules. */
+  /* Section title — subordinate headline inside a page. Poppins SemiBold. */
   .section-title {
+    font-family: 'Poppins', system-ui, sans-serif;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 18px;
     line-height: 1.3;
     letter-spacing: -0.003em;
-    color: #111111;
+    color: #020035;
   }
 
-  /* Metadata line — the tight grey line under titles. */
+  /* Card title. */
+  .card-title {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.3;
+    color: #020035;
+  }
+
+  /* Metadata line — tight grey line under titles. */
   .section-meta {
-    font-size: 13px;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 12px;
     line-height: 1.5;
-    color: #5C5A57;
+    color: #6B7280;
   }
 
   /* Large editorial number with tabular figures. */
   .metric-display {
+    font-family: 'Poppins', system-ui, sans-serif;
     font-weight: 600;
     font-size: 32px;
     line-height: 1.1;
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
-    color: #111111;
+    color: #020035;
   }
 
-  /* A quiet 1px top rule used at the top of hero sections — subtly echoes
-     the eyebrow's 2px accent bar and gives hero regions a printed feel. */
+  /* Trend percentage cells. */
+  .trend-up {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: #16A34A;
+  }
+  .trend-down {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: #EF4444;
+  }
+
+  /* Card hover lift — opt-in via .card-lift on any surface card. Translates
+     up 2px and bumps shadow on hover, so dashboards/lists feel "tactile" in
+     the demo recording without being applied indiscriminately. */
+  .card-lift {
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(2, 0, 53, 0.10), 0 2px 6px rgba(2, 0, 53, 0.06);
+  }
+
+  /* Status-pill smooth color/background transitions — used for "Not started
+     → Sent ✓" task chip swaps. */
+  .status-transition {
+    transition: background-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Quiet 1px top rule for hero sections — kimchi accent. */
   .editorial-rule {
     position: relative;
   }
@@ -142,21 +186,17 @@
     display: block;
     width: 28px;
     height: 2px;
-    background: #F24A14;
+    background: #ED4B00;
     margin-bottom: 14px;
   }
 }
 
-/* Phase 5: walkthrough focus pulse.
-   When a demo-flow step changes, WalkthroughStrip attaches this class to the
-   matching `[data-walkthrough-focus]` element for ~1.8s. A soft outline + a
-   gentle scale breath draws the eye to the section the step is about without
-   disrupting the page layout. */
+/* Walkthrough focus pulse — uses brand indigo. */
 @keyframes walkthrough-focus-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
-  20%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.60), 0 0 0 10px rgba(43, 0, 212, 0.20); }
-  70%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.35), 0 0 0 14px rgba(43, 0, 212, 0.10); }
-  100% { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
+  0%   { box-shadow: 0 0 0 0 rgba(2, 6, 111, 0.00), 0 0 0 0 rgba(2, 6, 111, 0.00); }
+  20%  { box-shadow: 0 0 0 3px rgba(2, 6, 111, 0.60), 0 0 0 10px rgba(2, 6, 111, 0.20); }
+  70%  { box-shadow: 0 0 0 3px rgba(2, 6, 111, 0.35), 0 0 0 14px rgba(2, 6, 111, 0.10); }
+  100% { box-shadow: 0 0 0 0 rgba(2, 6, 111, 0.00), 0 0 0 0 rgba(2, 6, 111, 0.00); }
 }
 
 .walkthrough-focus-pulse {
@@ -167,24 +207,60 @@
   scroll-margin-bottom: 200px;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Command Center — investigation-board "red string" animations.
+   ───────────────────────────────────────────────────────────────────────── */
 
-/* Phase 5: walkthrough focus pulse.
-   When a demo-flow step changes, WalkthroughStrip attaches this class to the
-   matching `[data-walkthrough-focus]` element for ~1.8s. A soft outline + a
-   gentle scale breath draws the eye to the section the step is about without
-   disrupting the page layout. */
-@keyframes walkthrough-focus-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
-  20%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.55), 0 0 0 10px rgba(43, 0, 212, 0.18); }
-  70%  { box-shadow: 0 0 0 3px rgba(43, 0, 212, 0.35), 0 0 0 14px rgba(43, 0, 212, 0.10); }
-  100% { box-shadow: 0 0 0 0 rgba(43, 0, 212, 0.00), 0 0 0 0 rgba(43, 0, 212, 0.00); }
+@keyframes dash-march {
+  to { stroke-dashoffset: -28; }
 }
 
-.walkthrough-focus-pulse {
-  position: relative;
-  border-radius: 8px;
-  animation: walkthrough-focus-pulse 1.8s ease-out 1;
-  scroll-margin-top: 96px;
-  scroll-margin-bottom: 200px;
+.cc-string {
+  stroke-dasharray: 6 6;
+  animation: dash-march 1.6s linear infinite;
 }
 
+.cc-string-slow {
+  stroke-dasharray: 6 6;
+  animation: dash-march 4.2s linear infinite;
+}
+
+@keyframes cc-ring-pulse {
+  0%   { transform: scale(0.9);  opacity: 0.55; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+.cc-ring-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cc-ring-pulse 3.4s ease-out infinite;
+}
+
+@keyframes cc-radar-sweep {
+  to { transform: rotate(360deg); }
+}
+
+.cc-radar-sweep {
+  animation: cc-radar-sweep 8s linear infinite;
+}
+
+@keyframes cc-popover-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cc-popover-anim {
+  animation: cc-popover-in 180ms ease-out both;
+}
+
+.cc-node-dim {
+  opacity: 0.28;
+  filter: saturate(0.7);
+  transition: opacity .25s ease, filter .25s ease;
+}
+
+.cc-node-focus {
+  transform: translate(-50%, -50%) scale(1.04);
+  filter: brightness(1.04);
+  transition: transform .22s ease, filter .22s ease;
+}

@@ -19,8 +19,7 @@ interface KpiCardProps {
 export function KpiCard({ label, value, delta, deltaLabel, trend, link }: KpiCardProps) {
   const positive = delta >= 0;
   const card = (
-    <div className="group h-full bg-surface border border-border-subtle rounded-md p-5 flex flex-col gap-3
-      transition-[border-color,background-color] duration-150 ease-out
+    <div className="card-lift group h-full bg-surface border border-border-subtle rounded-md p-5 flex flex-col gap-3
       hover:border-border-default hover:bg-surface-muted/20">
       <div className="flex items-start justify-between">
         <p className="text-[13px] text-secondary">{label}</p>

@@ -21,7 +21,7 @@ const TYPE_OPTIONS = [
   'Small donor',
 ];
 const RISK_OPTIONS = ['Low', 'Medium', 'High'];
-const OWNER_OPTIONS = ['Leah Kim', 'Noah Stein', 'Marcus Bell'];
+const OWNER_OPTIONS = ['Leah Kim', 'Noah Stein', 'Sofia Reyes'];
 const STAGE_OPTIONS = ['Growing', 'Slipping', 'Early', 'Lapsed', 'Stewardship', 'Stable', 'Evaluation', 'Unqualified'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const TODAY = new Date('2026-04-12');

@@ -36,8 +36,7 @@ export function PinnedCard({ item, accent = false }: PinnedCardProps) {
   const meta = CATEGORY_META[item.category];
   const body = (
     <div
-      className={`group relative h-full bg-surface border rounded-md p-4 flex flex-col gap-3
-        transition-[border-color,background-color] duration-150 ease-out
+      className={`card-lift group relative h-full bg-surface border rounded-md p-4 flex flex-col gap-3
         hover:border-border-default
         ${accent ? 'border-accent' : 'border-border-subtle'}`}
     >

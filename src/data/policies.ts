@@ -44,6 +44,40 @@ export interface Policy {
 
 export const policies: Policy[] = [
   {
+    id: 'nyc-food-expansion',
+    title: 'NYC Food Expansion Act',
+    jurisdiction: 'City',
+    topic: 'Food security',
+    status: 'Under review',
+    effectiveDate: 'June 2026',
+    lastUpdate: '2026-04-22',
+    impactLevel: 'High opportunity',
+    teams: ['Executive', 'Programs', 'Communications'],
+    summary:
+      'Expansion could increase legal support eligibility for vulnerable tenants in Brooklyn, Queens, and Bronx. This would directly align with mission area and could open new program funding channels.',
+    recommendedAction:
+      'Draft donor update to RobinHood Foundation highlighting expanded service-area overlap. Brief comms on advocacy messaging for the June 10 hearing.',
+    relatedDonors: [
+      { donorId: 'maya-patel', strength: 'Strong' },
+      { donorId: 'amira-hassan', strength: 'Medium' },
+    ],
+    relatedPolicyIds: ['anti-eviction-funding', 'housing-tax-credit'],
+    stakeholders: [
+      { name: 'NYC Council Housing Committee', stance: 'supportive' },
+      { name: 'NYC Restaurant Alliance', stance: 'opposed' },
+      { name: 'City Comptroller', stance: 'uncertain' },
+      { name: 'RobinHood Foundation', stance: 'mixed' },
+    ],
+    timeline: [
+      { date: '2026-01-12', title: 'Policy Identified', description: 'Flagged by monitoring system' },
+      { date: '2026-02-20', title: 'Impact Assessment', description: 'Scored: High Opportunity' },
+      { date: '2026-03-15', title: 'Council Committee Hearing', description: 'Public Testimony Phase' },
+      { date: '2026-05-01', title: 'Coalition Agreement', description: 'Partners confirmed positions' },
+      { date: '2026-06-10', title: 'Council Floor Vote', description: 'Passed committee, awaiting full vote' },
+      { date: '2026-09-01', title: 'Implementation Begins', description: 'New eligibility zones go live' },
+    ],
+  },
+  {
     id: 'right-to-counsel',
     title: 'New York City Right-to-Counsel Expansion',
     jurisdiction: 'City',

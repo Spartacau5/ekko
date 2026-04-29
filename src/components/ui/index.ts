@@ -29,6 +29,8 @@ export { Avatar } from './Avatar';
 export { StatusBadge } from './StatusBadge';
 export { DueDateBadge } from './DueDateBadge';
 export { AssignOwnerControl } from './AssignOwnerControl';
+export { AssignDropdown, ASSIGN_TEAM } from './AssignDropdown';
+export type { AssignableMember } from './AssignDropdown';
 export { TaskCard } from './TaskCard';
 export { InternalNotePreview } from './InternalNotePreview';
 export { PinnedModuleCard } from './PinnedModuleCard';

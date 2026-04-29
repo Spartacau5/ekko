@@ -112,7 +112,7 @@ export const donors: Donor[] = [
     timeline: [
       { date: '2026-03-28', type: 'download', title: 'Downloaded annual report', description: '2025 annual impact report PDF' },
       { date: '2026-03-20', type: 'email', title: 'Subscribed to newsletter', description: 'Via website form' },
-      { date: '2026-03-10', type: 'note', title: 'Referred by board member', description: 'Introduction via Sarah Chen, board treasurer' },
+      { date: '2026-03-10', type: 'note', title: 'Referred by funder contact', description: 'Introduction via Sarah Chen at RobinHood Foundation' },
     ],
   },
   {

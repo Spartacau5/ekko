@@ -73,6 +73,21 @@ export interface TeamMember {
   joinedDate: string;
   initials: string;
   bio?: string;
+  /** Public path to a head-cropped illustration used by <Avatar />. */
+  imageUrl?: string;
+}
+
+const ROLE_ILLUSTRATION: Record<Role, string> = {
+  executive:      '/images/onboarding/roles/executive-director.png',
+  fundraising:    '/images/onboarding/roles/fundraising-coordinator.png',
+  communications: '/images/onboarding/roles/communications-specialist.png',
+  policy:         '/images/onboarding/roles/other.png',
+  program:        '/images/onboarding/roles/program-manager.png',
+  operations:     '/images/onboarding/roles/operator.png',
+};
+
+export function imageForRole(role: Role): string {
+  return ROLE_ILLUSTRATION[role];
 }
 
 export const teamMembers: TeamMember[] = [
@@ -86,6 +101,7 @@ export const teamMembers: TeamMember[] = [
     joinedDate: '2021-06-01',
     initials: 'AR',
     bio: 'Leads strategy, governance, and external partnerships across Rivergate.',
+    imageUrl: ROLE_ILLUSTRATION.executive,
   },
   {
     id: 'leah-kim',
@@ -97,17 +113,19 @@ export const teamMembers: TeamMember[] = [
     joinedDate: '2022-09-12',
     initials: 'LK',
     bio: 'Owns the major-gifts pipeline, donor stewardship, and annual campaigns.',
+    imageUrl: ROLE_ILLUSTRATION.fundraising,
   },
   {
-    id: 'priya-shah',
-    name: 'Priya Shah',
+    id: 'hannah-win',
+    name: 'Hannah Win',
     role: 'communications',
-    title: 'Communications Specialist',
-    email: 'priya@rivergate.org',
+    title: 'Communications Director',
+    email: 'hannah@providefoodnyc.org',
     phone: '(212) 555-0165',
     joinedDate: '2023-01-09',
-    initials: 'PS',
+    initials: 'HW',
     bio: 'Shapes donor messaging, campaign storytelling, and stakeholder comms.',
+    imageUrl: ROLE_ILLUSTRATION.communications,
   },
   {
     id: 'noah-stein',
@@ -119,6 +137,7 @@ export const teamMembers: TeamMember[] = [
     joinedDate: '2023-02-20',
     initials: 'NS',
     bio: 'Tracks legislative movement, builds coalition relationships, and runs advocacy.',
+    imageUrl: ROLE_ILLUSTRATION.policy,
   },
   {
     id: 'tessa-moore',
@@ -130,6 +149,7 @@ export const teamMembers: TeamMember[] = [
     joinedDate: '2023-05-08',
     initials: 'TM',
     bio: 'Coordinates direct-service programs and resident outreach across boroughs.',
+    imageUrl: ROLE_ILLUSTRATION.program,
   },
   {
     id: 'marcus-bell',
@@ -141,6 +161,7 @@ export const teamMembers: TeamMember[] = [
     joinedDate: '2022-04-15',
     initials: 'MB',
     bio: 'Owns finance ops, integrations, compliance reporting, and team access.',
+    imageUrl: ROLE_ILLUSTRATION.operations,
   },
 ];
 

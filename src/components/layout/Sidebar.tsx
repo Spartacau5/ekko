@@ -13,21 +13,17 @@ import {
 } from 'lucide-react';
 import { motionDurations, motionEasings } from '../../lib/motion';
 import { EkkoWordmark } from '../onboarding/BrandMarks';
+import { ConsultBanner } from './ConsultBanner';
 
-// Global left-rail navigation. Dark surface, primary icon + label rows, with
-// an expandable People group that mirrors the /people/* sub-routes. Footer
-// rows (Settings, Help, Logout) sit pinned at the bottom.
+// Global left-rail navigation. White surface with Midnight Blue text and a
+// Dark Royalty active pill. The "Still human" Consult card sits above the
+// pinned Settings / Help / Logout footer.
 
 interface NavItem {
   label: string;
   path: string;
   icon: React.ReactNode;
   children?: Array<{ label: string; path: string }>;
-  /**
-   * Force the child list to stay expanded (and hide the chevron). Used for
-   * groups like People where the sub-pages are always-on and shouldn't need
-   * an extra click to surface.
-   */
   alwaysExpanded?: boolean;
 }
 
@@ -68,8 +64,6 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // Auto-expand a parent group whose path matches the current route so the
-  // child rows stay visible as the user navigates through them.
   useEffect(() => {
     const next: Record<string, boolean> = { ...expanded };
     NAV.forEach((item) => {
@@ -88,15 +82,18 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
 
   const toggle = (path: string) => setExpanded((p) => ({ ...p, [path]: !p[path] }));
 
+  const baseRow =
+    'flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] leading-[20px] font-medium cursor-pointer transition-[background-color,color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40';
+
   return (
-    <aside className="w-[240px] shrink-0 bg-[#1a1a1a] text-[#e8e6e1] flex flex-col h-screen">
-      <div className="px-5 pt-5 pb-8">
-        <Link to="/dashboard" className="flex items-center no-underline text-white" aria-label="Ekko">
-          <EkkoWordmark size={24} />
+    <aside className="w-[240px] shrink-0 bg-surface text-primary flex flex-col h-screen border-r border-border-subtle">
+      <div className="px-5 pt-5 pb-5">
+        <Link to="/dashboard" className="flex items-center no-underline text-brand" aria-label="Ekko">
+          <EkkoWordmark size={26} />
         </Link>
       </div>
 
-      <nav className="flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto">
+      <nav className="px-3 flex flex-col gap-0.5">
         {NAV.map((item) => {
           const active = item.children
             ? isActive(item.path) && location.pathname === item.path
@@ -104,25 +101,24 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
           const groupActive = !!item.children && isActive(item.path);
           const childrenVisible = !!item.children && (item.alwaysExpanded || !!expanded[item.path]);
           const showChevron = !!item.children && !item.alwaysExpanded;
+          const isPillActive = active || (item.children && groupActive && !childrenVisible);
 
           return (
             <div key={item.path} className="flex flex-col">
               <button
                 onClick={() => {
                   if (item.children && !item.alwaysExpanded) {
-                    // Expand + navigate to parent route so content matches the sidebar
                     toggle(item.path);
                     if (!isActive(item.path)) navigate(item.path);
                   } else {
                     navigate(item.path);
                   }
                 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] leading-[20px] font-medium cursor-pointer
-                  transition-[background-color,color] duration-150 ease-out
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60
-                  ${active || (item.children && groupActive && !childrenVisible)
-                    ? 'bg-page text-primary'
-                    : 'text-[#d9d7d2] hover:bg-white/5 hover:text-white'}`}
+                className={`${baseRow} ${
+                  isPillActive
+                    ? 'bg-brand/10 text-brand'
+                    : 'text-primary/80 hover:bg-page hover:text-primary'
+                }`}
               >
                 <span className="shrink-0">{item.icon}</span>
                 <span className="flex-1 text-left">{item.label}</span>
@@ -155,8 +151,8 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
                             className={`flex items-center pl-12 pr-3 py-2 rounded-md text-[14px] leading-[20px] no-underline
                               transition-[background-color,color] duration-150 ease-out
                               ${childActive
-                                ? 'bg-page text-primary font-medium'
-                                : 'text-[#c4c2bd] hover:bg-white/5 hover:text-white'}`}
+                                ? 'bg-brand/10 text-brand font-medium'
+                                : 'text-primary/70 hover:bg-page hover:text-primary'}`}
                           >
                             {child.label}
                           </Link>
@@ -171,14 +167,23 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
         })}
       </nav>
 
-      <div className="px-3 pb-5 pt-4 flex flex-col gap-0.5 border-t border-white/5">
+      {/* Consult / "Still human" panel — AI assistant entry point.
+          SVG composition: scales to fit the remaining vertical space without
+          ever cropping the layout. */}
+      <div className="flex-1 min-h-0 px-3 pt-3 flex">
+        <div className="w-full self-stretch rounded-lg overflow-hidden border border-border-subtle min-h-[140px]">
+          <ConsultBanner />
+        </div>
+      </div>
+
+      <div className="px-3 pb-4 pt-2 flex flex-col gap-0.5">
         <Link
           to="/settings"
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] leading-[20px] font-medium no-underline
-            transition-[background-color,color] duration-150 ease-out
-            ${isActive('/settings')
-              ? 'bg-page text-primary'
-              : 'text-[#d9d7d2] hover:bg-white/5 hover:text-white'}`}
+          className={`${baseRow} no-underline ${
+            isActive('/settings')
+              ? 'bg-brand/10 text-brand'
+              : 'text-primary/80 hover:bg-page hover:text-primary'
+          }`}
         >
           <SettingsIcon size={18} strokeWidth={1.8} />
           <span>Settings</span>
@@ -187,9 +192,9 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
         <div className="relative">
           <button
             onClick={() => setHelpOpen((o) => !o)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] leading-[20px] font-medium cursor-pointer
-              transition-[background-color,color] duration-150 ease-out
-              ${helpOpen ? 'bg-white/5 text-white' : 'text-[#d9d7d2] hover:bg-white/5 hover:text-white'}`}
+            className={`w-full ${baseRow} ${
+              helpOpen ? 'bg-page text-primary' : 'text-primary/80 hover:bg-page hover:text-primary'
+            }`}
           >
             <HelpCircle size={18} strokeWidth={1.8} />
             <span>Help</span>
@@ -201,7 +206,7 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -4, scale: 0.98 }}
                 transition={{ duration: motionDurations.modal, ease: motionEasings.out }}
-                className="absolute left-full bottom-0 ml-2 w-64 bg-surface border border-border-subtle rounded-md shadow-lg overflow-hidden z-50"
+                className="absolute left-full bottom-0 ml-2 w-64 bg-surface border border-border-subtle rounded-md shadow-elevated overflow-hidden z-50"
               >
                 <div className="px-4 py-3 border-b border-border-subtle">
                   <p className="text-[13px] font-semibold text-primary">Help & resources</p>
@@ -216,7 +221,7 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
                     <button
                       key={it.a}
                       onClick={() => { setHelpOpen(false); onHelpAction(it.a); }}
-                      className="w-full flex flex-col items-start gap-0.5 px-4 py-2.5 text-left hover:bg-surface-muted/60 transition-colors duration-150 cursor-pointer"
+                      className="w-full flex flex-col items-start gap-0.5 px-4 py-2.5 text-left hover:bg-page transition-colors duration-150 cursor-pointer"
                     >
                       <span className="text-[13px] font-medium text-primary">{it.label}</span>
                       <span className="text-[12px] text-muted">{it.desc}</span>
@@ -230,7 +235,7 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
 
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] leading-[20px] font-medium text-[#d9d7d2] hover:bg-white/5 hover:text-white cursor-pointer transition-[background-color,color] duration-150 ease-out"
+          className={`${baseRow} text-primary/80 hover:bg-page hover:text-primary`}
         >
           <LogOut size={18} strokeWidth={1.8} />
           <span>Logout</span>

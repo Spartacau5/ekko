@@ -37,10 +37,10 @@ export function SetupProgress() {
         onClick={() => setOpen((o) => !o)}
         aria-label={`Setup progress ${percent}%`}
         aria-expanded={open}
-        className="relative w-9 h-9 flex items-center justify-center rounded-full cursor-pointer hover:bg-surface-muted transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-default"
+        className="relative w-9 h-9 flex items-center justify-center rounded-full cursor-pointer hover:bg-page transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
       >
         <Ring percent={percent} />
-        <span className="absolute text-[10px] font-semibold text-primary tabular-nums">{percent}%</span>
+        <span className="absolute text-[10px] font-semibold text-brand tabular-nums">{percent}%</span>
       </button>
 
       <AnimatePresence>
@@ -110,10 +110,10 @@ function Ring({ percent }: { percent: number }) {
   const offset = c - (Math.max(0, Math.min(100, percent)) / 100) * c;
   return (
     <svg width={36} height={36} viewBox="0 0 36 36" aria-hidden="true">
-      <circle cx={18} cy={18} r={r} stroke="currentColor" className="text-border-subtle" strokeWidth={3} fill="none" />
+      <circle cx={18} cy={18} r={r} stroke="currentColor" className="text-brand/15" strokeWidth={3} fill="none" />
       <motion.circle
         cx={18} cy={18} r={r}
-        stroke="currentColor" className="text-accent"
+        stroke="currentColor" className="text-brand"
         strokeWidth={3} fill="none" strokeLinecap="round"
         strokeDasharray={c}
         initial={{ strokeDashoffset: c }}

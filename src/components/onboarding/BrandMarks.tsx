@@ -12,7 +12,7 @@ export function EkkoMark({ size = 40 }: { size?: number }) {
       style={{ width: size, height: size }}
     >
       <span
-        className="font-sans font-extrabold text-white leading-none tracking-[-0.04em]"
+        className="font-display font-bold text-white leading-none tracking-[-0.02em]"
         style={{ fontSize: size * 0.52 }}
       >
         E
@@ -34,24 +34,39 @@ export function EkkoWordmark({
   size?: number;
   className?: string;
 }) {
+  // viewBox 320 × 110 → cap height 96, stroke 14 with rounded caps.
+  const aspect = 320 / 110;
+  const width = size * aspect;
   return (
-    <span
+    <svg
+      role="img"
       aria-label="Ekko"
-      className={`inline-flex items-center font-sans font-extrabold leading-none tracking-[-0.04em] ${className}`}
-      style={{ fontSize: size, color: 'currentColor' }}
+      width={width}
+      height={size}
+      viewBox="0 0 320 110"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={14}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
     >
-      <span>EKK</span>
-      <span
-        aria-hidden="true"
-        className="inline-block rounded-full align-middle"
-        style={{
-          width: '0.96em',
-          height: '0.72em',
-          marginLeft: '0.05em',
-          border: '0.17em solid currentColor',
-        }}
-      />
-    </span>
+      {/* E */}
+      <path d="M10 7 V103" />
+      <path d="M10 7 H62" />
+      <path d="M10 55 H56" />
+      <path d="M10 103 H62" />
+      {/* K */}
+      <path d="M88 7 V103" />
+      <path d="M88 55 L138 7" />
+      <path d="M88 55 L138 103" />
+      {/* K */}
+      <path d="M162 7 V103" />
+      <path d="M162 55 L212 7" />
+      <path d="M162 55 L212 103" />
+      {/* O — wide horizontal capsule */}
+      <rect x="234" y="14" width="80" height="82" rx="41" />
+    </svg>
   );
 }
 

@@ -19,7 +19,7 @@ const RoleContext = createContext<RoleContextValue | null>(null);
 const ROLE_ORDER: Role[] = ['executive', 'fundraising', 'communications', 'policy', 'program', 'operations'];
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  const [activeRole, setActiveRoleState] = useState<Role>('executive');
+  const [activeRole, setActiveRoleState] = useState<Role>('communications');
 
   const activeMember =
     getMembersByRole(activeRole)[0] || teamMembers[0];
