@@ -16,10 +16,10 @@ export interface OrgResult {
 }
 
 export const MOCK_ORGS: OrgResult[] = [
-  { id: 'rivergate-youth',     name: 'Rivergate Youth Services',      ein: '13-4567890', city: 'Austin, TX',   sizeLabel: 'Large-size nonprofit' },
-  { id: 'rivergate-alliance',  name: 'Rivergate Community Alliance',  ein: '32-8273423', city: 'New York, NY', sizeLabel: 'Mid-size nonprofit' },
-  { id: 'rivergate-against',   name: 'Rivergate Against',             ein: '22-9784978', city: 'New York, NY', sizeLabel: 'Mid-size nonprofit' },
-  { id: 'rivergate-rescue',    name: 'Rivergate Rescue',              ein: '16-2348795', city: 'Newark, NJ',   sizeLabel: 'Small nonprofit' },
+  { id: 'provide-food-nyc',    name: 'Provide Food NYC',              ein: '32-8273423', city: 'New York, NY', sizeLabel: 'Mid-size nonprofit' },
+  { id: 'provide-youth',       name: 'Provide Youth Services',        ein: '13-4567890', city: 'Austin, TX',   sizeLabel: 'Large-size nonprofit' },
+  { id: 'provide-against',     name: 'Provide Against Hunger',        ein: '22-9784978', city: 'New York, NY', sizeLabel: 'Mid-size nonprofit' },
+  { id: 'provide-rescue',      name: 'Provide Food Rescue',           ein: '16-2348795', city: 'Newark, NJ',   sizeLabel: 'Small nonprofit' },
 ];
 
 export interface OrgState {
@@ -60,7 +60,7 @@ export function OrganizationStep({ state, onChange, onOpenManualModal, manualOrg
         <input
           value={state.query}
           onChange={(e) => onChange({ ...state, query: e.target.value, selectedId: null, manualEntryId: null })}
-          placeholder="Rivergate"
+          placeholder="Provide Food NYC"
           className="flex-1 outline-none text-[16px] leading-[20px] bg-transparent text-primary placeholder:text-muted/80"
         />
       </div>

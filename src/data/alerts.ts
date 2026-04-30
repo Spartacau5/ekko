@@ -27,8 +27,8 @@ export const dashboardAlerts: Alert[] = [
   {
     id: 'alert-2',
     type: 'warning',
-    title: 'Federal rental assistance reporting change in 33 days',
-    description: 'New compliance requirements take effect May 15. Marcus Bell\'s workflow audit is in progress.',
+    title: 'Federal food assistance reporting change in 33 days',
+    description: 'New USDA compliance requirements take effect May 15. Marcus Bell\'s workflow audit is in progress.',
     category: 'policy',
     actionLabel: 'View policy',
     actionLink: '/policy/rental-assistance-reporting',
@@ -39,14 +39,14 @@ export const dashboardAlerts: Alert[] = [
   {
     id: 'alert-3',
     type: 'success',
-    title: 'Bronx Housing emergency aid campaign outperforming sector 230%',
+    title: 'Bronx Food Collective emergency aid campaign outperforming sector 230%',
     description: 'Their messaging mix across email, social, and direct mail is worth studying. Leah Kim saved this campaign yesterday.',
     category: 'peers',
     actionLabel: 'View campaign',
     actionLink: '/peers/bronx-housing',
     timestamp: '2026-04-10T11:02:00',
     source: 'Peer intelligence',
-    reason: 'Flagged because Bronx Housing is a tracked peer and this campaign exceeds 200% of cohort average.',
+    reason: 'Flagged because Bronx Food Collective is a tracked peer and this campaign exceeds 200% of cohort average.',
   },
   {
     id: 'alert-4',
@@ -63,8 +63,8 @@ export const dashboardAlerts: Alert[] = [
   {
     id: 'alert-5',
     type: 'info',
-    title: 'Zoning reform: new stakeholder activity detected',
-    description: 'Regional Land Use Board published draft scoping schedule. Public comment opens May 1.',
+    title: 'Food hub zoning proposal: new stakeholder activity detected',
+    description: 'Regional Land Use Board published draft scoping schedule for the food hub zoning proposal. Public comment opens May 1.',
     category: 'policy',
     actionLabel: 'View policy',
     actionLink: '/policy/zoning-reform',

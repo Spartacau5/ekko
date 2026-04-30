@@ -70,12 +70,12 @@ export interface PriorityTask {
 export const priorityTasks: PriorityTask[] = [
   {
     id: 'task-1',
-    title: 'Submit testimony for Right-to-Counsel hearing',
-    context: 'Public hearing April 22 \u2014 deadline April 15',
+    title: 'Submit testimony for Food Expansion Act hearing',
+    context: 'Floor vote June 10 \u2014 deadline May 30',
     source: 'policy',
     dueLabel: 'Due in 5 days',
     priority: 'urgent',
-    link: '/policy/right-to-counsel',
+    link: '/policy/nyc-food-expansion',
   },
   {
     id: 'task-2',
@@ -88,7 +88,7 @@ export const priorityTasks: PriorityTask[] = [
   },
   {
     id: 'task-3',
-    title: 'Apply for anti-eviction emergency funding',
+    title: 'Apply for emergency food aid funding',
     context: 'Application window closes May 15',
     source: 'policy',
     dueLabel: 'Due in 35 days',
@@ -98,7 +98,7 @@ export const priorityTasks: PriorityTask[] = [
   {
     id: 'task-4',
     title: 'Audit reporting workflow before May 15',
-    context: 'Federal rental assistance compliance change',
+    context: 'Federal food assistance compliance change',
     source: 'policy',
     dueLabel: 'Due in 35 days',
     priority: 'high',
@@ -106,7 +106,7 @@ export const priorityTasks: PriorityTask[] = [
   },
   {
     id: 'task-5',
-    title: 'Send brief on tenant protection policy wins to Maya Patel',
+    title: 'Send brief on food access policy wins to Maya Patel',
     context: 'Major donor — engagement opportunity',
     source: 'people',
     dueLabel: 'Recommended this week',
@@ -136,9 +136,9 @@ export interface ActivityItem {
 
 export const recentActivity: ActivityItem[] = [
   { id: 'a1', type: 'gift', title: 'Gift received: $2,500', description: 'Maya Patel \u2014 Annual fund contribution', actor: 'Salesforce sync', timestamp: '2026-04-11T14:22:00', link: '/people/donors/maya-patel' },
-  { id: 'a2', type: 'policy', title: 'Hearing scheduled', description: 'Right-to-Counsel public testimony April 22 \u2014 submission deadline in 3 days', actor: 'Policy radar', timestamp: '2026-04-11T09:15:00', link: '/policy/right-to-counsel' },
+  { id: 'a2', type: 'policy', title: 'Floor vote scheduled', description: 'NYC Food Expansion Act floor vote June 10 \u2014 testimony deadline in 3 days', actor: 'Policy radar', timestamp: '2026-04-11T09:15:00', link: '/policy/nyc-food-expansion' },
   { id: 'a3', type: 'email', title: 'Email opened', description: 'Samir Gupta opened the March policy digest \u2014 his 3rd open this month', actor: 'Mailchimp', timestamp: '2026-04-10T16:48:00', link: '/people/donors/samir-gupta' },
-  { id: 'a4', type: 'peer', title: 'Peer campaign flagged', description: 'Bronx Housing emergency aid campaign \u2014 230% above sector avg. Saved by Leah Kim.', actor: 'Peer signals', timestamp: '2026-04-10T11:02:00', link: '/peers/bronx-housing' },
+  { id: 'a4', type: 'peer', title: 'Peer campaign flagged', description: 'Bronx Food Collective emergency aid campaign \u2014 230% above sector avg. Saved by Leah Kim.', actor: 'Peer signals', timestamp: '2026-04-10T11:02:00', link: '/peers/bronx-housing' },
   { id: 'a5', type: 'meeting', title: 'Meeting logged', description: 'Quarterly review with Priya Narang at Horizon Family Foundation \u2014 renewal timeline discussed', actor: 'Noah Stein', timestamp: '2026-04-09T15:30:00', link: '/people/donors/priya-narang' },
   { id: 'a6', type: 'team', title: 'Saved view created', description: 'Leah Kim created "At-risk this quarter" \u2014 4 donors matched', actor: 'Leah Kim', timestamp: '2026-04-08T10:14:00' },
 ];

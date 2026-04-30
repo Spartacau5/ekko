@@ -58,13 +58,6 @@ function GroupsListDayXPage() {
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="page-title">Groups</h1>
-        <p className="text-[14px] text-secondary mt-1.5 max-w-2xl">
-          Check and edit all groups in one place.
-        </p>
-      </div>
-
       <div className="grid grid-cols-3 gap-4 mb-6">
         <StatCard label="Total Groups" value={groups.length.toString()} />
         <div className="col-span-2">

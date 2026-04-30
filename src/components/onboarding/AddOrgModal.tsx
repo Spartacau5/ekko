@@ -94,7 +94,7 @@ export function AddOrgModal({ open, onClose, onSubmit }: AddOrgModalProps) {
                   required
                   value={details.name}
                   onChange={(e) => setDetails({ ...details, name: e.target.value })}
-                  placeholder="Rivergate Group"
+                  placeholder="Provide Food NYC"
                 />
                 <div className="flex gap-5">
                   <div className="flex-1">

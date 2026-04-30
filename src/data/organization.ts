@@ -1,7 +1,7 @@
 export const organization = {
-  name: 'Rivergate Community Alliance',
+  name: 'Provide Food NYC',
   type: 'Mid-size nonprofit',
-  missionArea: 'Housing stability and community development',
+  missionArea: 'Food access and emergency food assistance',
   headquarters: 'New York, NY',
   geographicFocus: ['Brooklyn', 'Queens', 'Bronx'],
   staffCount: 42,

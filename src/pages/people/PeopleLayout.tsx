@@ -14,16 +14,12 @@ export function PeopleLayout() {
   const donors = donorsForMaturity(activeMaturity);
   const groupsCount = isDay0 ? 0 : donorGroups.length;
 
-  // Hide the sub-nav and header on detail pages — they have their own headers
+  // Detail pages (single donor or single group) render their own header and
+  // back-link, so bypass the People shell entirely on those routes.
   const isDetailPage =
     /^\/people\/(donors|groups)\/[^/]+$/.test(location.pathname);
 
-  // The simplified Donors + Groups list pages now render their own page
-  // headers, so skip the outer "People" shell on both routes.
-  const isDonorsList = location.pathname === '/people/donors';
-  const isGroupsList = location.pathname === '/people/groups';
-
-  if (isDetailPage || isDonorsList || isGroupsList) {
+  if (isDetailPage) {
     return <Outlet />;
   }
 

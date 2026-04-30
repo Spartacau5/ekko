@@ -26,13 +26,6 @@ export function DonorsListDay0Page() {
       animate={{ opacity: 1 }}
       transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
     >
-      <div className="mb-6">
-        <h1 className="page-title">Donors</h1>
-        <p className="text-[14px] text-secondary mt-1.5 max-w-2xl">
-          Check and edit all donors in one place.
-        </p>
-      </div>
-
       <div className="grid grid-cols-4 gap-4 mb-6">
         <Day0StatCard label="Total Donors" value="0" />
         <Day0StatCard label="Inactive Donors" value="0" />

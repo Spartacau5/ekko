@@ -63,10 +63,10 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-rtc-1',
     policyId: 'right-to-counsel',
-    policyTitle: 'NYC Right-to-Counsel Expansion',
+    policyTitle: 'NYC SNAP Eligibility Reform',
     type: 'hearing_scheduled',
     title: 'Public hearing scheduled for April 22',
-    description: 'NYC Council Housing Committee will hold public testimony session. Submission deadline April 15.',
+    description: 'NYC Council Health & Food Committee will hold public testimony session. Submission deadline April 15.',
     date: '2026-04-08',
     isUnread: true,
     severity: 'urgent',
@@ -74,10 +74,10 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-rar-1',
     policyId: 'rental-assistance-reporting',
-    policyTitle: 'Federal Rental Assistance Reporting Change',
+    policyTitle: 'Federal Food Assistance Reporting Change',
     type: 'effective_date_set',
     title: 'Effective date confirmed: May 15, 2026',
-    description: 'HUD published implementation guidance with detailed reporting templates. Internal audit needed within 30 days.',
+    description: 'USDA published implementation guidance with detailed reporting templates. Internal audit needed within 30 days.',
     date: '2026-04-05',
     isUnread: true,
     severity: 'urgent',
@@ -85,10 +85,10 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-aef-1',
     policyId: 'anti-eviction-funding',
-    policyTitle: 'City Anti-Eviction Emergency Funding',
+    policyTitle: 'City Emergency Food Aid Funding',
     type: 'committee_action',
     title: 'Funding applications now open',
-    description: 'Application window: April 9 \u2013 May 15. Eligible orgs may request up to $250K for direct tenant services.',
+    description: 'Application window: April 9 \u2013 May 15. Eligible orgs may request up to $250K for direct food assistance services.',
     date: '2026-04-09',
     isUnread: true,
     severity: 'warning',
@@ -96,7 +96,7 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-rtc-2',
     policyId: 'right-to-counsel',
-    policyTitle: 'NYC Right-to-Counsel Expansion',
+    policyTitle: 'NYC SNAP Eligibility Reform',
     type: 'amendment',
     title: 'Income threshold amendment proposed',
     description: 'Council Member Rodriguez proposed raising income eligibility threshold to 250% federal poverty level. Coalition response needed.',
@@ -107,7 +107,7 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-rar-2',
     policyId: 'rental-assistance-reporting',
-    policyTitle: 'Federal Rental Assistance Reporting Change',
+    policyTitle: 'Federal Food Assistance Reporting Change',
     type: 'media_mention',
     title: 'NYT coverage: nonprofit compliance burden',
     description: 'New York Times article highlights administrative burden on smaller orgs. Op-ed opportunity for Sofia.',
@@ -118,7 +118,7 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-zr-1',
     policyId: 'zoning-reform',
-    policyTitle: 'Regional Zoning Reform Proposal',
+    policyTitle: 'Regional Food Hub Zoning Proposal',
     type: 'new_stakeholder',
     title: 'New stakeholder activity detected',
     description: 'Regional Land Use Board published draft scoping schedule. Public comment period opens May 1.',
@@ -129,7 +129,7 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-tdp-1',
     policyId: 'tenant-data-privacy',
-    policyTitle: 'State Tenant Data Privacy Bill',
+    policyTitle: 'State Food Recipient Data Privacy Bill',
     type: 'committee_action',
     title: 'Subcommittee hearing held',
     description: 'Expert testimony covered data minimization standards. Final committee vote expected within 4 weeks.',
@@ -140,7 +140,7 @@ export const policyAlerts: PolicyAlert[] = [
   {
     id: 'alert-aef-2',
     policyId: 'anti-eviction-funding',
-    policyTitle: 'City Anti-Eviction Emergency Funding',
+    policyTitle: 'City Emergency Food Aid Funding',
     type: 'status_change',
     title: 'Bill signed into law',
     description: 'Mayor signed emergency funding package. Funds available immediately upon application approval.',
@@ -163,16 +163,16 @@ export interface PolicyTopic {
 export const policyTopics: PolicyTopic[] = [
   {
     id: 'tenant-protection',
-    name: 'Tenant protection',
-    description: 'Renter rights, eviction defense, legal aid',
+    name: 'Food access',
+    description: 'SNAP eligibility, emergency food assistance, community kitchens',
     policyCount: 1,
     watchedCount: 1,
     recentActivity: 3,
   },
   {
     id: 'affordable-housing',
-    name: 'Affordable housing finance',
-    description: 'Tax credits, subsidies, development incentives',
+    name: 'Food security finance',
+    description: 'Tax credits, subsidies, food bank investment incentives',
     policyCount: 1,
     watchedCount: 0,
     recentActivity: 2,
@@ -188,7 +188,7 @@ export const policyTopics: PolicyTopic[] = [
   {
     id: 'emergency-aid',
     name: 'Emergency aid',
-    description: 'Direct relief, anti-eviction, crisis response',
+    description: 'Direct relief, emergency food distribution, crisis response',
     policyCount: 1,
     watchedCount: 1,
     recentActivity: 2,
@@ -196,7 +196,7 @@ export const policyTopics: PolicyTopic[] = [
   {
     id: 'privacy',
     name: 'Privacy & data',
-    description: 'Tenant data, surveillance, information sharing',
+    description: 'Recipient data, surveillance, information sharing',
     policyCount: 1,
     watchedCount: 1,
     recentActivity: 2,
@@ -204,7 +204,7 @@ export const policyTopics: PolicyTopic[] = [
   {
     id: 'land-use',
     name: 'Land use & zoning',
-    description: 'Zoning, development, neighborhood planning',
+    description: 'Food hub zoning, distribution sites, neighborhood planning',
     policyCount: 1,
     watchedCount: 0,
     recentActivity: 2,

@@ -21,8 +21,8 @@ export interface AssignableMember {
 // Demo team roster for assignment menus across the product.
 export const ASSIGN_TEAM: AssignableMember[] = [
   { id: 'sofia-reyes', name: 'Sofia Reyes', role: 'Executive Director',     initials: 'SR' },
-  { id: 'leah-kim',    name: 'Leah Kim',    role: 'Fundraising Director',   initials: 'LK' },
-  { id: 'hannah-win',  name: 'Hannah Win',  role: 'Communications Director', initials: 'HW' },
+  { id: 'leah-kim',    name: 'Leah Kim',    role: 'Communications Director', initials: 'LK' },
+  { id: 'hannah-win',  name: 'Hannah Win',  role: 'Fundraising Director',    initials: 'HW' },
   { id: 'noah-stein',  name: 'Noah Stein',  role: 'Policy Lead',            initials: 'NS' },
   { id: 'devon-kim',   name: 'Devon Kim',   role: 'Social Media Lead',      initials: 'DK' },
   { id: 'aisha-park',  name: 'Aisha Park',  role: 'Programs Director',      initials: 'AP' },

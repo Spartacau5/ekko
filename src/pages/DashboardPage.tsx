@@ -2,11 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  SlidersHorizontal,
-  FolderClosed,
-  MessageCircle,
-  Clock,
-  CircleDashed,
   ChevronDown,
   ArrowUpRight,
   Minus,
@@ -24,9 +19,11 @@ import {
   Plus,
   Users,
   Search,
+  FileText,
   Eye,
   Share2,
   DollarSign,
+  Sparkles,
 } from 'lucide-react';
 import { useRole } from '../lib/RoleContext';
 import { useMaturity } from '../lib/MaturityContext';
@@ -37,13 +34,11 @@ import { Role, teamMembers, roleMeta } from '../data/team';
 import { donors } from '../data/donors';
 import { kpiMetrics, recentActivity } from '../data/dashboardMetrics';
 import { dashboardAlerts } from '../data/alerts';
-import { policyAlerts } from '../data/watchlist';
 import { policies } from '../data/policies';
 import { usePins, PinRecord } from '../lib/PinContext';
 import { useToast, ActionDrawer } from '../components/ui';
 import { motionDurations, motionEasings } from '../lib/motion';
 import { Panel } from '../components/dashboard/Panel';
-import { StatsStrip } from '../components/dashboard/StatsStrip';
 import { KpiCard } from '../components/dashboard/KpiCard';
 import { TaskRow } from '../components/dashboard/TaskRow';
 import { SignalRow, SignalLegend } from '../components/dashboard/SignalRow';
@@ -93,14 +88,34 @@ const FUNDRAISING_KPI_VALUES: Record<string, { value: string; delta: number; tre
   'avg-engagement':   { value: '67',    delta: -2.1, trend: [66, 68, 70, 71, 70, 69, 68, 66, 65, 67] },
 };
 
+// Comms-specific KPIs reflect Hannah's actual job: reach, scheduled output,
+// engagement quality, and engagement vs the sector benchmark — not donor
+// counts. Each trend rises or falls in proportion to its delta so the
+// sparkline visibly tracks the headline number (engagement vs sector is
+// intentionally a decline, to show what a down-trend looks like).
+const COMMS_KPI_VALUES: Record<string, { value: string; delta: number; trend: number[] }> = {
+  'active-donors':    { value: '142K', delta: 12.4, trend: [126, 128, 130, 132, 134, 136, 138, 140, 141, 142] },
+  'lifetime-revenue': { value: '8',    delta: 33.3, trend: [6, 6, 6, 7, 7, 7, 7, 8, 8, 8] },
+  'tracked-policies': { value: '6.4%', delta: 1.8,  trend: [6.25, 6.28, 6.30, 6.32, 6.33, 6.35, 6.36, 6.38, 6.39, 6.40] },
+  'avg-engagement':   { value: '+3.1%', delta: -5.2, trend: [3.7, 3.6, 3.5, 3.5, 3.4, 3.3, 3.3, 3.2, 3.1, 3.1] },
+};
+
 interface DemoTask {
   id: string;
   status: 'urgent' | 'in_progress';
   title: string;
-  description: string;
+  /** Plain string OR JSX so descriptions can underline team-member names. */
+  description: React.ReactNode;
   meta: Array<{ icon: 'folder' | 'progress' | 'comment' | 'clock'; value: string }>;
   ctaLabel: string;
   ctaVariant: 'primary' | 'secondary';
+}
+
+// Inline marker for team-member names. Underlined wherever a person is
+// named in description copy — gives the eye an immediate "this person is
+// involved" cue without breaking sentence flow.
+function Person({ children }: { children: React.ReactNode }) {
+  return <span className="font-semibold text-primary underline decoration-1 underline-offset-2">{children}</span>;
 }
 
 const COMMUNICATIONS_TASKS: DemoTask[] = [
@@ -108,37 +123,26 @@ const COMMUNICATIONS_TASKS: DemoTask[] = [
     id: 'hannah-task-advocacy',
     status: 'urgent',
     title: 'Create advocacy campaign responding to NYC Food Expansion Act',
-    description:
-      'The NYC Food Expansion Act is heading to a floor vote June 10. Sofia has asked you to develop an advocacy content campaign supporting the expansion — including social media posts, a shareable policy brief, and community event promotion for the public hearing.',
+    description: (
+      <>
+        <Person>Sofia</Person> needs a campaign before the June 10 floor vote — social posts, a
+        policy brief, and event promo.
+      </>
+    ),
     meta: [
       { icon: 'folder', value: '2' },
       { icon: 'comment', value: '1' },
       { icon: 'clock', value: '1d' },
     ],
-    ctaLabel: 'Create',
+    ctaLabel: 'Start',
     ctaVariant: 'primary',
-  },
-  {
-    id: 'hannah-task-poster',
-    status: 'urgent',
-    title: 'Design promotional poster for Brownsville community kitchen summer series',
-    description:
-      'The org is launching 3 free community cooking events in Brownsville this summer. Create a poster for print and digital distribution.',
-    meta: [
-      { icon: 'folder', value: '2' },
-      { icon: 'progress', value: '60%' },
-      { icon: 'comment', value: '6' },
-      { icon: 'clock', value: '2d' },
-    ],
-    ctaLabel: 'Continue',
-    ctaVariant: 'secondary',
   },
   {
     id: 'hannah-task-wrap',
     status: 'in_progress',
     title: "Post campaign wrap-up for 'Full Hearts, Full Plates' fundraiser",
     description:
-      'The fundraiser closed last week raising $80K for food security. Draft a thank-you post celebrating the milestone and thanking all supporters.',
+      'Fundraiser closed at $80K. Draft a thank-you post celebrating the milestone.',
     meta: [
       { icon: 'folder', value: '4' },
       { icon: 'progress', value: '45%' },
@@ -177,22 +181,9 @@ const COMMUNICATIONS_CAMPAIGNS: DemoCampaign[] = [
     raised: '$128,400',
     status: 'live',
     duration: 'Running for 3 months',
-    // Volunteers serving food at an outdoor community meal.
-    imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=360&fit=crop&q=80',
-  },
-  {
-    id: 'full-hearts-full-plates',
-    title: 'Full Hearts, Full Plates',
-    tag: 'Fundraising',
-    tagTone: 'brand',
-    by: 'Hannah Win',
-    views: '8,405',
-    shares: '928',
-    raised: '$80,250',
-    status: 'closed',
-    duration: 'Closed · ran for 6 weeks',
-    // Warm overhead shot of plated food on a shared table.
-    imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=360&fit=crop&q=80',
+    // Harlem brownstone block — anchors the campaign in the neighborhoods
+    // Provide Food NYC actually serves.
+    imageUrl: 'https://images.unsplash.com/photo-1582647509711-c8aa8a8bda71?w=600&h=360&fit=crop&q=80',
   },
   {
     id: 'pantry-stories',
@@ -214,23 +205,23 @@ const FUNDRAISING_TASKS: DemoTask[] = [
   {
     id: 'leah-task-robinhood',
     status: 'urgent',
-    title: 'Draft impact memo for RobinHood Foundation highlighting expanded eligibility zones',
+    title: 'Draft donor memo for RobinHood Foundation on the Food Expansion Act',
     description:
-      "The NYC Food Expansion Act aligns with RobinHood's 2026 priority areas. Sofia has asked you to prepare a donor-facing impact memo connecting the new eligibility zones to Provide Food NYC's existing programs in Brownsville and East New York.",
+      "The Food Expansion Act aligns with RobinHood's 2026 funding priorities. Sofia has asked you to connect the new eligibility zones to our existing programs in Brownsville and East New York — show them why we're well-positioned to scale.",
     meta: [
       { icon: 'folder', value: '2' },
       { icon: 'comment', value: '1' },
       { icon: 'clock', value: '1d' },
     ],
-    ctaLabel: 'Draft',
+    ctaLabel: 'Start',
     ctaVariant: 'primary',
   },
   {
     id: 'leah-task-cityharvest',
     status: 'in_progress',
-    title: 'Prepare Q3 grant renewal package for City Harvest partnership',
+    title: 'Prepare City Harvest grant renewal — due May 15',
     description:
-      "Annual renewal deadline is May 15. Last year's package scored 92/100. Update program outcomes data with March numbers.",
+      "Annual renewal deadline is May 15. Last year's application scored 92/100 — just needs updated March outcomes data.",
     meta: [
       { icon: 'folder', value: '4' },
       { icon: 'progress', value: '45%' },
@@ -250,33 +241,52 @@ interface DemoSignal {
   relevance?: number;
 }
 
+// Fundraising director's reactive inbox — donor signals that need a glance
+// before producing more outreach. Mirrors the structure of COMMS_NEEDS.
+const LEAH_NEEDS: AttentionItem[] = [
+  {
+    id: 'leah-eyes-maya',
+    tone: 'approval',
+    title: 'Maya Patel asked when the FY26 annual report drops',
+    body: 'Her last email is sitting unread in your inbox — major donor, fast turnaround expected.',
+    cta: 'Reply',
+  },
+  {
+    id: 'leah-eyes-robinhood',
+    tone: 'peer',
+    title: 'RobinHood Foundation announced a $5M food-access tranche',
+    body: 'Q3 supplemental window opens July 1. Worth aligning the donor memo to the new criteria.',
+    cta: 'Open',
+  },
+];
+
 const FUNDRAISING_SIGNALS: DemoSignal[] = [
   {
     id: 'leah-sig-1',
     category: 'policy',
-    title: 'Federal Rental Assistance Reporting Change',
+    title: 'Federal Food Program Reporting Change',
     description: 'New compliance requirements take effect May 2026.',
     relevance: 92,
   },
   {
     id: 'leah-sig-2',
     category: 'policy',
-    title: 'State Food Assistance Expansion bill introduced in Albany',
-    description: 'Draft would extend SNAP eligibility statewide. Overlaps with our Bronx and Brooklyn footprint.',
+    title: 'State SNAP Expansion bill introduced in Albany',
+    description: 'Would extend eligibility statewide. Overlaps with our Bronx and Brooklyn service areas.',
     relevance: 88,
   },
   {
     id: 'leah-sig-3',
     category: 'peers',
-    title: 'Bronx Food Collective posted Q1 campaign results',
+    title: 'Bronx Food Collective Q1 results',
     description:
-      'Their emergency food campaign outperformed sector average by 18%. Worth reviewing messaging approach.',
+      'Their emergency food campaign outperformed the sector average by 18%. Worth reviewing their messaging approach.',
   },
   {
     id: 'leah-sig-4',
     category: 'policy',
-    title: 'NYC Food Expansion Act: Committee vote confirmed for June 10',
-    description: 'Floor vote scheduled. Opposition amendment still active.',
+    title: 'NYC Food Expansion Act: Full council vote confirmed for June 10',
+    description: 'Opposition amendment still active.',
     relevance: 97,
   },
 ];
@@ -345,39 +355,6 @@ function DashboardDayXPage() {
   const isCommsDemo = activeRole === 'communications';
   const isDemoView = isFundraisingDemo || isCommsDemo;
 
-  const atAGlance = useMemo(() => {
-    if (isFundraisingDemo) {
-      return [
-        { label: 'Open tasks',        value: '2',  tone: 'danger' as const },
-        { label: 'Policy signals',    value: '3',  tone: 'info' as const },
-        { label: 'Upcoming meetings', value: '1',  tone: 'primary' as const },
-        { label: 'Funds Raised',      value: '$7k', tone: 'success' as const, tooltip: 'Gifts received in the last 7 days' },
-      ];
-    }
-    if (isCommsDemo) {
-      return [
-        { label: 'Open tasks',        value: '1',  tone: 'danger' as const },
-        { label: 'Signals',           value: '3',  tone: 'info' as const },
-        { label: 'Upcoming meetings', value: '2',  tone: 'primary' as const },
-        { label: 'Funds Raised',      value: '$7k', tone: 'success' as const, tooltip: 'Gifts received in the last 7 days' },
-      ];
-    }
-    const unreadAlerts = policyAlerts.filter((a) => a.isUnread).length;
-    const upcomingMeetings = donors
-      .flatMap((d) => d.timeline.filter((e) => e.type === 'meeting' && e.date >= '2026-04-12'))
-      .length;
-    const giftsThisWeek = donors
-      .flatMap((d) => d.timeline.filter((e) => e.type === 'gift' && e.date >= '2026-04-05'))
-      .reduce((sum, e: any) => sum + (e.amount || 0), 0);
-    const giftsLabel = giftsThisWeek >= 1000 ? `$${(giftsThisWeek / 1000).toFixed(0)}K` : `$${giftsThisWeek}`;
-    return [
-      { label: 'Urgent tasks',      value: urgentCount.toString() },
-      { label: 'Signals',           value: unreadAlerts.toString() },
-      { label: 'Upcoming meetings', value: upcomingMeetings.toString() },
-      { label: 'Funds raised',      value: giftsLabel, tooltip: 'Gifts received in the last 7 days' },
-    ];
-  }, [urgentCount, isFundraisingDemo, isCommsDemo]);
-
   const handleToggleComplete = (id: string, next: ActionStatus) => {
     updateStatus(id, next);
     const action = actionState.find((a) => a.id === id);
@@ -399,7 +376,7 @@ function DashboardDayXPage() {
     setDrawerOpen(true);
   };
 
-  const greetingSubtitle = `${roleMeta[activeRole].label}, Rivergate Community Alliance`;
+  const greetingSubtitle = `${roleMeta[activeRole].label}, Provide Food NYC`;
   const dateLine = TODAY.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const FUNDRAISING_LABELS: Record<string, string> = {
@@ -408,10 +385,20 @@ function DashboardDayXPage() {
     'tracked-policies': 'Tracked Policies',
     'avg-engagement':   'Average Engagement',
   };
+  // Comms reuses kpiMetrics IDs but relabels them to match Hannah's work —
+  // total reach, scheduled output, engagement, and engagement-rate trend.
+  const COMMS_LABELS: Record<string, string> = {
+    'active-donors':    'Total reach',
+    'lifetime-revenue': 'Posts scheduled',
+    'tracked-policies': 'Avg engagement rate',
+    'avg-engagement':   'Engagement vs sector',
+  };
+  const valueMap = isCommsDemo ? COMMS_KPI_VALUES : isFundraisingDemo ? FUNDRAISING_KPI_VALUES : null;
+  const labelMap = isCommsDemo ? COMMS_LABELS : isFundraisingDemo ? FUNDRAISING_LABELS : null;
   const kpiWithLinks = isDemoView
     ? kpiMetrics.map((m) => {
-        const o = FUNDRAISING_KPI_VALUES[m.id];
-        const label = FUNDRAISING_LABELS[m.id] ?? m.label;
+        const o = valueMap?.[m.id];
+        const label = labelMap?.[m.id] ?? m.label;
         return o ? { ...m, label, value: o.value, delta: o.delta, trend: o.trend } : { ...m, label };
       })
     : kpiMetrics;
@@ -440,11 +427,6 @@ function DashboardDayXPage() {
           )}
         </motion.div>
       </AnimatePresence>
-
-      {/* Today at a Glance */}
-      <div className="mb-6">
-        <StatsStrip items={atAGlance} variant={isDemoView ? 'large' : 'default'} />
-      </div>
 
       {/* KPI row */}
       <div className="grid grid-cols-4 gap-4 mb-6">
@@ -492,26 +474,46 @@ function DashboardDayXPage() {
         </section>
       )}
 
-      {/* Tasks + Signals (equal-height, internal scroll) */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {isFundraisingDemo ? (
-          <FundraisingTasksPanel
-            tasks={FUNDRAISING_TASKS}
-            sentIds={robinhoodSent ? ['leah-task-robinhood'] : []}
-            onPrimaryAction={(task) => {
-              if (task.id === 'leah-task-robinhood') setComposerOpen(true);
-            }}
-          />
-        ) : isCommsDemo ? (
+      {/* Hannah (Fundraising Director) drives campaigns — her dashboard
+          surfaces the campaign-creation flow + the My Campaigns panel.
+          Leah (Communications Director) handles donor messaging — her
+          dashboard surfaces the donor-memo task + email-composer trigger
+          + donor signals. Same panel structure, content swapped to fit. */}
+      {isFundraisingDemo ? (
+        <div className="flex flex-col gap-6 mb-6">
           <FundraisingTasksPanel
             tasks={COMMUNICATIONS_TASKS}
+            newIds={['hannah-task-advocacy']}
+            attentionItems={COMMS_NEEDS}
             onPrimaryAction={(task) => {
               if (task.id === 'hannah-task-advocacy') {
                 navigate('/campaigns/new?policy=nyc-food-expansion');
               }
             }}
           />
-        ) : (
+          <div className="grid grid-cols-2 gap-6">
+            <TopCampaignsPanel campaigns={COMMUNICATIONS_CAMPAIGNS} />
+            <CompactActivityPanel />
+          </div>
+        </div>
+      ) : isCommsDemo ? (
+        <div className="flex flex-col gap-6 mb-6">
+          <FundraisingTasksPanel
+            tasks={FUNDRAISING_TASKS}
+            attentionItems={LEAH_NEEDS}
+            newIds={['leah-task-robinhood']}
+            sentIds={robinhoodSent ? ['leah-task-robinhood'] : []}
+            onPrimaryAction={(task) => {
+              if (task.id === 'leah-task-robinhood') setComposerOpen(true);
+            }}
+          />
+          <div className="grid grid-cols-2 gap-6">
+            <FundraisingSignalsPanel signals={FUNDRAISING_SIGNALS} />
+            <CompactActivityPanel items={LEAH_ACTIVITY} />
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 mb-6">
           <Panel
             eyebrow="Your work"
             title="Tasks"
@@ -549,13 +551,7 @@ function DashboardDayXPage() {
               )}
             </AnimatePresence>
           </Panel>
-        )}
 
-        {isFundraisingDemo ? (
-          <FundraisingSignalsPanel signals={FUNDRAISING_SIGNALS} />
-        ) : isCommsDemo ? (
-          <TopCampaignsPanel campaigns={COMMUNICATIONS_CAMPAIGNS} />
-        ) : (
           <Panel
             eyebrow="What's changed"
             title="Recent signals"
@@ -573,23 +569,27 @@ function DashboardDayXPage() {
               <EmptyBody message="No new signals in your workspace." />
             )}
           </Panel>
-        )}
-      </div>
-
-      {/* Recent activities (full-width) */}
-      <Panel
-        eyebrow="Activity"
-        title="Recent activities"
-        subtitle="Last 24 hours"
-        bodyHeight={320}
-        flushBody
-      >
-        <div className="divide-y divide-border-subtle">
-          {recentActivity.map((item) => (
-            <ActivityRow key={item.id} item={item} />
-          ))}
         </div>
-      </Panel>
+      )}
+
+      {/* Recent activities (full-width) — Leah and Hannah views render
+          their activity feed in the 2-column grid above, so suppress the
+          duplicate here. */}
+      {!isCommsDemo && !isFundraisingDemo && (
+        <Panel
+          eyebrow="Activity"
+          title="Recent activities"
+          subtitle="Last 24 hours"
+          bodyHeight={320}
+          flushBody
+        >
+          <div className="divide-y divide-border-subtle">
+            {recentActivity.map((item) => (
+              <ActivityRow key={item.id} item={item} />
+            ))}
+          </div>
+        </Panel>
+      )}
 
       <ActionDrawer
         action={drawerAction}
@@ -799,12 +799,12 @@ function BigSparkline({ data, stroke, fill }: { data: number[]; stroke: string; 
   if (!data.length) return null;
   const W = 240;
   const H = 100;
-  const pad = 6;
+  const pad = 8;
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
   const w = W - pad * 2;
-  const h = H - pad * 2 - 6; // leave a little headroom above baseline
+  const h = H - pad * 2;
 
   const pts = data.map((v, i) => {
     const x = pad + (i / (data.length - 1)) * w;
@@ -812,96 +812,163 @@ function BigSparkline({ data, stroke, fill }: { data: number[]; stroke: string; 
     return [x, y] as const;
   });
 
-  // Smooth cubic-bezier path through points (mid-handle smoothing).
-  const line = pts
-    .map((p, i, arr) => {
-      if (i === 0) return `M ${p[0]},${p[1]}`;
-      const prev = arr[i - 1];
-      const cp1x = prev[0] + (p[0] - prev[0]) * 0.5;
-      const cp1y = prev[1];
-      const cp2x = prev[0] + (p[0] - prev[0]) * 0.5;
-      const cp2y = p[1];
-      return `C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p[0]},${p[1]}`;
-    })
-    .join(' ');
-  const area = `${line} L ${pad + w},${H - pad} L ${pad},${H - pad} Z`;
-  const baselineY = H - pad - 1;
-  const id = stroke.replace('#', '');
-  const strokeGradId = `cc-spark-stroke-${id}`;
-  const fillGradId = `cc-spark-fill-${id}`;
+  // Smooth cubic-bezier between two adjacent points, mid-handle smoothing.
+  const seg = (prev: readonly [number, number], p: readonly [number, number]) => {
+    const cpx = prev[0] + (p[0] - prev[0]) * 0.5;
+    return `C ${cpx},${prev[1]} ${cpx},${p[1]} ${p[0]},${p[1]}`;
+  };
+  const buildPath = (slice: ReadonlyArray<readonly [number, number]>) =>
+    slice
+      .map((p, i, arr) => (i === 0 ? `M ${p[0]},${p[1]}` : seg(arr[i - 1], p)))
+      .join(' ');
 
-  // Two dots at the top portion of the curve — find local high inflection
-  // (around 70%) and the final point.
+  // Two emphasized data points: a fixed midpoint dot plus the final value.
+  // Anchoring the first dot at the middle of the dataset (instead of the
+  // calculated peak) keeps the two dots visibly spaced even when the trend
+  // is monotonic, so the bold segment spans roughly half the chart.
   const endIdx = pts.length - 1;
-  const peakSearchStart = Math.floor(pts.length * 0.55);
-  let peakIdx = endIdx - 2;
-  for (let i = peakSearchStart; i < endIdx; i++) {
-    if (pts[i][1] < pts[peakIdx][1]) peakIdx = i;
-  }
-  const dots = [pts[peakIdx], pts[endIdx]];
+  const midIdx = Math.max(1, Math.min(endIdx - 1, Math.floor(pts.length / 2)));
+
+  const fullLine = buildPath(pts);
+  const boldLine = buildPath(pts.slice(midIdx, endIdx + 1));
+  const area     = `${fullLine} L ${pad + w},${pad + h} L ${pad},${pad + h} Z`;
+
+  // Baseline runs through the value of the first data point — gives a
+  // "where we started" reference so the upward drift reads at a glance.
+  const baselineY = pts[0][1];
+  const id = stroke.replace('#', '');
+  const fillGradId = `cc-spark-fill-${id}`;
 
   return (
     <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block">
       <defs>
-        {/* Horizontal stroke gradient — faded on the left, full color on the right */}
-        <linearGradient id={strokeGradId} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%"  stopColor={stroke} stopOpacity="0.18" />
-          <stop offset="55%" stopColor={stroke} stopOpacity="0.45" />
-          <stop offset="100%" stopColor={stroke} stopOpacity="1" />
-        </linearGradient>
-        {/* Vertical fill gradient under the curve, also fading from left */}
         <linearGradient id={fillGradId} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={fill} stopOpacity="0.20" />
+          <stop offset="0%"   stopColor={fill} stopOpacity="0.18" />
           <stop offset="100%" stopColor={fill} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <line x1={pad} y1={baselineY} x2={W - pad} y2={baselineY} stroke="#D8D7DD" strokeWidth="1" strokeDasharray="3 4" />
-      <path d={area} fill={`url(#${fillGradId})`} fillOpacity="0.55" />
+
+      {/* Dashed neutral baseline at the start value */}
+      <line
+        x1={pad}
+        y1={baselineY}
+        x2={W - pad}
+        y2={baselineY}
+        stroke="#D8D7DD"
+        strokeWidth="1"
+        strokeDasharray="3 4"
+      />
+
+      {/* Soft fill under the whole curve */}
+      <path d={area} fill={`url(#${fillGradId})`} />
+
+      {/* Faded full-length line — sits underneath the bold segment */}
       <path
-        d={line}
+        d={fullLine}
         fill="none"
-        stroke={`url(#${strokeGradId})`}
-        strokeWidth="3"
+        stroke={stroke}
+        strokeOpacity="0.28"
+        strokeWidth="2.25"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {dots.map(([x, y], i) => (
+
+      {/* Bold segment between the two dots */}
+      <path
+        d={boldLine}
+        fill="none"
+        stroke={stroke}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      {/* Highlighted data points — one at the midpoint, one at the end */}
+      {[pts[midIdx], pts[endIdx]].map(([x, y], i) => (
         <g key={i}>
-          <circle cx={x} cy={y} r={5} fill={stroke} fillOpacity="0.18" />
-          <circle cx={x} cy={y} r={3.5} fill={stroke} />
+          <circle cx={x} cy={y} r={4.5} fill="#FFFFFF" />
+          <circle cx={x} cy={y} r={3.2} fill={stroke} />
         </g>
       ))}
     </svg>
   );
 }
 
+// "What needs my eyes today" — reactive inbox surfaced inside the Tasks
+// panel. Each row offers two paths: handle it now (Review/Open) or convert
+// it into a task and come back later.
+type EyesTone = 'approval' | 'peer' | 'event';
+
+interface AttentionItem {
+  id: string;
+  tone: EyesTone;
+  title: string;
+  body: string;
+  cta: string;
+}
+
+const COMMS_NEEDS: AttentionItem[] = [
+  {
+    id: 'eyes-peer',
+    tone: 'peer',
+    title: 'Bronx Food Collective just posted a Food Expansion Act explainer',
+    body: 'Their thread is at 4.2K shares in 6 hours. Worth checking before launching ours.',
+    cta: 'Open',
+  },
+  {
+    id: 'eyes-event',
+    tone: 'event',
+    title: 'Brownsville kitchen RSVPs passed 200',
+    body: 'Capacity is 250 — consider closing registration or moving to a larger venue.',
+    cta: 'Open',
+  },
+];
+
+const EYES_STYLES: Record<EyesTone, { dot: string; label: string; chip: string }> = {
+  approval: { dot: 'bg-warning',  label: 'APPROVAL',      chip: 'text-warning bg-warning-soft' },
+  peer:     { dot: 'bg-accent',   label: 'PEER ACTIVITY', chip: 'text-accent bg-accent/10' },
+  event:    { dot: 'bg-brand',    label: 'EVENT',         chip: 'text-brand bg-brand-soft' },
+};
+
 function FundraisingTasksPanel({
   tasks,
   sentIds = [],
+  newIds = [],
+  attentionItems,
   onPrimaryAction,
 }: {
   tasks: DemoTask[];
   sentIds?: string[];
+  /** Tasks rendered with a NEW pill + soft accent background. */
+  newIds?: string[];
+  /** Optional reactive-inbox items pinned at the top of the panel. */
+  attentionItems?: AttentionItem[];
   onPrimaryAction?: (task: DemoTask) => void;
 }) {
   return (
     <div className="bg-surface border border-border-subtle rounded-lg shadow-card flex flex-col">
-      <div className="flex items-center justify-between px-7 pt-6 pb-4">
+      <div className="flex items-center justify-between px-6 pt-6 pb-4">
         <h2 className="text-[22px] font-semibold text-primary tracking-tight">Tasks</h2>
         <button
           type="button"
-          className="inline-flex items-center gap-2 h-9 px-3.5 rounded-md border border-border-subtle text-[13px] text-primary hover:border-brand/40 hover:bg-page transition-colors"
+          className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-brand text-white text-[13px] font-semibold hover:bg-brand-hover transition-colors"
         >
-          <SlidersHorizontal size={14} />
-          Filters
+          <Plus size={14} strokeWidth={2.4} />
+          Create
         </button>
       </div>
-      <div className="px-7 pb-7 divide-y divide-border-subtle">
+
+      {attentionItems && attentionItems.length > 0 && (
+        <NeedsAttentionBlock items={attentionItems} />
+      )}
+
+      <div className="px-3 pt-2 pb-4 flex flex-col gap-2">
         {tasks.map((t) => (
           <FundraisingTaskCard
             key={t.id}
             task={t}
             sent={sentIds.includes(t.id)}
+            isNew={newIds.includes(t.id)}
             onPrimaryAction={onPrimaryAction}
           />
         ))}
@@ -910,44 +977,118 @@ function FundraisingTasksPanel({
   );
 }
 
+function NeedsAttentionBlock({ items }: { items: AttentionItem[] }) {
+  return (
+    <div className="mx-3 mb-3 rounded-xl bg-page/70 border border-border-subtle">
+      <div className="flex items-center justify-between px-3 pt-3.5 pb-2">
+        <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-secondary">
+          Needs your eyes today
+        </p>
+        <span className="inline-flex items-center px-2 h-5 rounded-full bg-surface text-secondary text-[11px] font-semibold tabular-nums border border-border-subtle">
+          {items.length}
+        </span>
+      </div>
+      <ul className="divide-y divide-border-subtle/70">
+        {items.map((it) => {
+          const s = EYES_STYLES[it.tone];
+          return (
+            <li key={it.id} className="flex items-start gap-3 px-3 py-3">
+              <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${s.dot}`} aria-hidden="true" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13.5px] font-semibold text-primary leading-snug">
+                  {it.title}
+                </p>
+                <p className="mt-0.5 text-[12.5px] text-muted leading-relaxed">{it.body}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 self-center">
+                {/* Category pill lives next to the actions — keeps the title
+                    rows visually aligned regardless of pill width. */}
+                <span
+                  className={`inline-flex items-center px-2 h-[18px] rounded-full text-[9px] font-bold uppercase tracking-[0.12em] ${s.chip}`}
+                >
+                  {s.label}
+                </span>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center h-8 px-3 rounded-full bg-brand text-white text-[12px] font-semibold hover:bg-brand-hover transition-colors"
+                >
+                  {it.cta}
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center h-8 px-3 rounded-full border border-border-subtle text-[12px] font-medium text-secondary hover:border-brand/40 hover:text-primary transition-colors"
+                >
+                  Create task
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function FundraisingTaskCard({
   task,
   sent,
+  isNew,
   onPrimaryAction,
 }: {
   task: DemoTask;
   sent?: boolean;
+  isNew?: boolean;
   onPrimaryAction?: (task: DemoTask) => void;
 }) {
-  const tags = sent
-    ? [{ label: 'Sent', cls: 'bg-success-soft text-success' }]
-    : task.status === 'urgent'
-    ? [
-        { label: 'Urgent', cls: 'bg-danger-soft text-danger' },
-        { label: 'Not started', cls: 'bg-brand-soft text-brand' },
-      ]
-    : [{ label: 'In progress', cls: 'bg-brand-soft text-brand' }];
+  // Pull progress (if any) and remaining-time meta out of the icon list so
+  // we can render a real progress bar + a clean "due" indicator.
+  const progressMeta = task.meta.find((m) => m.icon === 'progress');
+  const progressPct = progressMeta ? parseInt(progressMeta.value, 10) || 0 : null;
+  const dueMeta = task.meta.find((m) => m.icon === 'clock');
 
   return (
-    <div className="py-5 first:pt-0 last:pb-0">
-      <div className="flex items-center gap-2 mb-3">
-        <AnimatePresence initial={false} mode="popLayout">
-          {tags.map((t) => (
-            <motion.span
-              key={t.label}
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.92 }}
-              transition={{ duration: motionDurations.chip, ease: motionEasings.out }}
-              className={`status-transition inline-flex items-center px-3 h-6 rounded-full text-[12px] font-semibold ${t.cls}`}
-            >
-              {t.label}
-            </motion.span>
-          ))}
-        </AnimatePresence>
-      </div>
-      <div className="flex items-start justify-between gap-5">
-        <p className="text-[16px] font-semibold text-primary leading-snug flex-1">{task.title}</p>
+    <div
+      className={`rounded-xl border overflow-hidden transition-colors ${
+        isNew
+          ? 'bg-accent/8 border-accent/30'
+          : 'bg-surface border-border-subtle hover:border-brand/30'
+      }`}
+    >
+      <div className="px-5 py-4 flex items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isNew && (
+              <span className="inline-flex items-center px-2 h-[18px] rounded-full bg-accent text-white text-[10px] font-bold uppercase tracking-[0.12em]">
+                New
+              </span>
+            )}
+            {dueMeta && (
+              <span className="text-[11px] font-semibold text-secondary tabular-nums">
+                Due in {dueMeta.value}
+              </span>
+            )}
+          </div>
+          <h3 className="mt-1.5 text-[16px] font-semibold text-primary leading-snug">
+            {task.title}
+          </h3>
+          <p className="mt-1.5 text-[13px] text-muted leading-relaxed">{task.description}</p>
+
+          {/* Progress bar — only when a progress value is reported. */}
+          {progressPct !== null && (
+            <div className="mt-3 flex items-center gap-2.5">
+              <div className="flex-1 h-1.5 rounded-full bg-page overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-brand transition-[width] duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-semibold tabular-nums text-secondary">
+                {progressPct}%
+              </span>
+            </div>
+          )}
+        </div>
+
         <AnimatePresence initial={false} mode="popLayout">
           {sent ? (
             <motion.span
@@ -956,7 +1097,7 @@ function FundraisingTaskCard({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
               transition={{ duration: motionDurations.chip, ease: motionEasings.out }}
-              className="status-transition inline-flex items-center gap-1.5 h-10 px-5 rounded-full bg-success-soft text-success text-[13px] font-semibold shrink-0"
+              className="status-transition inline-flex items-center gap-1.5 h-10 px-5 rounded-full bg-success-soft text-success text-[13px] font-semibold shrink-0 self-center"
             >
               <Check size={14} strokeWidth={2.5} /> Sent
             </motion.span>
@@ -969,63 +1110,91 @@ function FundraisingTaskCard({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
               transition={{ duration: motionDurations.chip, ease: motionEasings.out }}
-              className="inline-flex items-center justify-center h-10 px-7 rounded-full bg-brand text-white text-[13px] font-semibold hover:bg-brand-hover transition-colors shrink-0"
+              className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-brand text-white text-[13px] font-semibold hover:bg-brand-hover transition-colors shrink-0 self-center"
             >
               {task.ctaLabel}
             </motion.button>
           )}
         </AnimatePresence>
       </div>
-      <p className="mt-2.5 text-[14px] text-muted leading-relaxed">{task.description}</p>
-      <div className="mt-4 flex items-center gap-5 text-[13px] text-muted">
-        {task.meta.map((m, i) => (
-          <span key={i} className="inline-flex items-center gap-1.5 tabular-nums">
-            {m.icon === 'folder'   && <FolderClosed size={14} />}
-            {m.icon === 'progress' && <CircleDashed size={14} />}
-            {m.icon === 'comment'  && <MessageCircle size={14} />}
-            {m.icon === 'clock'    && <Clock size={14} />}
-            {m.value}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
 
-const SIGNAL_DOT: Record<DemoSignal['category'], string> = {
-  policy: 'bg-danger',
-  people: 'bg-warning',
-  peers:  'bg-success',
+// Per-category styling for signals — tinted icon avatar + label, plus a
+// human-readable category name so the row tells you what kind of signal it
+// is at a glance instead of forcing a legend lookup. Policy and Peer share
+// the brand blue treatment; Donor keeps the warning amber so it stays
+// visually distinct from the other two.
+const SIGNAL_STYLES: Record<DemoSignal['category'], { iconBg: string; iconText: string; label: string; icon: React.ReactNode }> = {
+  policy: { iconBg: 'bg-brand-soft',    iconText: 'text-brand',    label: 'POLICY', icon: <FileText size={13} /> },
+  people: { iconBg: 'bg-warning-soft',  iconText: 'text-warning',  label: 'DONOR',  icon: <Users size={13} /> },
+  peers:  { iconBg: 'bg-brand-soft',    iconText: 'text-brand',    label: 'PEER',   icon: <Sparkles size={13} /> },
 };
+
+// Match-score color scale — green for strong matches, amber for medium,
+// red for weak. Threshold tuned so the demo data (88, 92, 97) reads as
+// "one is borderline, two are strong."
+function relevanceChipClass(pct: number): string {
+  if (pct >= 90) return 'bg-success-soft text-success';
+  if (pct >= 80) return 'bg-warning-soft text-warning';
+  return 'bg-danger-soft text-danger';
+}
 
 function FundraisingSignalsPanel({ signals }: { signals: DemoSignal[] }) {
   return (
     <div className="bg-surface border border-border-subtle rounded-lg shadow-card flex flex-col">
-      <div className="px-7 pt-6 pb-4">
-        <h2 className="text-[22px] font-semibold text-primary tracking-tight">Recent Signals</h2>
+      <div className="px-6 pt-6 pb-4 flex items-baseline justify-between gap-3">
+        <h2 className="text-[18px] font-semibold text-primary tracking-tight">Recent signals</h2>
+        <button
+          type="button"
+          className="text-[12px] font-medium text-brand hover:text-brand-hover"
+        >
+          View all
+        </button>
       </div>
-      <div className="px-7 pb-7 divide-y divide-border-subtle">
-        {signals.map((s) => (
-          <div key={s.id} className="flex items-start gap-3 py-5 first:pt-0 last:pb-0">
-            <span
-              className={`w-2.5 h-2.5 mt-1.5 rounded-sm shrink-0 ${SIGNAL_DOT[s.category]}`}
-              aria-hidden="true"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-[16px] font-semibold text-primary leading-snug">{s.title}</p>
-              <p className="text-[14px] text-muted leading-relaxed mt-1">
-                {s.description}
-                {typeof s.relevance === 'number' && (
-                  <>
-                    <span className="text-muted/60"> — </span>
-                    <span className="text-brand font-medium">{s.relevance}% relevant</span>
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+      <ul className="px-3 pb-4 flex flex-col gap-1">
+        {signals.map((s) => {
+          const style = SIGNAL_STYLES[s.category];
+          return (
+            <li
+              key={s.id}
+              className="group flex items-start gap-3 px-3 py-3 rounded-md hover:bg-page transition-colors"
+            >
+              <span
+                className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${style.iconBg} ${style.iconText}`}
+                aria-hidden="true"
+              >
+                {style.icon}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-[9px] font-bold uppercase tracking-[0.12em] ${style.iconText}`}>
+                    {style.label}
+                  </span>
+                  {typeof s.relevance === 'number' && (
+                    <span
+                      className={`inline-flex items-center px-1.5 h-[16px] rounded-full text-[10px] font-bold tabular-nums ${relevanceChipClass(s.relevance)}`}
+                    >
+                      {s.relevance}% match
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-[13.5px] font-semibold text-primary leading-snug">
+                  {s.title}
+                </p>
+                <p className="mt-0.5 text-[12.5px] text-muted leading-relaxed">{s.description}</p>
+              </div>
+              <button
+                type="button"
+                className="shrink-0 self-center inline-flex items-center justify-center h-8 px-3 rounded-full border border-border-subtle text-[12px] font-medium text-secondary hover:border-brand/40 hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+              >
+                View
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -1041,6 +1210,12 @@ interface RecipientGroup {
   description?: string;
 }
 
+// Donor → org affiliation. Surfaced inline next to the recipient pill so
+// the writer sees who they're talking to at a glance.
+const RECIPIENT_AFFILIATIONS: Record<string, string> = {
+  'Sarah Chen': 'RobinHood Foundation',
+};
+
 const RECIPIENT_GROUPS: RecipientGroup[] = [
   { id: 'all-active',     label: 'All active donors',           count: 142, description: 'Active giving status, last 12 months' },
   { id: 'major-gifts',    label: 'Major gifts portfolio',       count: 28,  description: 'Lifetime giving > $50K' },
@@ -1053,15 +1228,10 @@ const RECIPIENT_GROUPS: RecipientGroup[] = [
 // the user already saw on the Policy Detail page. The `id` is shared between
 // a sidebar list item and the inline highlight so hovering one (or hovering
 // the highlight) reveals the same source context.
-type CiteId =
-  | 'bill-id'
-  | 'floor-vote'
-  | 'eligibility-expansion'
-  | 'kitchen-partnerships'
-  | 'service-zones'
-  | 'funding-streams'
-  | 'robinhood-priority'
-  | 'go-live';
+// Only the three numbers a recipient might double-check get highlighted —
+// the date, the resident count, and the dollar range. Everything else is
+// plain text so the email reads as prose, not a wiki.
+type CiteId = 'floor-vote' | 'eligibility-expansion' | 'funding-streams';
 
 interface Citation {
   id: CiteId;
@@ -1071,110 +1241,60 @@ interface Citation {
 }
 
 const POLICY_CITATIONS: Record<CiteId, Citation> = {
-  'bill-id': {
-    id: 'bill-id',
-    label: 'Bill identifier',
-    source: 'Case file · 2026-RTC-014',
-    detail: 'Int. 2026-0347 — A Local Law to amend the administrative code of the City of New York, expanding eligibility for emergency food assistance.',
-  },
   'floor-vote': {
     id: 'floor-vote',
-    label: 'Floor vote date',
-    source: 'Policy timeline · June 10, 2026',
-    detail: 'Council Floor Vote — passed committee, awaiting full vote. Risk Alert: opposition amendment introduced Feb 20.',
+    label: 'June 10 floor vote',
+    source: 'Policy timeline',
+    detail: 'Full council vote. Bill passed committee 7–2.',
   },
   'eligibility-expansion': {
     id: 'eligibility-expansion',
-    label: 'Service-area expansion',
-    source: 'Impact radar · ring 3 (opportunity)',
-    detail: '+12k eligible households across Brooklyn, Queens, and the Bronx (~85,000 residents) — covered in the For-Our-Org summary.',
-  },
-  'kitchen-partnerships': {
-    id: 'kitchen-partnerships',
-    label: 'Existing infrastructure',
-    source: 'Policy summary',
-    detail: 'Provide Food NYC already operates 3 community kitchen partnerships in Brownsville and East New York — strongest overlap zone.',
-  },
-  'service-zones': {
-    id: 'service-zones',
-    label: 'Brownsville & East New York impact',
+    label: '85,000 newly eligible',
     source: 'For Our Org summary',
-    detail: 'Bill expands addressable service area by ~40%, with strongest overlap in our active service zones.',
+    detail: 'Brooklyn, Queens, and the Bronx — overlaps with our active service areas.',
   },
   'funding-streams': {
     id: 'funding-streams',
-    label: 'New funding streams',
+    label: '$200K–$400K / year',
     source: 'For Our Org summary',
-    detail: 'If passed, opens eligibility for two new city contract funding streams (estimated $200K–$400K annually).',
-  },
-  'robinhood-priority': {
-    id: 'robinhood-priority',
-    label: 'RobinHood alignment',
-    source: 'Stakeholder graph · RobinHood Foundation',
-    detail: 'Current funder: $120K across 2 active grants. 2026 priority areas include expanded eligibility zones — 84% overlap with your updated service map. Q3 supplemental window opens July 1.',
-  },
-  'go-live': {
-    id: 'go-live',
-    label: 'Implementation date',
-    source: 'Policy timeline · Sep 1, 2026',
-    detail: 'Implementation Begins — new eligibility zones go live if the bill passes the floor vote and is signed.',
+    detail: 'Two new city funding streams open if the bill passes.',
   },
 };
 
 type BodyNode = string | { cite: CiteId; text: string };
 type Paragraph = { kind: 'p' | 'li' | 'blank'; nodes: BodyNode[] };
 
+// Tightened to ~120 words across three short paragraphs. Leads with the
+// donor's frame ("aligns with RobinHood's priorities"), tucks the data
+// into one sentence so it works on mobile, and closes with a single
+// 20-minute ask.
 const ROBINHOOD_BODY: Paragraph[] = [
-  { kind: 'p', nodes: ['Dear Sarah,'] },
+  { kind: 'p', nodes: ['Hi Sarah,'] },
   { kind: 'blank', nodes: [] },
   { kind: 'p', nodes: [
-    "I hope this message finds you well. I'm reaching out with an exciting development that directly connects to the work ",
-    { cite: 'robinhood-priority', text: 'RobinHood Foundation' },
-    ' has been supporting through our partnership.',
+    "Quick heads-up on something that aligns directly with RobinHood's 2026 food-access priorities.",
   ] },
   { kind: 'blank', nodes: [] },
   { kind: 'p', nodes: [
-    'The ',
-    { cite: 'bill-id', text: 'NYC Food Expansion Act (Int. 2026-0347)' },
-    ' is advancing through City Council and is scheduled for a ',
-    { cite: 'floor-vote', text: 'floor vote on June 10' },
-    '. If passed, it would expand emergency food assistance eligibility to an ',
-    { cite: 'eligibility-expansion', text: 'additional 85,000 residents across Brooklyn, Queens, and the Bronx' },
-    ' — including neighborhoods where Provide Food NYC already operates ',
-    { cite: 'kitchen-partnerships', text: 'three community kitchen partnerships' },
-    '.',
-  ] },
-  { kind: 'blank', nodes: [] },
-  { kind: 'p', nodes: ['For our programs specifically, this means:'] },
-  { kind: 'li', nodes: [
-    'Our ',
-    { cite: 'service-zones', text: 'Brownsville and East New York sites would see an estimated 40% increase' },
-    ' in eligible residents',
-  ] },
-  { kind: 'li', nodes: [
-    'Two new city contract funding streams would open (',
-    { cite: 'funding-streams', text: 'estimated $200K–$400K annually' },
-    ')',
-  ] },
-  { kind: 'li', nodes: [
-    'Our existing infrastructure positions us to scale quickly without significant new capital expenditure',
+    'The NYC Food Expansion Act goes to a council vote on ',
+    { cite: 'floor-vote', text: 'June 10' },
+    '. If it passes, eligibility opens up for ',
+    { cite: 'eligibility-expansion', text: '85,000 more residents' },
+    ' across Brooklyn, Queens, and the Bronx — including the neighborhoods we already serve from our Brownsville and East New York kitchens.',
   ] },
   { kind: 'blank', nodes: [] },
   { kind: 'p', nodes: [
-    "We believe this creates a strong alignment with ",
-    { cite: 'robinhood-priority', text: "RobinHood's 2026 priority around expanding eligibility zone coverage" },
-    ". We'd welcome the opportunity to discuss how a supplemental investment could help us meet the anticipated increase in demand when the new zones ",
-    { cite: 'go-live', text: 'go live in September' },
-    '.',
+    'Our existing infrastructure can absorb the demand on day one. Two new city funding streams (',
+    { cite: 'funding-streams', text: '$200K–$400K/year' },
+    ") become available, and the timing matches RobinHood's Q3 supplemental window unusually cleanly.",
   ] },
   { kind: 'blank', nodes: [] },
   { kind: 'p', nodes: [
-    "Would you have 20 minutes in the coming weeks to discuss? I'd be happy to share our service area mapping and impact projections.",
+    "Open to a 20-minute call in the next two weeks? I'd love to walk you through our coverage map. I've added the policy brief for your reference.",
   ] },
   { kind: 'blank', nodes: [] },
-  { kind: 'p', nodes: ['With gratitude,'] },
-  { kind: 'p', nodes: ['Leah Kim'] },
-  { kind: 'p', nodes: ['Fundraising Director, Provide Food NYC'] },
+  { kind: 'p', nodes: ['Thanks,'] },
+  { kind: 'p', nodes: ['Leah'] },
 ];
 
 function EmailComposer({
@@ -1205,8 +1325,6 @@ function EmailComposer({
       setSelectedPolicyId('nyc-food-expansion');
     }
   }, [open]);
-
-  const totalRecipientCount = recipients.length + groups.reduce((s, g) => s + g.count, 0);
 
   const toggleGroup = (g: RecipientGroup) =>
     setGroups((prev) => (prev.some((x) => x.id === g.id) ? prev.filter((x) => x.id !== g.id) : [...prev, g]));
@@ -1261,6 +1379,14 @@ function EmailComposer({
           />
 
           <div className="flex-1 flex flex-col min-w-0">
+            {/* From — author identity inline at the top of the email so the
+                bottom signature strip can be removed. */}
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle shrink-0">
+              <span className="text-[12px] font-medium text-muted">From</span>
+              <span className="text-[13px] font-semibold text-primary">Leah Kim</span>
+              <span className="text-[12px] text-muted">· Communications Director</span>
+            </div>
+
             {/* Recipients */}
             <div className="flex items-start gap-2 px-4 py-2.5 border-b border-border-subtle shrink-0">
               <span className="text-[12px] font-medium text-muted mt-1">To</span>
@@ -1284,22 +1410,31 @@ function EmailComposer({
                     </button>
                   </span>
                 ))}
-                {recipients.map((r) => (
-                  <span
-                    key={r}
-                    className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand-soft text-brand text-[12px] font-medium"
-                  >
-                    {r}
-                    <button
-                      type="button"
-                      onClick={() => removeRecipient(r)}
-                      className="w-4 h-4 inline-flex items-center justify-center rounded-full hover:bg-brand/15"
-                      aria-label={`Remove ${r}`}
+                {recipients.map((r) => {
+                  // Show donor affiliation inline next to the recipient pill
+                  // so the writer knows who they're writing to without having
+                  // to bounce out to the donor record.
+                  const affiliation = RECIPIENT_AFFILIATIONS[r];
+                  return (
+                    <span
+                      key={r}
+                      className="inline-flex items-center gap-1.5 h-6 pl-2.5 pr-1 rounded-full bg-brand-soft text-brand text-[12px] font-medium"
                     >
-                      <X size={10} />
-                    </button>
-                  </span>
-                ))}
+                      <span>{r}</span>
+                      {affiliation && (
+                        <span className="text-brand/60 font-normal">· {affiliation}</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeRecipient(r)}
+                        className="w-4 h-4 inline-flex items-center justify-center rounded-full hover:bg-brand/15"
+                        aria-label={`Remove ${r}`}
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  );
+                })}
                 <input
                   value={recipientInput}
                   onChange={(e) => {
@@ -1332,9 +1467,6 @@ function EmailComposer({
                   onToggleGroup={toggleGroup}
                   onToggleDonor={toggleDonorByName}
                 />
-                <span className="text-[11px] font-mono text-muted">
-                  {totalRecipientCount}/234 donors
-                </span>
               </div>
             </div>
 
@@ -1366,21 +1498,11 @@ function EmailComposer({
               <EmailBody body={ROBINHOOD_BODY} activeCite={activeCite} onCiteHover={setActiveCite} />
             </div>
 
-            <div className="px-5 py-3 border-t border-border-subtle flex items-start justify-between gap-3 shrink-0">
-              <div>
-                <p className="text-[13px] font-semibold text-primary">Leah Kim</p>
-                <p className="text-[12px] text-muted">Fundraising Director at Provide Food NYC</p>
-              </div>
-              <button
-                type="button"
-                className="w-7 h-7 inline-flex items-center justify-center rounded-md text-muted hover:text-primary hover:bg-page transition-colors"
-                aria-label="Edit signature"
-              >
-                <Pencil size={13} />
-              </button>
-            </div>
+            {/* Attachments — pre-loaded with the policy brief PDF that the
+                email body references. Removable but defaults to attached. */}
+            <EmailAttachments />
 
-            <div className="px-5 pb-4 flex items-center justify-end shrink-0">
+            <div className="px-5 py-3 border-t border-border-subtle flex items-center justify-end shrink-0">
               <button
                 type="button"
                 onClick={onSend}
@@ -1454,34 +1576,20 @@ function PolicySourcePanel({
   const meta = POLICY_SOURCE_META[policy.id] ?? { ref: policy.id, jurisdictionLabel: policy.jurisdiction };
   const isCitedPolicy = policy.id === 'nyc-food-expansion';
 
-  // Order matches the order citations appear in the email body.
-  const cites: CiteId[] = [
-    'robinhood-priority',
-    'bill-id',
-    'floor-vote',
-    'eligibility-expansion',
-    'kitchen-partnerships',
-    'service-zones',
-    'funding-streams',
-    'go-live',
-  ];
+  // Citations rail — only the three numerical references the new email
+  // actually highlights. Order matches their appearance in the body.
+  const cites: CiteId[] = ['floor-vote', 'eligibility-expansion', 'funding-streams'];
 
   // Pick first 4 timeline events for the "Key dates" mini-list.
   const keyDates = policy.timeline.slice(0, 4);
   const floorVoteIdx = policy.timeline.findIndex((t) => /vote/i.test(t.title));
 
-  const urgencyClass: Record<NonNullable<PolicySourceMeta['urgencyTone']>, string> = {
-    danger:  'bg-danger-soft text-danger',
-    warning: 'bg-warning/15 text-warning',
-    brand:   'bg-brand-soft text-brand',
-  };
-
   return (
-    <aside className="w-[300px] shrink-0 border-r-2 border-brand/40 bg-surface flex flex-col overflow-hidden">
+    <aside className="w-[300px] shrink-0 border-r border-border-subtle bg-surface flex flex-col overflow-hidden">
       <div className="px-4 pt-4 pb-3 border-b border-border-subtle">
         <p className="text-[10px] font-mono tracking-[0.18em] text-muted uppercase">Source Policy</p>
 
-        {/* Dropdown trigger */}
+        {/* Title + ref dropdown */}
         <div ref={pickerRef} className="relative mt-1.5">
           <button
             type="button"
@@ -1505,7 +1613,7 @@ function PolicySourcePanel({
           {pickerOpen && (
             <div
               role="listbox"
-              className="absolute z-40 left-0 right-0 mt-1.5 bg-surface border border-brand/30 rounded-md shadow-elevated overflow-hidden"
+              className="absolute z-40 left-0 right-0 mt-1.5 bg-surface border border-border-subtle rounded-md shadow-elevated overflow-hidden"
             >
               <div className="max-h-[320px] overflow-auto py-1">
                 {policies.map((p) => {
@@ -1536,23 +1644,14 @@ function PolicySourcePanel({
             </div>
           )}
         </div>
-
-        <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
-          {meta.urgencyLabel && (
-            <span className={`inline-flex items-center px-2 h-5 rounded-full text-[10px] font-semibold ${urgencyClass[meta.urgencyTone ?? 'brand']}`}>
-              {meta.urgencyLabel}
-            </span>
-          )}
-          {meta.highlightDate && (
-            <span className="inline-flex items-center px-2 h-5 rounded-full bg-brand-soft text-brand text-[10px] font-semibold">
-              {meta.highlightDate}
-            </span>
-          )}
-        </div>
       </div>
 
+      {/* Donor-relevance line — replaces the verbose policy summary with
+          the one-sentence "why are we writing this donor about it." */}
       <div className="px-4 py-3 border-b border-border-subtle">
-        <p className="text-[12px] text-primary/85 leading-relaxed">{policy.summary}</p>
+        <p className="text-[12px] text-primary/85 leading-relaxed">
+          Aligns with RobinHood's 2026 food-access priorities — strong fit for their Q3 supplemental window.
+        </p>
       </div>
 
       {keyDates.length > 0 && (
@@ -1576,7 +1675,7 @@ function PolicySourcePanel({
         {isCitedPolicy ? (
           <>
             <p className="text-[11px] text-muted mb-3 leading-relaxed">
-              Hover a highlighted phrase in the email to see how it maps back to the policy.
+              Hover a highlighted phrase in the email to see the source.
             </p>
             <ul className="space-y-1">
               {cites.map((id) => {
@@ -1595,7 +1694,7 @@ function PolicySourcePanel({
                       <p className={`text-[12px] font-semibold leading-tight ${active ? 'text-brand' : 'text-primary'}`}>
                         {c.label}
                       </p>
-                      <p className="text-[10px] font-mono text-muted mt-0.5">{c.source}</p>
+                      <p className="text-[10.5px] text-muted mt-0.5 leading-snug">{c.detail}</p>
                     </button>
                   </li>
                 );
@@ -1620,6 +1719,39 @@ function PolicySourcePanel({
         )}
       </div>
     </aside>
+  );
+}
+
+// Pre-loaded attachment row that sits above the Send action. Defaults to
+// the policy brief — the email body explicitly references "the policy brief
+// I've added," so the attachment should be the first thing the recipient
+// expects to see.
+function EmailAttachments() {
+  const [attached, setAttached] = useState(true);
+  if (!attached) return null;
+  return (
+    <div className="px-5 py-3 border-t border-border-subtle flex items-center gap-2 shrink-0">
+      <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted shrink-0">
+        Attachment
+      </p>
+      <span className="inline-flex items-center gap-2 max-w-full pl-2 pr-1 py-1 rounded-md border border-border-subtle bg-page text-[12px] text-primary">
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-sm bg-danger-soft text-danger shrink-0">
+          <FileText size={13} />
+        </span>
+        <span className="flex flex-col leading-tight min-w-0">
+          <span className="font-semibold truncate">NYC Food Expansion Act — Policy Brief.pdf</span>
+          <span className="text-muted text-[11px]">2 pages · 184 KB</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => setAttached(false)}
+          className="ml-1 w-6 h-6 inline-flex items-center justify-center rounded-full text-muted hover:text-primary hover:bg-page/80 transition-colors shrink-0"
+          aria-label="Remove attachment"
+        >
+          <X size={12} />
+        </button>
+      </span>
+    </div>
   );
 }
 
@@ -1947,7 +2079,14 @@ function AddRecipientsButton({
   );
 }
 
-function TopCampaignsPanel({ campaigns }: { campaigns: DemoCampaign[] }) {
+function TopCampaignsPanel({
+  campaigns,
+  compact = false,
+}: {
+  campaigns: DemoCampaign[];
+  /** Compact list-row variant for sitting in a 2-column grid. */
+  compact?: boolean;
+}) {
   // Live campaigns float to the top; closed ones sink. Stable within each
   // group so the input order still controls the live-vs-live ranking.
   const orderedCampaigns = useMemo(() => {
@@ -1958,8 +2097,10 @@ function TopCampaignsPanel({ campaigns }: { campaigns: DemoCampaign[] }) {
 
   return (
     <div className="bg-surface border border-border-subtle rounded-lg shadow-card flex flex-col">
-      <div className="px-7 pt-6 pb-4 flex items-center justify-between gap-3">
-        <h2 className="text-[22px] font-semibold text-primary tracking-tight">My Campaigns</h2>
+      <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-4">
+        <h2 className={`font-semibold text-primary tracking-tight ${compact ? 'text-[18px]' : 'text-[22px]'}`}>
+          My Campaigns
+        </h2>
         <button
           type="button"
           className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-brand text-white text-[13px] font-semibold hover:bg-brand-hover transition-colors"
@@ -1968,28 +2109,272 @@ function TopCampaignsPanel({ campaigns }: { campaigns: DemoCampaign[] }) {
           Create
         </button>
       </div>
-      <div className="px-7 pb-7 flex flex-col gap-4">
-        {orderedCampaigns.map((c) => (
-          <CampaignCard key={c.id} campaign={c} />
-        ))}
+      <div className={`flex flex-col ${compact ? 'px-3 pb-4 gap-1.5' : 'px-3 pb-4 gap-3'}`}>
+        {orderedCampaigns.map((c) =>
+          compact ? <CampaignRow key={c.id} campaign={c} /> : <CampaignCard key={c.id} campaign={c} />,
+        )}
       </div>
     </div>
   );
 }
 
+// Compact list-row campaign — fits inside a 2-column dashboard grid alongside
+// the activity feed without overpowering it.
+function CampaignRow({ campaign }: { campaign: DemoCampaign }) {
+  const isLive = campaign.status === 'live';
+  return (
+    <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-page transition-colors">
+      <div className="relative w-[68px] h-[52px] rounded-md bg-surface-muted shrink-0 overflow-hidden">
+        <img
+          src={campaign.imageUrl}
+          alt=""
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <span
+          className={`absolute top-1 left-1 inline-flex items-center gap-1 px-1.5 h-[14px] rounded-full text-[8.5px] font-bold uppercase tracking-[0.1em] ${
+            isLive ? 'bg-success/90 text-white' : 'bg-black/60 text-white'
+          }`}
+        >
+          {isLive && <span className="w-1 h-1 rounded-full bg-white animate-pulse" aria-hidden="true" />}
+          {isLive ? 'Live' : 'Closed'}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[14px] font-semibold text-primary leading-tight truncate">
+          {campaign.title}
+        </p>
+        <p className="mt-0.5 text-[12px] text-muted truncate">
+          {campaign.tag} · {campaign.duration.replace(/^Closed · /, '')}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-[15px] font-bold text-success leading-none tabular-nums">
+          {campaign.raised}
+        </p>
+        <p className="mt-1 text-[11px] text-muted tabular-nums">
+          {campaign.views} views · {campaign.shares} shares
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Comms-specific activity feed. Items flagged `highlight: true` represent
+// signals Hannah cares most about — campaign milestones, big mentions, and
+// approvals she initiated — and render with an accent treatment.
+type CommsActivityType = 'post' | 'mention' | 'campaign' | 'approval' | 'gift' | 'open' | 'press' | 'team';
+
+interface CommsActivityItem {
+  id: string;
+  type: CommsActivityType;
+  title: string;
+  meta: string;
+  highlight?: boolean;
+}
+
+const COMMS_ACTIVITY_ICONS: Record<CommsActivityType, React.ReactNode> = {
+  post:     <Pencil size={14} />,
+  mention:  <MoreHorizontal size={14} />,
+  campaign: <Sparkles size={14} />,
+  approval: <Check size={14} />,
+  gift:     <DollarSign size={14} />,
+  open:     <Eye size={14} />,
+  press:    <List size={14} />,
+  team:     <Users size={14} />,
+};
+
+// Activity feed reads chronologically — highlighted items mix in with the
+// rest rather than stacking at the top. Trimmed to 6 rows so the panel
+// height matches the My Campaigns panel (now 2 campaigns).
+const COMMS_ACTIVITY: Array<CommsActivityItem & { titleNode?: React.ReactNode }> = [
+  {
+    id: 'act-mention',
+    type: 'mention',
+    title: '',
+    titleNode: <>Mayor's office reposted Feed Every Block on X</>,
+    meta: 'Via X mentions · 1h ago',
+    highlight: true,
+  },
+  {
+    id: 'act-floor-vote',
+    type: 'campaign',
+    title: 'Floor vote scheduled for the Food Expansion Act',
+    meta: 'Via Policy radar · 2h ago',
+  },
+  {
+    id: 'act-mailchimp',
+    type: 'open',
+    title: 'Pantry Stories email crossed 35% open rate',
+    meta: 'Via Mailchimp · 3h ago',
+    highlight: true,
+  },
+  {
+    id: 'act-approval',
+    type: 'approval',
+    title: '',
+    titleNode: <><Person>Sofia</Person> approved the Brownsville event poster draft</>,
+    meta: 'Via Approvals · 5h ago',
+  },
+  {
+    id: 'act-gift-campaign',
+    type: 'gift',
+    title: '$2,500 gift attributed to Feed Every Block',
+    meta: 'Via Salesforce · 6h ago',
+    highlight: true,
+  },
+  {
+    id: 'act-press',
+    type: 'press',
+    title: 'Pantry Stories featured in NY Daily News op-ed',
+    meta: 'Via Press monitor · 1d ago',
+  },
+  {
+    id: 'act-rsvp',
+    type: 'campaign',
+    title: 'Brownsville kitchen RSVPs passed 200',
+    meta: 'Via Eventbrite · 1d ago',
+  },
+  {
+    id: 'act-coalition',
+    type: 'press',
+    title: 'NYC Food Policy Alliance shared our policy brief',
+    meta: 'Via Coalition channel · 2d ago',
+  },
+];
+
+// Leah's activity feed — donor + grant flavor. Three items highlighted in
+// accent orange (gifts, funder windows, attribution) since those are the
+// signals she scans for first.
+const LEAH_ACTIVITY: Array<CommsActivityItem & { titleNode?: React.ReactNode }> = [
+  {
+    id: 'leah-act-gift-maya',
+    type: 'gift',
+    title: '',
+    titleNode: <>$2,500 gift received from <Person>Maya Patel</Person></>,
+    meta: 'Via Salesforce · 1h ago',
+    highlight: true,
+  },
+  {
+    id: 'leah-act-floor-vote',
+    type: 'campaign',
+    title: 'Floor vote scheduled for the Food Expansion Act',
+    meta: 'Via Policy radar · 2h ago',
+  },
+  {
+    id: 'leah-act-robinhood-window',
+    type: 'campaign',
+    title: 'RobinHood Q3 supplemental window opens July 1',
+    meta: 'Via Funder radar · 4h ago',
+    highlight: true,
+  },
+  {
+    id: 'leah-act-approval',
+    type: 'approval',
+    title: '',
+    titleNode: <><Person>Sofia</Person> approved the FY26 donor report draft</>,
+    meta: 'Via Approvals · 5h ago',
+  },
+  {
+    id: 'leah-act-attribution',
+    type: 'gift',
+    title: 'Gift attribution updated on Feed Every Block',
+    meta: 'Via Salesforce · 6h ago',
+    highlight: true,
+  },
+  {
+    id: 'leah-act-jordan',
+    type: 'open',
+    title: 'Jordan Rivera reactivated email subscriptions',
+    meta: 'Via Mailchimp · 1d ago',
+  },
+  {
+    id: 'leah-act-cityharvest',
+    type: 'press',
+    title: 'City Harvest renewal portal opened for FY26',
+    meta: 'Via Funder portal · 1d ago',
+  },
+];
+
+function CompactActivityPanel({
+  items = COMMS_ACTIVITY,
+}: {
+  items?: Array<CommsActivityItem & { titleNode?: React.ReactNode }>;
+}) {
+  return (
+    <div className="bg-surface border border-border-subtle rounded-lg shadow-card flex flex-col">
+      <div className="px-6 pt-6 pb-4 flex items-baseline justify-between gap-3">
+        <h2 className="text-[18px] font-semibold text-primary tracking-tight">Recent activity</h2>
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); }}
+          className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:text-brand-hover"
+        >
+          April <ChevronDown size={12} />
+        </button>
+      </div>
+      <ul className="px-3 pb-4 flex flex-col gap-0.5">
+        {items.map((item) => (
+          <CommsActivityRow key={item.id} item={item} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function CommsActivityRow({
+  item,
+}: {
+  item: CommsActivityItem & { titleNode?: React.ReactNode };
+}) {
+  const highlight = !!item.highlight;
+  return (
+    <li
+      className={`flex items-start gap-3 px-3 py-2.5 rounded-md transition-colors hover:bg-page ${
+        highlight ? 'bg-accent/5' : ''
+      }`}
+    >
+      <span
+        className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+          highlight ? 'bg-accent/15 text-accent' : 'bg-surface-muted text-secondary'
+        }`}
+        aria-hidden="true"
+      >
+        {COMMS_ACTIVITY_ICONS[item.type]}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[13.5px] leading-snug font-medium text-primary line-clamp-2">
+          {item.titleNode ?? item.title}
+        </p>
+        <p className="mt-0.5 text-[12px] leading-tight text-muted">{item.meta}</p>
+      </div>
+    </li>
+  );
+}
+
 function CampaignCard({ campaign }: { campaign: DemoCampaign }) {
   const tagCls = 'bg-brand-soft text-brand';
+  const isLive = campaign.status === 'live';
   return (
     <div className="rounded-lg border border-border-subtle overflow-hidden">
       {/* Top — image + meta */}
       <div className="bg-surface p-4 flex gap-4">
-        <div className="w-[180px] h-[110px] rounded-md bg-surface-muted shrink-0 overflow-hidden">
+        <div className="relative w-[180px] h-[110px] rounded-md bg-surface-muted shrink-0 overflow-hidden">
           <img
             src={campaign.imageUrl}
             alt={`${campaign.title} cover`}
             loading="lazy"
             className="w-full h-full object-cover"
           />
+          {/* Status corner pill — universal CMS/streaming pattern. */}
+          <span
+            className={`absolute top-2 left-2 inline-flex items-center gap-1.5 px-2 h-[22px] rounded-full text-[10px] font-bold uppercase tracking-[0.1em] backdrop-blur-sm ${
+              isLive ? 'bg-success/90 text-white' : 'bg-black/60 text-white'
+            }`}
+          >
+            {isLive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />}
+            {isLive ? 'Live' : 'Closed'}
+          </span>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           <span className={`inline-flex items-center self-start px-3 h-6 rounded-full text-[12px] font-semibold ${tagCls}`}>
@@ -1997,48 +2382,43 @@ function CampaignCard({ campaign }: { campaign: DemoCampaign }) {
           </span>
           <h3 className="mt-2 text-[18px] font-bold text-primary leading-tight">{campaign.title}</h3>
           <p className="mt-1 text-[13px] text-muted">By {campaign.by}</p>
-          <p className="mt-1.5 inline-flex items-center gap-1.5 text-[12px] text-muted">
-            <span
-              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                campaign.status === 'live' ? 'bg-success animate-pulse' : 'bg-muted'
-              }`}
-              aria-hidden="true"
-            />
-            <span className={campaign.status === 'live' ? 'text-success font-semibold' : 'font-semibold'}>
-              {campaign.status === 'live' ? 'Live' : 'Closed'}
-            </span>
-            <span className="text-muted/60">·</span>
-            <span>{campaign.duration.replace(/^Closed · /, '')}</span>
+          <p className="mt-1.5 text-[12px] text-muted">
+            {campaign.duration.replace(/^Closed · /, '')}
           </p>
         </div>
       </div>
-      {/* Bottom — stat strip on brand-soft wash */}
+      {/* Bottom — stat strip on brand-soft wash. The raised dollar value uses
+          the success-green token so it pops as the number Hannah scans for. */}
       <div className="bg-brand-soft/60 border-t border-border-subtle px-4 py-3 grid grid-cols-3 gap-3">
         <CampaignStat icon="views"  label="Total views"  value={campaign.views} />
         <CampaignStat icon="shares" label="Total shares" value={campaign.shares} />
-        <CampaignStat icon="raised" label="Raised"       value={campaign.raised} />
+        <CampaignStat icon="raised" label="Raised"       value={campaign.raised} accent="success" />
       </div>
     </div>
   );
 }
 
 function CampaignStat({
-  icon, label, value,
+  icon, label, value, accent = 'brand',
 }: {
   icon: 'views' | 'shares' | 'raised';
   label: string;
   value: string;
+  accent?: 'brand' | 'success';
 }) {
+  // Icon color stays brand-blue for visual consistency across all three
+  // stats; only the value text picks up the accent color (green for raised).
+  const valueClass = accent === 'success' ? 'text-success' : 'text-brand';
   return (
     <div className="flex items-center gap-2.5 min-w-0">
-      <span className="w-9 h-9 rounded-md bg-surface flex items-center justify-center text-brand shrink-0 shadow-card">
+      <span className="w-9 h-9 rounded-md bg-surface flex items-center justify-center shrink-0 shadow-card text-brand">
         {icon === 'views'  && <Eye size={15} strokeWidth={2.2} />}
         {icon === 'shares' && <Share2 size={15} strokeWidth={2.2} />}
         {icon === 'raised' && <DollarSign size={15} strokeWidth={2.4} />}
       </span>
       <div className="min-w-0">
         <p className="text-[11px] text-secondary leading-tight truncate">{label}</p>
-        <p className="text-[16px] font-bold text-brand leading-tight tabular-nums mt-0.5">{value}</p>
+        <p className={`text-[16px] font-bold leading-tight tabular-nums mt-0.5 ${valueClass}`}>{value}</p>
       </div>
     </div>
   );

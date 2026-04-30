@@ -21,7 +21,7 @@ const TYPE_OPTIONS = [
   'Small donor',
 ];
 const RISK_OPTIONS = ['Low', 'Medium', 'High'];
-const OWNER_OPTIONS = ['Leah Kim', 'Noah Stein', 'Sofia Reyes'];
+const OWNER_OPTIONS = ['Hannah Win', 'Noah Stein', 'Sofia Reyes'];
 const STAGE_OPTIONS = ['Growing', 'Slipping', 'Early', 'Lapsed', 'Stewardship', 'Stable', 'Evaluation', 'Unqualified'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const TODAY = new Date('2026-04-12');
@@ -160,13 +160,6 @@ function DonorsListDayXPage() {
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="page-title">Donors</h1>
-        <p className="text-[14px] text-secondary mt-1.5 max-w-2xl">
-          Check and edit all donors in one place.
-        </p>
-      </div>
-
       <div className="grid grid-cols-4 gap-4 mb-6">
         <StatCard label="Total Donors" value={stats.total.toString()} />
         <StatCard label="Inactive Donors" value={stats.inactive.toString()} />

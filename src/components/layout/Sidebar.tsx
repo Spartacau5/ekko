@@ -12,7 +12,6 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { motionDurations, motionEasings } from '../../lib/motion';
-import { EkkoWordmark } from '../onboarding/BrandMarks';
 import { ConsultBanner } from './ConsultBanner';
 
 // Global left-rail navigation. White surface with Midnight Blue text and a
@@ -25,30 +24,20 @@ interface NavItem {
   icon: React.ReactNode;
   children?: Array<{ label: string; path: string }>;
   alwaysExpanded?: boolean;
+  /** Additional path prefixes that should also count as "active" for this
+   *  nav item. e.g. Campaigns lives at /peers/campaigns AND /campaigns/*. */
+  alsoActiveOn?: string[];
 }
 
 const NAV: NavItem[] = [
   { label: 'Home',   path: '/dashboard', icon: <LayoutGrid size={18} strokeWidth={1.8} /> },
   { label: 'Policy', path: '/policy',    icon: <Newspaper size={18} strokeWidth={1.8} /> },
+  { label: 'People', path: '/people', icon: <Users size={18} strokeWidth={1.8} /> },
   {
-    label: 'People',
-    path: '/people',
-    icon: <Users size={18} strokeWidth={1.8} />,
-    alwaysExpanded: true,
-    children: [
-      { label: 'Donors', path: '/people/donors' },
-      { label: 'Groups', path: '/people/groups' },
-    ],
-  },
-  {
-    label: 'Peers',
-    path: '/peers',
+    label: 'Campaigns',
+    path: '/peers/campaigns',
     icon: <BarChart3 size={18} strokeWidth={1.8} />,
-    alwaysExpanded: true,
-    children: [
-      { label: 'Organizations', path: '/peers/organizations' },
-      { label: 'Campaigns', path: '/peers/campaigns' },
-    ],
+    alsoActiveOn: ['/campaigns'],
   },
 ];
 
@@ -75,9 +64,12 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const isActive = (path: string, exact = false) => {
+  const isActive = (path: string, exact = false, alsoActiveOn?: string[]) => {
     if (exact) return location.pathname === path;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    if (location.pathname === path || location.pathname.startsWith(path + '/')) return true;
+    return (alsoActiveOn ?? []).some(
+      (p) => location.pathname === p || location.pathname.startsWith(p + '/'),
+    );
   };
 
   const toggle = (path: string) => setExpanded((p) => ({ ...p, [path]: !p[path] }));
@@ -88,16 +80,16 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
   return (
     <aside className="w-[240px] shrink-0 bg-surface text-primary flex flex-col h-screen border-r border-border-subtle">
       <div className="px-5 pt-5 pb-5">
-        <Link to="/dashboard" className="flex items-center no-underline text-brand" aria-label="Ekko">
-          <EkkoWordmark size={26} />
+        <Link to="/dashboard" className="flex items-center no-underline" aria-label="Ekko">
+          <img src="/images/ekko-logo.svg" alt="Ekko" className="h-6 w-auto" />
         </Link>
       </div>
 
-      <nav className="px-3 flex flex-col gap-0.5">
+      <nav className="px-3 flex flex-col gap-2">
         {NAV.map((item) => {
           const active = item.children
             ? isActive(item.path) && location.pathname === item.path
-            : isActive(item.path, item.path === '/dashboard');
+            : isActive(item.path, item.path === '/dashboard', item.alsoActiveOn);
           const groupActive = !!item.children && isActive(item.path);
           const childrenVisible = !!item.children && (item.alwaysExpanded || !!expanded[item.path]);
           const showChevron = !!item.children && !item.alwaysExpanded;
@@ -167,16 +159,14 @@ export function Sidebar({ onHelpAction }: SidebarProps) {
         })}
       </nav>
 
-      {/* Consult / "Still human" panel — AI assistant entry point.
-          SVG composition: scales to fit the remaining vertical space without
-          ever cropping the layout. */}
-      <div className="flex-1 min-h-0 px-3 pt-3 flex">
-        <div className="w-full self-stretch rounded-lg overflow-hidden border border-border-subtle min-h-[140px]">
-          <ConsultBanner />
-        </div>
+      {/* Consult banner — AI assistant entry point. Pinned to the bottom of
+          the sidebar (mt-auto), sitting just above the Settings/Help/Logout
+          footer at its natural aspect ratio. */}
+      <div className="mt-auto px-3 pt-3 pb-2">
+        <ConsultBanner />
       </div>
 
-      <div className="px-3 pb-4 pt-2 flex flex-col gap-0.5">
+      <div className="px-3 pb-4 pt-2 flex flex-col gap-2">
         <Link
           to="/settings"
           className={`${baseRow} no-underline ${

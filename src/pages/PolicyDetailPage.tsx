@@ -5,19 +5,15 @@ import { motionDurations, motionEasings } from '../lib/motion';
 import {
   ArrowLeft,
   Star,
-  Plus,
   Sparkles,
   Search as SearchIcon,
   ChevronDown,
-  ChevronRight,
-  Flag,
   AlertTriangle,
   Check,
   Lightbulb,
   User as UserIcon,
   Users as UsersIcon,
   Target as TargetIcon,
-  Filter as FilterIcon,
   Building2,
   DollarSign,
   ZoomIn as ZoomInIcon,
@@ -25,8 +21,7 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { policies, Policy } from '../data/policies';
-import { notesForEntity } from '../data/notes';
-import { useToast, InternalNotePreview, Button, ComposeNoteModal, FollowUpComposer, AssignDropdown } from '../components/ui';
+import { useToast, ComposeNoteModal, FollowUpComposer, AssignDropdown } from '../components/ui';
 import { useRecent } from '../lib/RecentContext';
 import { usePolicyRead } from '../lib/PolicyReadContext';
 import { useMaturity } from '../lib/MaturityContext';
@@ -55,22 +50,18 @@ const SUMMARY_COPY: Record<SummaryTab, { title: string; body: React.ReactNode }>
     title: 'For Our Org',
     body: (
       <>
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <SummaryStat label="New residents eligible" value="85,000" />
+          <SummaryStat label="Our reach expands by"  value="~40%" />
+          <SummaryStat label="New funding potential" value="$200–400K" suffix="/yr" highlight />
+        </div>
         <p>
-          The NYC Food Expansion Act would extend emergency food assistance eligibility to an
-          additional <strong>85,000 residents</strong> across Brooklyn, Queens, and the Bronx. For
-          Provide Food NYC, this directly expands our addressable service area by approximately
-          <strong> 40%</strong>, with the strongest overlap in Brownsville and East New York —
-          neighborhoods where we already operate 3 community kitchen partnerships.
+          This bill would extend emergency food assistance eligibility across Brooklyn, Queens, and
+          the Bronx — with the strongest overlap in <strong>Brownsville</strong> and{' '}
+          <strong>East New York</strong>, where we already run 3 community kitchens. It opens two
+          new city funding streams and strengthens our position in the RobinHood Foundation Q3
+          grant cycle.
         </p>
-        <p className="mt-3">
-          If passed, this opens eligibility for two new city contract funding streams (estimated
-          <strong> $200K–$400K annually</strong>) and strengthens our position in the Robin Hood
-          Foundation Q3 grant cycle.
-        </p>
-        <RiskAlert
-          label="Immediate risk"
-          body="If the opposition amendment passes, eligibility zones would exclude our Bronx service corridor."
-        />
       </>
     ),
   },
@@ -130,8 +121,6 @@ function PolicyDetailDayXPage() {
     }
   }, [policy?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const linkedNotes = useMemo(() => (policy ? notesForEntity('policy', policy.id) : []), [policy?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
   if (!policy) {
     return (
       <div className="text-center py-16">
@@ -140,11 +129,6 @@ function PolicyDetailDayXPage() {
       </div>
     );
   }
-
-  const relatedPolicies = (policy.relatedPolicyIds ?? [])
-    .map((pid) => policies.find((p) => p.id === pid))
-    .filter((p): p is Policy => Boolean(p))
-    .slice(0, 2);
 
   return (
     <>
@@ -157,14 +141,10 @@ function PolicyDetailDayXPage() {
 
       {/* HEADER + SUMMARY (combined) */}
       <section className="bg-surface border border-border-subtle rounded-lg p-7 mb-6 shadow-card">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <span className="inline-flex items-center px-2.5 h-[24px] text-[11px] font-medium leading-none rounded-full bg-danger-soft text-danger">
-            Urgent
-          </span>
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <h1 className="page-title">{policy.title}</h1>
           <PriorityMenu value={priority} onChange={setPriority} />
         </div>
-
-        <h1 className="page-title mb-5">{policy.title}</h1>
 
         {/* Summary toggle */}
         <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
@@ -189,7 +169,9 @@ function PolicyDetailDayXPage() {
         </div>
       </section>
 
-      {/* TIMELINE */}
+      {/* TIMELINE — leads with the recent change so the strip and the visual
+          timeline read as one unit: what just shifted, then where it sits
+          on the broader arc. */}
       <section className="bg-surface border border-border-subtle rounded-lg p-7 mb-6 shadow-card">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
@@ -198,98 +180,52 @@ function PolicyDetailDayXPage() {
           </div>
           <div className="text-right shrink-0">
             <div className="inline-flex flex-col items-end px-3 py-2 rounded-md bg-brand/5 border border-brand/15">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand">Time Left</span>
-              <span className="text-[13px] font-semibold text-brand mt-0.5">5 months</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand">Floor vote in</span>
+              <span className="text-[13px] font-semibold text-brand mt-0.5">42 days</span>
             </div>
           </div>
         </div>
 
-        <PolicyTimeline events={policy.timeline} />
-
-        <div className="mt-6 flex items-center justify-between gap-4 flex-wrap pt-4 border-t border-border-subtle">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            <p className="text-[13px] text-primary">
-              <span className="font-semibold">Next:</span> Council Committee Hearing —{' '}
-              <span className="text-muted">June 10, 2026</span>
+        {/* Recent change strip + visual tether to the Jun 10 column. The
+            tether is a dashed amber line dropped at the column's center
+            (75% across the 6-column grid) so the eye flows from row → node. */}
+        <div className="relative">
+          <div className="rounded-lg bg-amber-50/70 border border-amber-200 px-3 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-amber-800 mb-2">
+              Recent change
             </p>
+            <div className="flex items-start gap-3">
+              <span
+                className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 bg-amber-500"
+                aria-hidden="true"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-primary leading-snug">
+                  Hearing date moved up
+                </p>
+                <p className="text-[13px] text-secondary mt-0.5 leading-relaxed">
+                  Council Committee Hearing rescheduled from July 15 to June 10. Preparation
+                  window <strong>shortened by 5 weeks</strong>.
+                </p>
+              </div>
+            </div>
           </div>
-          <Button variant="secondary" size="sm">Add to calendar</Button>
         </div>
+
+        <div className="mt-5">
+          <PolicyTimeline events={policy.timeline} />
+        </div>
+
+        <SuggestedActions />
       </section>
 
-      {/* HOW DOES THIS AFFECT US — command-center centerpiece */}
+      {/* IMPACT NETWORK — command-center centerpiece. Shows everyone touched
+          by this policy and the actions we should take in response. Heading
+          lives inside the card so it sits on the white surface, not the page
+          background. */}
       <section className="mb-6">
-        <div className="mb-4">
-          <h2 className="section-title">How does this affect us?</h2>
-          <p className="text-[14px] text-muted leading-relaxed mt-1 max-w-3xl">
-            {policy.summary}
-          </p>
-        </div>
         <CommandCenter />
       </section>
-
-      {/* RELATED POLICIES + INTERNAL DISCUSSION — side-by-side */}
-      <div className="grid lg:grid-cols-5 gap-6 mb-10">
-        {/* RELATED POLICIES */}
-        <section className="lg:col-span-2 bg-surface border border-border-subtle rounded-lg shadow-card flex flex-col">
-          <div className="px-6 pt-6 pb-4">
-            <h2 className="section-title">Related Policies</h2>
-            <p className="text-[12px] text-muted mt-0.5">Other movements that touch our service area</p>
-          </div>
-          <div className="px-6 pb-6 flex flex-col gap-4 flex-1">
-            <RelatedPolicyCard
-              title="State Food Assistance Expansion"
-              relevance={78}
-              blurb="Proposed additional SNAP funding for emergency food providers."
-              status="In committee"
-              href={relatedPolicies[0] ? `/policy/${relatedPolicies[0].id}` : undefined}
-            />
-            <RelatedPolicyCard
-              title="Federal Nutrition Program Reauthorization"
-              relevance={65}
-              blurb="USDA block grant restructuring could affect city-level funding."
-              status="Proposed"
-              href={relatedPolicies[1] ? `/policy/${relatedPolicies[1].id}` : undefined}
-            />
-          </div>
-        </section>
-
-        {/* INTERNAL DISCUSSION */}
-        <section className="lg:col-span-3 bg-surface border border-border-subtle rounded-lg shadow-card flex flex-col">
-          <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="section-title">Internal Discussion</h2>
-              <p className="text-[12px] text-muted mt-0.5">Notes from the team</p>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => setNoteOpen(true)}>
-              <Plus size={13} className="mr-1" /> Add Note
-            </Button>
-          </div>
-          <div className="px-6 pb-6 flex-1">
-            {linkedNotes.length > 0 ? (
-              <div className="divide-y divide-border-subtle">
-                {linkedNotes.map((n) => <InternalNotePreview key={n.id} note={n} />)}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <DiscussionNote
-                  author="Sofia Reyes"
-                  role="Executive Director"
-                  date="Apr 15, 2026"
-                  body="Briefed board on potential impact. Leah to prep donor talking points by next week."
-                />
-                <DiscussionNote
-                  author="Noah Stein"
-                  role="Policy Lead"
-                  date="Apr 10, 2026"
-                  body="Committee staff confirmed June 10 vote date. Opposition amendment sponsor is Councilmember Torres — scheduling meeting."
-                />
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
 
       <FollowUpComposer
         open={composerOpen}
@@ -427,17 +363,35 @@ function PriorityMenu({ value, onChange }: { value: Priority; onChange: (v: Prio
   );
 }
 
-function RiskAlert({ label, body }: { label: string; body: string }) {
+// Compact stat tile used at the top of the "For Our Org" summary. Three of
+// these sit in a row to give the at-a-glance numbers (eligible residents,
+// reach expansion, funding potential) before the prose.
+function SummaryStat({
+  label,
+  value,
+  suffix,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  suffix?: string;
+  highlight?: boolean;
+}) {
   return (
-    <div
-      role="alert"
-      className="mt-4 flex items-start gap-3 rounded-md border-l-[3px] border-l-danger bg-danger-soft/60 border border-danger/20 px-4 py-3"
-    >
-      <AlertTriangle size={16} className="text-danger mt-0.5 shrink-0" />
-      <div className="text-[13px] leading-relaxed text-primary/90">
-        <span className="font-semibold text-danger">{label}: </span>
-        <span>{body}</span>
-      </div>
+    <div className="rounded-md border border-border-subtle bg-page px-3 py-2.5">
+      <p className="text-[10px] font-mono tracking-[0.14em] text-muted uppercase leading-tight">
+        {label}
+      </p>
+      <p
+        className={`mt-1.5 text-[20px] font-semibold leading-none tabular-nums ${
+          highlight ? 'text-success' : 'text-primary'
+        }`}
+      >
+        {value}
+        {suffix && (
+          <span className="text-[12px] font-medium text-muted ml-0.5">{suffix}</span>
+        )}
+      </p>
     </div>
   );
 }
@@ -481,18 +435,25 @@ function PolicyTimeline({ events }: { events: Policy['timeline'] }) {
   // Demo-flow timeline: hard-codes the 6 steps for the NYC Food Expansion
   // story so the visual treatment (completed / current / future + flags)
   // matches the design without needing a richer data model.
-  type Step = { date: string; title: string; subtitle: string; state: 'done' | 'current' | 'future'; progress?: number };
+  type Step = {
+    date: string;
+    title: string;
+    subtitle: string;
+    state: 'done' | 'current' | 'future';
+    progress?: number;
+    rescheduledFrom?: string;
+  };
   const steps: Step[] = [
-    { date: 'Jan 12', title: 'Policy Identified',          subtitle: 'Flagged by monitoring system', state: 'done' },
-    { date: 'Feb 20', title: 'Impact Assessment',          subtitle: 'Scored: High Opportunity',     state: 'done' },
-    { date: 'Mar 15', title: 'Council Committee Hearing',  subtitle: 'Public Testimony Phase',        state: 'current' },
-    { date: 'May 1',  title: 'Coalition Agreement',        subtitle: 'Partners confirmed positions', state: 'future' },
-    { date: 'Jun 10', title: 'Council Floor Vote',         subtitle: 'Passed committee, awaiting full vote', state: 'future' },
-    { date: 'Sep 1',  title: 'Implementation Begins',      subtitle: 'New eligibility zones go live', state: 'future', progress: 18 },
+    { date: 'Jan 12', title: 'Policy Identified',          subtitle: "Detected by Ekko's policy monitor", state: 'done' },
+    { date: 'Feb 20', title: 'Impact Assessment',          subtitle: '',                                  state: 'done' },
+    { date: 'Mar 15', title: 'Council Committee Hearing',  subtitle: 'Public testimony is open',          state: 'current' },
+    { date: 'May 1',  title: 'Coalition Agreement',        subtitle: 'Coalition positions confirmed',    state: 'future' },
+    { date: 'Jun 10', title: 'Council Floor Vote',         subtitle: 'Awaiting full council vote',       state: 'future', rescheduledFrom: 'Jul 15' },
+    { date: 'Sep 1',  title: 'Implementation Begins',      subtitle: 'New coverage areas go live',       state: 'future' },
   ];
 
   return (
-    <div className="relative pt-4 pb-2 min-h-[280px]">
+    <div className="relative pt-4 pb-2">
       <div className="grid grid-cols-6 gap-2 relative">
         {/* Connecting line — runs behind the dots. */}
         <div className="absolute left-[8.33%] right-[8.33%] top-[42px] h-[2px] bg-border-subtle" aria-hidden="true">
@@ -501,36 +462,57 @@ function PolicyTimeline({ events }: { events: Policy['timeline'] }) {
 
         {steps.map((s, i) => {
           const isImpact = s.date === 'Feb 20';
+          const isRescheduled = !!s.rescheduledFrom;
           return (
             <div
               key={i}
               className={`flex flex-col items-center text-center relative ${isImpact ? 'group cursor-default' : ''}`}
             >
-              {/* Date label */}
-              <span
-                className={`text-[12px] font-semibold mb-2 ${
-                  s.state === 'future' ? 'text-muted' : 'text-brand'
-                }`}
-              >
-                {s.date}
-              </span>
+              {/* Date label — when rescheduled, show old → new with
+                  strikethrough on old. The date is the single primary signal
+                  for the move; the dot and chip below are subtle supporting
+                  cues so the column doesn't read as three competing alerts. */}
+              {isRescheduled ? (
+                <span className="text-[12px] font-semibold mb-2 inline-flex items-baseline gap-1 text-amber-700">
+                  <span className="line-through text-muted font-medium">{s.rescheduledFrom}</span>
+                  <span aria-hidden="true">→</span>
+                  <span>{s.date}</span>
+                </span>
+              ) : (
+                <span
+                  className={`text-[12px] font-semibold mb-2 ${
+                    s.state === 'future' ? 'text-muted' : 'text-brand'
+                  }`}
+                >
+                  {s.date}
+                </span>
+              )}
 
               {/* Dot */}
-              <TimelineDot state={s.state} progress={s.progress} />
+              <TimelineDot state={s.state} progress={s.progress} rescheduled={isRescheduled} />
 
-              {/* Title + subtitle */}
+              {/* Title */}
               <p className="mt-3 text-[12px] font-semibold text-primary leading-tight px-1">
                 {s.title}
               </p>
-              <p className="mt-1 text-[11px] text-muted leading-tight px-1">{s.subtitle}</p>
 
-              {/* Annotation flags — keyed off date so they appear under the right step */}
-              {s.date === 'Feb 20' && (
-                <TimelineFlag color="success" label="Jan 12" body="ED briefed board on policy implications" />
-              )}
-              {s.date === 'Jun 10' && (
-                <TimelineFlag color="danger" label="Feb 20" prefix="Risk Alert" body="Opposition amendment introduced" />
-              )}
+              {/* Detail row — fixed min-height so chip rows and subtitle rows
+                  share the same vertical rhythm across all six columns. */}
+              <div className="mt-1 min-h-[32px] flex items-start justify-center px-1">
+                {isImpact ? (
+                  <span className="inline-flex items-center px-2 h-[20px] rounded-full bg-success-soft text-success text-[11px] font-semibold leading-none">
+                    High Opportunity
+                  </span>
+                ) : isRescheduled ? (
+                  <span className="inline-flex items-center px-2 h-[20px] rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold leading-none">
+                    Preponed 5 weeks
+                  </span>
+                ) : (
+                  s.subtitle && (
+                    <p className="text-[11px] text-muted leading-tight">{s.subtitle}</p>
+                  )
+                )}
+              </div>
 
               {/* Impact Assessment hover popover */}
               {isImpact && (
@@ -548,7 +530,27 @@ function PolicyTimeline({ events }: { events: Policy['timeline'] }) {
   );
 }
 
-function TimelineDot({ state, progress }: { state: 'done' | 'current' | 'future'; progress?: number }) {
+function TimelineDot({
+  state,
+  progress,
+  rescheduled = false,
+}: {
+  state: 'done' | 'current' | 'future';
+  progress?: number;
+  rescheduled?: boolean;
+}) {
+  // Rescheduled future node — single amber border. The date treatment above
+  // (Jul 15 → Jun 10) carries the primary "this moved" signal, so the dot
+  // stays understated to avoid stacking three amber alerts on one column.
+  if (rescheduled) {
+    return (
+      <span className="w-9 h-9 rounded-full bg-surface border-2 border-amber-500 flex items-center justify-center">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 7l3.5 3.5L12 4" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    );
+  }
   if (state === 'done') {
     return (
       <span className="w-9 h-9 rounded-full bg-brand text-white flex items-center justify-center shadow-sm">
@@ -581,30 +583,6 @@ function TimelineDot({ state, progress }: { state: 'done' | 'current' | 'future'
   );
 }
 
-function TimelineFlag({
-  color,
-  label,
-  prefix,
-  body,
-}: {
-  color: 'success' | 'danger';
-  label: string;
-  prefix?: string;
-  body: string;
-}) {
-  const tone = color === 'danger' ? 'text-danger' : 'text-success';
-  return (
-    <div className="absolute left-1/2 -translate-x-1/2 top-[140px] w-[170px] flex flex-col items-center pointer-events-none">
-      {/* short connector tying the flag back to the timeline column */}
-      <span className="w-px h-5 bg-border-subtle" aria-hidden="true" />
-      <Flag size={14} className={`${tone} fill-current mt-1`} />
-      <p className="text-[11px] font-semibold text-primary mt-2">{label}</p>
-      {prefix && <p className={`text-[11px] font-semibold ${tone}`}>{prefix}</p>}
-      <p className="text-[11px] text-muted leading-tight mt-0.5 px-1">{body}</p>
-    </div>
-  );
-}
-
 function ImpactAssessmentCard() {
   return (
     <div className="w-[440px] bg-surface border border-border-subtle rounded-lg shadow-elevated p-6 pointer-events-auto">
@@ -619,7 +597,7 @@ function ImpactAssessmentCard() {
       {/* Tip card */}
       <div className="flex items-center gap-3 bg-warning-soft/70 rounded-md px-3 py-3 mb-5">
         <Lightbulb size={22} className="text-warning shrink-0" />
-        <p className="flex-1 text-[12px] text-primary leading-snug">
+        <p className="flex-1 text-[12px] text-primary leading-snug text-left">
           This policy intersects with <strong>your program areas</strong> &amp; may unlock{' '}
           <strong>2 new funding streams</strong>.
         </p>
@@ -674,7 +652,7 @@ function ScoreRing({
   const offset = c * (1 - percent / 100);
   const stroke = tone === 'warm' ? '#84CC16' : '#16A34A';
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="flex flex-col items-start text-left">
       <div className="relative w-[68px] h-[68px]">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
           <circle cx="34" cy="34" r={r} stroke="#E5E7EB" strokeWidth="5" fill="none" />
@@ -761,10 +739,10 @@ function useElementSize() {
   return [ref, size] as const;
 }
 
-const BOARD_TABS: Array<{ id: BoardId; label: string; sub: string; icon: React.ReactNode }> = [
-  { id: 'people', label: 'People',  sub: 'EXTERNAL STAKEHOLDERS · 6', icon: <UserIcon size={14} /> },
-  { id: 'policy', label: 'Policy',  sub: 'IMPACT RADAR · 11',         icon: <TargetIcon size={14} /> },
-  { id: 'peers',  label: 'Peers',   sub: 'INTERNAL TEAM ACTIONS · 5', icon: <UsersIcon size={14} /> },
+const BOARD_TABS: Array<{ id: BoardId; label: string; count: number; icon: React.ReactNode }> = [
+  { id: 'people', label: 'People',  count: 6, icon: <UserIcon size={14} /> },
+  { id: 'policy', label: 'Policy',  count: 3, icon: <TargetIcon size={14} /> },
+  { id: 'peers',  label: 'Peers',   count: 4, icon: <UsersIcon size={14} /> },
 ];
 
 function CommandCenter() {
@@ -777,8 +755,19 @@ function CommandCenter() {
   return (
     <div className="rounded-lg bg-surface border border-border-subtle shadow-card overflow-hidden">
       <div className="relative">
-        {/* TAB BAR */}
-        <div className="px-5 pt-5 pb-4 flex items-center justify-between gap-3 flex-wrap border-b border-border-subtle">
+        {/* HEADING — sits on the card surface so the section title travels
+            with the panel rather than floating on the page background. */}
+        <div className="px-5 pt-5 pb-4">
+          <h2 className="section-title">Impact network</h2>
+          <p className="text-[14px] text-muted leading-relaxed mt-1 max-w-3xl">
+            Who's involved in this policy and what actions should we take.
+          </p>
+        </div>
+
+        {/* TAB BAR — board switcher on the left, stance filter on the right
+            (only for the People board, since Policy/Peers boards don't use
+            stance). */}
+        <div className="px-5 pb-4 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             {BOARD_TABS.map((t) => {
               const active = board === t.id;
@@ -787,7 +776,7 @@ function CommandCenter() {
                   key={t.id}
                   type="button"
                   onClick={() => setBoard(t.id)}
-                  className={`flex items-center gap-2.5 h-12 px-3.5 rounded-md border transition-colors ${
+                  className={`flex items-center gap-2.5 h-11 px-3.5 rounded-md border transition-colors ${
                     active
                       ? 'bg-brand/5 border-brand/30'
                       : 'bg-surface border-border-subtle hover:border-brand/30 hover:bg-page'
@@ -800,54 +789,47 @@ function CommandCenter() {
                   >
                     {t.icon}
                   </span>
-                  <span className="flex flex-col items-start leading-tight text-left">
-                    <span className={`text-[13px] font-semibold ${active ? 'text-brand' : 'text-primary'}`}>
-                      {t.label}
-                    </span>
-                    <span className="text-[9px] font-mono tracking-[0.1em] text-muted">{t.sub}</span>
+                  <span className={`text-[13px] font-semibold ${active ? 'text-brand' : 'text-primary'}`}>
+                    {t.label}
+                  </span>
+                  <span
+                    className={`tabular-nums text-[11px] font-semibold px-1.5 h-[18px] inline-flex items-center rounded ${
+                      active ? 'bg-brand/15 text-brand' : 'bg-page text-muted'
+                    }`}
+                  >
+                    {t.count}
                   </span>
                 </button>
               );
             })}
           </div>
-
-          <div className="inline-flex items-center gap-2 h-9 px-3.5 rounded-md border border-border-subtle bg-surface text-[12px]">
-            <FilterIcon size={13} className="text-muted" />
-            <span className="font-mono uppercase tracking-[0.12em] text-muted text-[10px]">Layer</span>
-            <span className="text-muted/60">·</span>
-            <span className="text-primary font-medium">All connections</span>
-          </div>
+          {board === 'people' && (
+            <StanceFilterRow value={stanceFilter} onChange={setStanceFilter} />
+          )}
         </div>
 
-        {/* BODY: 2-column with right sidebar */}
-        <div className="grid grid-cols-12 gap-4 px-5 pb-5">
-          <div className="col-span-12 lg:col-span-9">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={board}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
-              >
-                {board === 'people' && (
-                  <PeopleBoard
-                    hoverId={hover?.id ?? null}
-                    onHover={setHover}
-                    stanceFilter={stanceFilter}
-                    onStanceFilter={setStanceFilter}
-                  />
-                )}
-                {board === 'policy' && <PolicyBoard hoverId={hover?.id ?? null} onHover={setHover} />}
-                {board === 'peers'  && <PeersBoard  hoverId={hover?.id ?? null} onHover={setHover} />}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-          <div className="col-span-12 lg:col-span-3 flex flex-col gap-3">
-            <SidebarHint />
-            <SidebarLegend />
-            <SidebarCaseFile />
-          </div>
+        {/* BODY — graph spans the full card width; legend + case file moved
+            out so the network has the room to breathe. */}
+        <div className="px-5 pb-5">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={board}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: motionDurations.tab, ease: motionEasings.out }}
+            >
+              {board === 'people' && (
+                <PeopleBoard
+                  hoverId={hover?.id ?? null}
+                  onHover={setHover}
+                  stanceFilter={stanceFilter}
+                />
+              )}
+              {board === 'policy' && <PolicyBoard hoverId={hover?.id ?? null} onHover={setHover} />}
+              {board === 'peers'  && <PeersBoard  hoverId={hover?.id ?? null} onHover={setHover} />}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
@@ -872,72 +854,86 @@ interface NodeDef {
 }
 
 const PEOPLE_NODES: NodeDef[] = [
+  // Center hub — the policy itself. Every stakeholder edge connects here, so
+  // the graph reads as "who is for/against/uncertain about this bill" instead
+  // of an arbitrary tangle of stakeholder-to-stakeholder lines.
   {
-    id: 'nyc-council-housing',
-    name: 'NYC Council Housing Committee',
+    id: 'policy-hub',
+    name: 'NYC Food Expansion Act',
     icon: 'building',
     stance: 'supportive',
     influence: 'high',
-    x: 50, y: 22,
-    href: '/peers/nyc-council-housing',
+    x: 50, y: 50,
+    href: '/policy/nyc-food-expansion',
     detail: {
-      category: 'PEOPLE',
-      title: 'NYC Council Housing Committee',
-      meta: 'Government · Supportive · High influence',
-      body: 'Chaired by Councilmember Davis. Voted yes in committee 7–2. Authored the original eligibility expansion clause.',
-      opportunity: 'Request meeting to discuss Provide Food NYC\'s testimony for the June 10 floor vote.',
-      action: 'No prior relationship — Noah Stein to initiate outreach.',
+      category: 'POLICY',
+      title: 'NYC Food Expansion Act',
+      meta: 'Int. 2026-0347 · Council floor vote · Jun 10',
+      body: 'The bill at the center of this network. Lines show how each stakeholder is positioned relative to the expansion: green for support, red for opposition, amber for unclear.',
     },
   },
   {
-    id: 'tenant-rights-coalition',
-    name: 'Tenant Rights Coalition',
-    initials: 'TR',
+    id: 'nyc-council-health-food',
+    name: 'NYC Council Health & Food Committee',
+    icon: 'building',
+    stance: 'supportive',
+    influence: 'high',
+    x: 50, y: 14,
+    href: '/peers/nyc-council-health-food',
+    detail: {
+      category: 'PEOPLE',
+      title: 'NYC Council Health & Food Committee',
+      meta: 'Government · Supportive · High influence',
+      body: 'Chaired by Councilmember Davis. Voted yes in committee 7–2 and authored the original eligibility expansion. The committee\'s position carries weight with swing council members heading into the June 10 floor vote.',
+      opportunity: 'Request a testimony slot for the June 10 floor vote — committee staff have signaled openness to organizational input.',
+    },
+  },
+  {
+    id: 'nyc-food-policy-alliance',
+    name: 'NYC Food Policy Alliance',
+    initials: 'FA',
     stance: 'supportive',
     influence: 'med',
-    x: 22, y: 45,
-    href: '/peers/tenant-rights-coalition',
+    x: 16, y: 32,
+    href: '/peers/nyc-food-policy-alliance',
     detail: {
       category: 'PEOPLE',
-      title: 'Tenant Rights Coalition',
+      title: 'NYC Food Policy Alliance',
       meta: 'Coalition partner · Supportive · Medium influence',
-      body: 'Co-signed the open letter advocating expanded eligibility zones. Active in Brooklyn and Bronx.',
-      opportunity: 'Joint testimony slot available for the June 10 floor vote.',
-      action: 'Hannah Win to align messaging on shared talking points.',
+      body: 'Coalition of 40+ food access organizations. Co-signed the coalition letter backing the bill and is coordinating joint testimony for the June 10 hearing.',
+      opportunity: 'Coordinate joint testimony and share Provide Food NYC\'s service-area data to strengthen the coalition\'s case.',
     },
   },
   {
-    id: 'property-owners-assoc',
-    name: 'Property Owners Association',
-    initials: 'PO',
+    id: 'restaurant-industry-council',
+    name: 'Restaurant Industry Council',
+    initials: 'RI',
     stance: 'opposed',
     influence: 'high',
-    x: 80, y: 42,
-    href: '/peers/property-owners-assoc',
+    x: 84, y: 32,
+    href: '/peers/restaurant-industry-council',
     detail: {
       category: 'PEOPLE',
-      title: 'Property Owners Association',
+      title: 'Restaurant Industry Council',
       meta: 'Industry group · Opposed · High influence',
-      body: 'Sponsored the opposition amendment that narrows the geographic scope to exclude Bronx corridors.',
-      opportunity: 'Counter-narrative needed before floor vote.',
-      action: 'Devon Kim to draft response brief; Sofia Reyes to brief board.',
+      body: 'Trade group representing commercial food establishments. Opposes the expansion, citing competition from subsidized programs and added compliance costs. Lobbying three council members to back a narrowing amendment.',
+      opportunity: 'Track the amendment\'s sponsor list weekly so the coalition can respond before the floor vote.',
     },
   },
   {
-    id: 'city-comptroller',
-    name: "City Comptroller's Office",
+    id: 'city-budget-office',
+    name: 'City Budget Office',
     icon: 'dollar',
     stance: 'uncertain',
     influence: 'high',
-    x: 22, y: 72,
-    href: '/peers/city-comptroller',
+    x: 16, y: 68,
+    href: '/peers/city-budget-office',
     detail: {
       category: 'PEOPLE',
-      title: "City Comptroller's Office",
+      title: 'City Budget Office',
       meta: 'Government · Uncertain · High influence',
-      body: 'Reviewing fiscal impact analysis. Position depends on FY2027 budget projections.',
-      opportunity: 'Provide impact data showing program ROI in current zones.',
-      action: 'Aisha Park to package service-area outcome data this week.',
+      body: 'Fiscal impact review pending; their cost analysis will move swing votes. Previous food-program notes flagged implementation timeline concerns rather than opposing the policy outright.',
+      opportunity: 'Provide outcomes data from current coverage areas to shape the fiscal note before its May 15 release.',
     },
   },
   {
@@ -946,94 +942,78 @@ const PEOPLE_NODES: NodeDef[] = [
     icon: 'dollar',
     stance: 'supportive',
     influence: 'med',
-    x: 50, y: 80,
+    x: 50, y: 86,
     href: '/peers/robinhood-foundation',
     detail: {
       category: 'PEOPLE',
       title: 'RobinHood Foundation',
-      meta: 'Funder · Current grant: $120K across 2 active grants',
-      body: '2026 priority areas include expanded eligibility zones. 84% overlap with your updated service map. Q3 supplemental window opens July 1.',
-      opportunity: 'Position for Q3 supplemental grant. Window opens July 1.',
-      benchmark: {
-        coverageLabel: 'Your coverage overlap',
-        coveragePct: 84,
-        peerLabel: 'Peer benchmark · Bronx Food Collective',
-        peerValue: '$95K supplemental (2025)',
-      },
-      action: 'Leah Kim to draft impact memo connecting expanded zones to existing program outcomes.',
+      meta: 'Funder · Lifetime donation: $120K',
+      body: 'RobinHood\'s 2026 food access priorities overlap with the bill\'s newly eligible neighborhoods. Their Q3 supplemental funding window opens July 1 — well-timed if the bill passes on schedule.',
+      action: 'Ask Leah to draft a donor memo for RobinHood showing how the expansion overlaps with our existing programs.',
     },
   },
   {
-    id: 'bronx-housing-justice',
-    name: 'Bronx Housing Justice Network',
+    id: 'bronx-grocers-association',
+    name: 'Bronx Grocers Association',
     initials: 'BX',
     stance: 'opposed',
     influence: 'low',
-    x: 80, y: 72,
-    href: '/peers/bronx-housing-justice',
+    x: 84, y: 68,
+    href: '/peers/bronx-grocers-association',
     detail: {
       category: 'PEOPLE',
-      title: 'Bronx Housing Justice Network',
-      meta: 'Advocacy group · Opposed · Low influence',
-      body: 'Concerned the bill diverts attention from housing justice priorities. Aligned with Property Owners on amendment.',
-      opportunity: 'Listen + share program outcomes data; common ground on Bronx coverage.',
-      action: 'Programs team to attend their May community forum.',
+      title: 'Bronx Grocers Association',
+      meta: 'Trade group · Opposed · Low influence',
+      body: 'Local trade group for independent Bronx grocery stores. Opposes a separate nutrition-labeling provision rather than the food access expansion itself. Low influence on the overall vote.',
+      opportunity: 'Monitor only — common ground exists on Bronx coverage if the labeling provision is clarified.',
     },
   },
 ];
 
-type EdgeKind = 'advocacy' | 'opposition' | 'funding' | 'information';
+type EdgeKind = 'advocacy' | 'opposition' | 'uncertain' | 'funding' | 'information';
 const EDGE_COLOR: Record<EdgeKind, string> = {
   advocacy: '#22C55E',
   opposition: '#EF4444',
+  uncertain: '#F59E0B',
   funding: '#F59E0B',
   information: '#22D3EE',
 };
 
+// Hub-and-spoke topology — every stakeholder connects to the policy itself.
+// Edge color reflects each stakeholder's stance toward the bill so the graph
+// reads at a glance: green = supports, red = opposes, amber = unclear.
 const PEOPLE_EDGES: Array<{ from: string; to: string; kind: EdgeKind }> = [
-  { from: 'tenant-rights-coalition',  to: 'nyc-council-housing',    kind: 'advocacy' },
-  { from: 'property-owners-assoc',    to: 'nyc-council-housing',    kind: 'opposition' },
-  { from: 'city-comptroller',         to: 'robinhood-foundation',   kind: 'funding' },
-  { from: 'property-owners-assoc',    to: 'bronx-housing-justice',  kind: 'advocacy' },
-  { from: 'tenant-rights-coalition',  to: 'city-comptroller',       kind: 'information' },
-  { from: 'tenant-rights-coalition',  to: 'robinhood-foundation',   kind: 'information' },
-  { from: 'nyc-council-housing',      to: 'robinhood-foundation',   kind: 'information' },
-  { from: 'robinhood-foundation',     to: 'bronx-housing-justice',  kind: 'information' },
-  { from: 'city-comptroller',         to: 'bronx-housing-justice',  kind: 'information' },
+  { from: 'nyc-council-health-food',      to: 'policy-hub', kind: 'advocacy' },
+  { from: 'nyc-food-policy-alliance',     to: 'policy-hub', kind: 'advocacy' },
+  { from: 'robinhood-foundation',         to: 'policy-hub', kind: 'advocacy' },
+  { from: 'restaurant-industry-council',  to: 'policy-hub', kind: 'opposition' },
+  { from: 'bronx-grocers-association',    to: 'policy-hub', kind: 'opposition' },
+  { from: 'city-budget-office',           to: 'policy-hub', kind: 'uncertain' },
 ];
 
 function PeopleBoard({
   hoverId,
   onHover,
   stanceFilter,
-  onStanceFilter,
 }: {
   hoverId: string | null;
   onHover: (h: HoverState | null) => void;
   stanceFilter: 'all' | StanceTone;
-  onStanceFilter: (s: 'all' | StanceTone) => void;
 }) {
   const indexed = useMemo(() => Object.fromEntries(PEOPLE_NODES.map((n) => [n.id, n])), []);
   const [boardRef, size] = useElementSize();
   const { zoom, tx, ty, beginPan, zoomIn, zoomOut, reset, onWheel } = useGraphZoomPan();
 
   const pos = (n: NodeDef) => ({ x: (n.x / 100) * size.w, y: (n.y / 100) * size.h });
-  const visible = (n: NodeDef) => stanceFilter === 'all' || n.stance === stanceFilter;
+  // The policy hub is always visible — it's the bill itself, the anchor for
+  // the network, so a stance filter on stakeholders should never hide it.
+  const visible = (n: NodeDef) =>
+    n.id === 'policy-hub' || stanceFilter === 'all' || n.stance === stanceFilter;
   const linked = (id: string) =>
     PEOPLE_EDGES.some((e) => (e.from === hoverId && e.to === id) || (e.to === hoverId && e.from === id));
 
   return (
     <div className="relative rounded-md bg-page border border-border-subtle overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle bg-surface">
-        <div className="flex items-center gap-3">
-          <p className="text-[10px] font-mono tracking-[0.18em] text-muted uppercase">Stakeholder Network</p>
-          <span className="text-muted/40 text-[10px]">·</span>
-          <p className="text-[10px] font-mono tracking-[0.12em] text-muted">board 01 / 03</p>
-        </div>
-        <p className="text-[10px] font-mono tracking-[0.12em] text-muted">06 STAKEHOLDERS · 09 CONNECTIONS</p>
-      </div>
-
-      <StanceFilterRow value={stanceFilter} onChange={onStanceFilter} />
 
       <div
         ref={boardRef}
@@ -1079,8 +1059,14 @@ function PeopleBoard({
               const b = indexed[e.to];
               if (!a || !b) return null;
               if (!visible(a) || !visible(b)) return null;
-              const A = pos(a);
-              const B = pos(b);
+              // The wrapper around each node contains the avatar circle plus
+              // a label card below it, so the wrapper's vertical center sits
+              // ~24px below the circle's center. Shift each edge endpoint up
+              // by that amount so connections terminate on the circle, not on
+              // the label card.
+              const NODE_LABEL_OFFSET = 24;
+              const A = { x: pos(a).x, y: pos(a).y - NODE_LABEL_OFFSET };
+              const B = { x: pos(b).x, y: pos(b).y - NODE_LABEL_OFFSET };
               const focused = hoverId === e.from || hoverId === e.to;
               const dimmed = hoverId && !focused;
               const sag = ((i % 3) - 1) * 0.08 + 0.12;
@@ -1140,8 +1126,36 @@ function PeopleBoard({
           onReset={reset}
         />
 
-        {/* Persistent recommended-actions panel — bottom-right. */}
-        <RecommendedActionsPanel />
+        {/* Suggested-action panel — bottom-right inside the canvas. Surfaces
+            the top action tied to a node in the graph (currently RobinHood)
+            without crowding the node itself. */}
+        <SuggestedActionPanel />
+      </div>
+    </div>
+  );
+}
+
+function SuggestedActionPanel() {
+  const [assignedId, setAssignedId] = useState<string | undefined>(undefined);
+  return (
+    <div className="absolute top-3 left-3 z-30 w-[300px] rounded-lg bg-surface border border-accent/40 shadow-elevated p-3">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <Sparkles size={12} className="text-accent" />
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent">
+          Suggested action
+        </p>
+      </div>
+      <div className="flex items-start gap-2.5">
+        <p className="flex-1 text-[12px] text-primary leading-snug">
+          Ask <span className="font-semibold underline decoration-1 underline-offset-2">Leah</span>{' '}
+          to draft a donor memo for RobinHood.
+        </p>
+        <AssignDropdown
+          assignedId={assignedId}
+          onAssign={(m) => setAssignedId(m.id)}
+          placement="bottom"
+          align="right"
+        />
       </div>
     </div>
   );
@@ -1246,37 +1260,51 @@ function ControlBtn({
   );
 }
 
-// ─── Recommended actions panel ──────────────────────────────────────────────
+// ─── Suggested actions ──────────────────────────────────────────────────────
+// Lives at the bottom of the timeline card. Replaces both the standalone
+// "Next: Add to calendar" footer and the floating Recommended Actions blue
+// card that used to overlay the impact graph.
 
-const QUICK_ACTIONS: Array<{ id: string; label: string; suggestedId?: string }> = [
-  { id: 'q1', label: 'Reach out to RobinHood Foundation highlighting this change', suggestedId: 'leah-kim' },
-  { id: 'q2', label: 'Start advocating on social media',                            suggestedId: 'hannah-win' },
+interface QuickAction {
+  id: string;
+  label: React.ReactNode;
+  suggestedId?: string;
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    id: 'q2',
+    label: (
+      <>Ask <span className="font-semibold underline decoration-1 underline-offset-2">Hannah</span> to launch an advocacy campaign supporting the bill before the June 10 vote</>
+    ),
+    suggestedId: 'hannah-win',
+  },
 ];
 
-function RecommendedActionsPanel() {
+function SuggestedActions() {
   const [assigned, setAssigned] = useState<Record<string, string>>({});
   return (
-    <div className="absolute bottom-3 right-3 z-30 w-[340px] bg-brand text-white rounded-lg shadow-elevated">
-      <div className="px-4 pt-3 pb-2.5 border-b border-white/10 flex items-center gap-2">
-        <Sparkles size={12} className="text-accent" />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
-          Recommended Actions
-        </p>
+    <div className="mt-8 pt-6 border-t border-border-subtle">
+      <div className="flex items-center gap-2 mb-5">
+        <Sparkles size={14} className="text-accent" />
+        <h3 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary">
+          Suggested Actions
+        </h3>
       </div>
-      <div className="p-3 space-y-2.5">
+      <ul className="flex flex-col gap-4">
         {QUICK_ACTIONS.map((a) => (
-          <div key={a.id} className="flex items-start gap-2.5">
-            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-            <p className="flex-1 text-[12px] leading-snug text-white/95">{a.label}</p>
+          <li key={a.id} className="flex items-start gap-4">
+            <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" aria-hidden="true" />
+            <p className="flex-1 text-[13px] leading-relaxed text-primary pr-2">{a.label}</p>
             <AssignDropdown
               assignedId={assigned[a.id]}
               onAssign={(m) => setAssigned((prev) => ({ ...prev, [a.id]: m.id }))}
               placement="top"
               align="right"
             />
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -1295,24 +1323,22 @@ function StanceFilterRow({
     { id: 'uncertain', label: 'UNCERTAIN' },
   ];
   return (
-    <div className="flex justify-end px-4 py-2 border-b border-border-subtle bg-surface">
-      <div className="inline-flex items-center gap-1 bg-page border border-border-subtle rounded-md p-1">
-        {filters.map((f) => {
-          const sel = f.id === value;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => onChange(f.id)}
-              className={`px-3 h-7 text-[10px] font-mono tracking-[0.12em] rounded transition-colors ${
-                sel ? 'bg-brand text-white' : 'text-muted hover:text-primary'
-              }`}
-            >
-              {f.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className="inline-flex items-center gap-1 bg-page border border-border-subtle rounded-md p-1">
+      {filters.map((f) => {
+        const sel = f.id === value;
+        return (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => onChange(f.id)}
+            className={`px-3 h-7 text-[10px] font-mono tracking-[0.12em] rounded transition-colors ${
+              sel ? 'bg-brand text-white' : 'text-muted hover:text-primary'
+            }`}
+          >
+            {f.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1339,7 +1365,16 @@ function StakeholderNode({
     opposed:    { ring: '#EF4444', bg: '#FEE2E2', text: '#B91C1C', glow: 'rgba(239,68,68,0.30)', label: 'OPPOSED',    chipText: '#B91C1C' },
     uncertain:  { ring: '#F59E0B', bg: '#FEF3C7', text: '#B45309', glow: 'rgba(245,158,11,0.35)', label: 'UNCERTAIN',  chipText: '#B45309' },
   };
-  const s = stanceMap[node.stance];
+  // Policy hub overrides the stance palette — it's the bill itself, not a
+  // stakeholder, so it gets the brand navy treatment to read as the center.
+  const isHub = node.id === 'policy-hub';
+  // Spotlight node — the stakeholder tied to the top suggested action. Gets
+  // an extra accent-orange pulsing ring + a small "Suggested action" pill so
+  // the eye lands on it as the answer to "where do we move first?"
+  const isSpotlight = node.id === 'robinhood-foundation';
+  const s = isHub
+    ? { ring: '#02066F', bg: '#02066F', text: '#FFFFFF', glow: 'rgba(2,6,111,0.35)', label: 'POLICY', chipText: '#02066F' }
+    : stanceMap[node.stance];
   const sz = sizes[node.influence];
   const inflLabel: Record<Influence, string> = { high: 'HIGH INFL.', med: 'MEDIUM INFL.', low: 'LOW INFL.' };
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -1384,16 +1419,29 @@ function StakeholderNode({
               strokeOpacity={focused ? 0.45 : 0.22}
               strokeWidth={1.25}
             />
-            {(focused || node.stance === 'uncertain') && (
+            {(focused || node.stance === 'uncertain' || isSpotlight) && (
               <circle
                 cx={(sz.avatar + 24) / 2}
                 cy={(sz.avatar + 24) / 2}
                 r={sz.avatar / 2 + 6}
                 fill="none"
-                stroke={s.ring}
-                strokeOpacity="0.55"
+                stroke={isSpotlight ? '#ED4B00' : s.ring}
+                strokeOpacity={isSpotlight ? '0.7' : '0.55'}
                 strokeWidth={1.25}
                 className="cc-ring-pulse"
+              />
+            )}
+            {isSpotlight && (
+              <circle
+                cx={(sz.avatar + 24) / 2}
+                cy={(sz.avatar + 24) / 2}
+                r={sz.avatar / 2 + 11}
+                fill="none"
+                stroke="#ED4B00"
+                strokeOpacity="0.55"
+                strokeWidth={1.5}
+                className="cc-ring-pulse"
+                style={{ animationDelay: '1.7s' }}
               />
             )}
           </svg>
@@ -1415,16 +1463,22 @@ function StakeholderNode({
           </span>
         </div>
 
-        <div className="mt-2 px-2.5 py-1.5 rounded-md bg-surface border border-border-subtle shadow-card min-w-[150px] text-center">
+        <div className={`mt-2 px-2.5 py-1.5 rounded-md bg-surface border ${isSpotlight ? 'border-accent/50' : 'border-border-subtle'} shadow-card min-w-[150px] text-center`}>
           <p className="text-[11px] font-semibold text-primary leading-tight">{node.name}</p>
-          <p className="mt-1 text-[9px] font-mono tracking-[0.1em] flex items-center justify-center gap-1.5">
-            <span className="inline-flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full" style={{ background: s.ring }} />
-              <span style={{ color: s.chipText }}>{s.label}</span>
-            </span>
-            <span className="text-muted/40">·</span>
-            <span className="text-muted">{inflLabel[node.influence]}</span>
-          </p>
+          {isHub ? (
+            <p className="mt-1 text-[9px] font-mono tracking-[0.1em] text-muted">
+              FLOOR VOTE · JUN 10
+            </p>
+          ) : (
+            <p className="mt-1 text-[9px] font-mono tracking-[0.1em] flex items-center justify-center gap-1.5">
+              <span className="inline-flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full" style={{ background: s.ring }} />
+                <span style={{ color: s.chipText }}>{s.label}</span>
+              </span>
+              <span className="text-muted/40">·</span>
+              <span className="text-muted">{inflLabel[node.influence]}</span>
+            </p>
+          )}
         </div>
       </Link>
     </div>
@@ -1467,49 +1521,24 @@ function HoverPopover({ hover, board }: { hover: HoverState | null; board: Board
           borderTop: `3px solid ${accent}`,
         }}
       >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[9px] font-mono tracking-[0.22em] text-muted uppercase">
-            {detail.category}
-          </span>
-          <span className="text-[9px] font-mono tracking-[0.16em] text-muted/70 uppercase">
-            {board}
-          </span>
-        </div>
         <h4 className="text-[15px] font-bold text-primary leading-snug">{detail.title}</h4>
         {detail.meta && (
           <p className="mt-1 text-[10px] font-mono tracking-[0.1em] text-muted">{detail.meta}</p>
         )}
         <p className="mt-2.5 text-[12.5px] text-primary/85 leading-relaxed">{detail.body}</p>
 
-        {detail.opportunity && (
+        {/* Suggested action takes precedence over the generic Opportunity
+            callout — when a node has a concrete next step it should read as
+            an action, not an observation. */}
+        {detail.action ? (
+          <div className="mt-3 rounded-md border border-accent/40 bg-accent/10 p-2.5">
+            <p className="text-[9px] font-mono tracking-[0.16em] text-accent uppercase">Suggested action</p>
+            <p className="mt-1 text-[12px] text-primary leading-snug">{detail.action}</p>
+          </div>
+        ) : detail.opportunity && (
           <div className="mt-3 rounded-md border border-success/30 bg-success-soft/60 p-2.5">
             <p className="text-[9px] font-mono tracking-[0.16em] text-success uppercase">Opportunity</p>
             <p className="mt-1 text-[12px] text-primary leading-snug">{detail.opportunity}</p>
-          </div>
-        )}
-
-        {detail.benchmark && (
-          <div className="mt-3 rounded-md border border-border-subtle bg-page p-2.5 space-y-2">
-            <div>
-              <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className="text-muted">{detail.benchmark.coverageLabel}</span>
-                <span className="text-success font-semibold">{detail.benchmark.coveragePct}%</span>
-              </div>
-              <div className="mt-1 h-1.5 rounded-full bg-surface-muted overflow-hidden">
-                <div className="h-full bg-success" style={{ width: `${detail.benchmark.coveragePct}%` }} />
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-[10px] font-mono pt-1.5 border-t border-border-subtle">
-              <span className="text-muted">{detail.benchmark.peerLabel}</span>
-              <span className="text-accent font-semibold">{detail.benchmark.peerValue}</span>
-            </div>
-          </div>
-        )}
-
-        {detail.action && (
-          <div className="mt-3 pt-3 border-t border-border-subtle">
-            <p className="text-[9px] font-mono tracking-[0.18em] text-accent uppercase mb-1">● Suggested action</p>
-            <p className="text-[12px] text-primary leading-relaxed">{detail.action}</p>
           </div>
         )}
       </div>
@@ -1533,6 +1562,10 @@ function HoverPopover({ hover, board }: { hover: HoverState | null; board: Board
 
 // ── POLICY BOARD (impact radar — simplified placeholder) ─────────────────
 
+// Related policies that orbit the NYC Food Expansion Act. The board reads
+// like a radar of nearby legislation that touches the same mission area —
+// state SNAP reform, city emergency food funding, and a state-level food
+// bank tax credit. Three nodes is enough to show context without crowding.
 const POLICY_ITEMS: Array<{
   id: string;
   ring: 1 | 2 | 3;
@@ -1541,20 +1574,9 @@ const POLICY_ITEMS: Array<{
   label: string;
   meta: string;
 }> = [
-  // ring 1 — funding (Kimchi accent)
-  { id: 'robinhood',        ring: 1, angle: 35,  tone: 'funder',  label: 'Robin Hood Foundation', meta: '$420k Q3 ask · alignment ↑' },
-  { id: 'hud',              ring: 1, angle: 145, tone: 'funder',  label: 'HUD CoC Grant',         meta: 'Eligibility broadens · +18%' },
-  { id: 'fund-justice',     ring: 1, angle: 250, tone: 'funder',  label: 'Fund for Justice',      meta: 'New RFP opens July 2026' },
-  // ring 2 — lifecycle (brand navy)
-  { id: 'introduced',       ring: 2, angle: 20,  tone: 'info',    label: 'Introduced',            meta: 'Mar 2026 · ✓ complete' },
-  { id: 'committee',        ring: 2, angle: 90,  tone: 'info',    label: 'Committee Review',      meta: 'Now · public comment open' },
-  { id: 'floor-vote',       ring: 2, angle: 180, tone: 'info',    label: 'Floor Vote',            meta: 'Jun 18 · projected' },
-  { id: 'implementation',   ring: 2, angle: 280, tone: 'info',    label: 'Implementation',        meta: 'Aug 2026 if passed' },
-  // ring 3 — risk / opportunity
-  { id: 'service-area',     ring: 3, angle: 60,  tone: 'success', label: 'Service-area expansion', meta: '+12k eligible households' },
-  { id: 'cross-org',        ring: 3, angle: 200, tone: 'success', label: 'Cross-org coalition',    meta: '3 partner orgs aligned' },
-  { id: 'funder-confusion', ring: 3, angle: 320, tone: 'danger',  label: 'Funder confusion',       meta: 'Eligibility shift mid-grant' },
-  { id: 'capacity',         ring: 3, angle: 130, tone: 'danger',  label: 'Capacity strain',        meta: 'Volunteer pipeline gap' },
+  { id: 'state-snap',         ring: 2, angle: 30,  tone: 'success', label: 'State SNAP Eligibility Reform',  meta: 'In committee · 78% relevance' },
+  { id: 'city-emergency-food', ring: 2, angle: 150, tone: 'funder',  label: 'City Emergency Food Aid Funding', meta: 'Passed · RFP closes May 15' },
+  { id: 'food-bank-credit',   ring: 3, angle: 270, tone: 'info',    label: 'State Food Bank Tax Credit',     meta: 'Proposed · Q3 2026' },
 ];
 
 const POLICY_TONE_COLOR: Record<'info' | 'success' | 'danger' | 'funder', string> = {
@@ -1565,17 +1587,27 @@ const POLICY_TONE_COLOR: Record<'info' | 'success' | 'danger' | 'funder', string
 };
 
 const POLICY_DETAILS: Record<string, HoverDetail> = {
-  introduced:   { category: 'POLICY', title: 'Introduced',          body: 'Bill formally introduced Mar 2026; first reading complete.' },
-  'service-area': { category: 'POLICY', title: 'Service-area expansion', body: 'Adds 12,000 eligible households across Brooklyn, Queens, and the Bronx.', opportunity: 'Update GIS overlays before Coalition Agreement deadline.' },
-  committee:    { category: 'POLICY', title: 'Committee Review',    body: 'Public comment window currently open. Closes 7 days before floor vote.' },
-  implementation: { category: 'POLICY', title: 'Implementation',    body: 'Eligibility zones go live Aug 2026 if bill passes floor vote and is signed by mayor.' },
-  'funder-confusion': { category: 'POLICY', title: 'Funder confusion', body: 'Eligibility shift mid-grant cycle is creating questions from active funders.', action: 'Leah Kim to send clarifying memo to all Q2 funders.' },
-  capacity:     { category: 'POLICY', title: 'Capacity strain',     body: 'Volunteer pipeline does not yet cover the new zones.', action: 'Volunteer Coordinator to recruit in newly eligible zones once bill advances.' },
-  'floor-vote': { category: 'POLICY', title: 'Floor Vote',          body: 'Projected Jun 18, 2026. Whip count: 28 in favor, 18 opposed, 5 undecided.' },
-  'cross-org':  { category: 'POLICY', title: 'Cross-org coalition', body: '3 partner orgs aligned on shared testimony.' },
-  'fund-justice': { category: 'POLICY', title: 'Fund for Justice',  body: 'New RFP opens July 2026; expanded eligibility language is a strong fit.' },
-  hud:          { category: 'POLICY', title: 'HUD CoC Grant',       body: 'Federal CoC grant eligibility broadens. Provide Food NYC projects +18% capture rate.' },
-  robinhood:    { category: 'POLICY', title: 'Robin Hood Foundation', body: '$420K Q3 ask under preparation. Alignment trending upward.' },
+  'state-snap': {
+    category: 'POLICY',
+    title: 'State SNAP Eligibility Reform',
+    meta: 'State · Albany · In committee',
+    body: 'Would extend SNAP eligibility statewide — overlaps directly with our Bronx and Brooklyn service areas and amplifies the city-level expansion if both pass.',
+    opportunity: 'Coordinate testimony with state advocates so the city and state expansions reinforce each other.',
+  },
+  'city-emergency-food': {
+    category: 'POLICY',
+    title: 'City Emergency Food Aid Funding',
+    meta: 'City · Passed · Effective immediately',
+    body: 'Already-passed emergency funding package. Up to $250K available per qualified org for direct food assistance services. Application window closes May 15.',
+    opportunity: 'Apply before May 15 — overlaps with the same coverage areas the Food Expansion Act would unlock.',
+  },
+  'food-bank-credit': {
+    category: 'POLICY',
+    title: 'State Food Bank Tax Credit',
+    meta: 'State · Proposed · Q3 2026',
+    body: 'Revised tax credit structure to incentivize investment in community food banks. Aligned with the Food Expansion Act\'s neighborhood priorities.',
+    opportunity: 'Brief leadership before the comment period closes; tax credit could fund expansion-era growth.',
+  },
 };
 
 function PolicyBoard({
@@ -1605,18 +1637,9 @@ function PolicyBoard({
 
   return (
     <div className="relative rounded-md bg-page border border-border-subtle overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle bg-surface">
-        <div className="flex items-center gap-3">
-          <p className="text-[10px] font-mono tracking-[0.18em] text-muted uppercase">Impact Radar</p>
-          <span className="text-muted/40 text-[10px]">·</span>
-          <p className="text-[10px] font-mono tracking-[0.12em] text-muted">board 02 / 03</p>
-        </div>
-        <p className="text-[10px] font-mono tracking-[0.12em] text-muted">LIVE · SWEEP REFRESH 8s</p>
-      </div>
-
       <div
         ref={boardRef}
-        className="relative w-full h-[640px]"
+        className="relative w-full h-[620px]"
         style={{
           backgroundImage: 'radial-gradient(circle, #D6D6DC 1px, transparent 1px)',
           backgroundSize: '16px 16px',
@@ -1690,12 +1713,8 @@ function PolicyBoard({
           style={{ left: cx, top: cy, zIndex: 5 }}
         >
           <p className="text-[10px] font-mono tracking-[0.18em] text-accent uppercase">● Active Policy</p>
-          <h3 className="mt-2 text-[18px] font-bold text-primary leading-tight">Right to Counsel<br/>Expansion</h3>
-          <p className="mt-2 text-[10px] font-mono tracking-[0.14em] text-muted">NYC · Citywide · June 2026</p>
-          <div className="mt-3 pt-3 border-t border-border-subtle flex items-center justify-between">
-            <p className="text-[10px] font-mono tracking-[0.16em] text-muted">RISK</p>
-            <p className="text-[18px] font-bold text-danger">32</p>
-          </div>
+          <h3 className="mt-2 text-[18px] font-bold text-primary leading-tight">NYC Food Expansion Act</h3>
+          <p className="mt-2 text-[10px] font-mono tracking-[0.14em] text-muted">NYC · Citywide · Floor vote Jun 10</p>
         </div>
 
         {POLICY_ITEMS.map((it) => {
@@ -1780,9 +1799,12 @@ function RadarChip({
   );
 }
 
-// ── PEERS BOARD (internal action map) ────────────────────────────────────
+// ── PEERS BOARD (peer orgs aligned with this policy) ─────────────────────
 
-type ActionPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+// Peer organizations relevant to the Food Expansion Act. Two buckets:
+//   PARTNER     — already in coalition with us on this bill
+//   OPPORTUNITY — adjacent orgs worth reaching out to
+type PeerRelationship = 'PARTNER' | 'OPPORTUNITY';
 
 interface ActionCard {
   id: string;
@@ -1792,128 +1814,95 @@ interface ActionCard {
   initialsText: string;
   lead: string;
   body: string;
-  priority: ActionPriority;
+  priority: PeerRelationship;
   due: string;
-  /** Pre-fills the AssignDropdown's recommended option (still requires user click). */
-  suggestedAssigneeId?: string;
   x: number; // % within canvas
   y: number;
   detail: HoverDetail;
 }
 
-const PRIORITY_STYLES: Record<ActionPriority, { text: string; bg: string }> = {
-  CRITICAL: { text: '#B91C1C', bg: '#FEE2E2' },
-  HIGH:     { text: '#B45309', bg: '#FEF3C7' },
-  MEDIUM:   { text: '#02066F', bg: '#E6E7F2' },
-  LOW:      { text: '#4A4A55', bg: '#EBEAED' },
+const PRIORITY_STYLES: Record<PeerRelationship, { text: string; bg: string }> = {
+  PARTNER:     { text: '#15803D', bg: '#DCFCE7' },
+  OPPORTUNITY: { text: '#02066F', bg: '#E6E7F2' },
 };
 
 const ACTION_CARDS: ActionCard[] = [
   {
-    id: 'ed',
-    team: 'Executive Director',
-    initials: 'ED',
-    initialsBg: '#FEE2E2',
-    initialsText: '#B91C1C',
-    lead: 'Suggest · Sofia Reyes',
-    body: 'Schedule meeting with NYC Council Housing Committee members; prepare written testimony for the June 10 floor vote.',
-    priority: 'CRITICAL',
-    due: 'MAY 14',
-    suggestedAssigneeId: 'sofia-reyes',
-    x: 18, y: 38,
-    detail: {
-      category: 'PEERS',
-      title: 'Executive Director',
-      meta: 'Critical · due May 14',
-      body: 'Schedule meeting with NYC Council Housing Committee members; prepare written testimony for the June 10 floor vote.',
-      action: 'Blocks Donor Relations + Programs work downstream.',
-    },
-  },
-  {
-    id: 'donor',
-    team: 'Donor Relations',
-    initials: 'DR',
-    initialsBg: '#FEF3C7',
-    initialsText: '#B45309',
-    lead: 'Suggest · Leah Kim',
-    body: 'Draft donor update to RobinHood Foundation highlighting expanded eligibility zones and Provide Food NYC outcomes in Brownsville and East New York.',
-    priority: 'HIGH',
-    due: 'MAY 30',
-    suggestedAssigneeId: 'leah-kim',
-    x: 50, y: 14,
-    detail: {
-      category: 'PEERS',
-      title: 'Donor Relations',
-      meta: 'High · due May 30',
-      body: 'Draft donor update to RobinHood Foundation connecting expanded eligibility zones to existing program outcomes.',
-      action: 'Unblocks Social Media & Comms briefing.',
-    },
-  },
-  {
-    id: 'comms',
-    team: 'Social Media & Comms',
-    initials: 'SM',
-    initialsBg: '#E6E7F2',
-    initialsText: '#02066F',
-    lead: 'Suggest · Hannah Win',
-    body: 'Brief comms team on advocacy messaging for the June 10 hearing; develop a campaign across social, email, and event promotion.',
-    priority: 'MEDIUM',
-    due: 'JUN 8',
-    suggestedAssigneeId: 'hannah-win',
-    x: 80, y: 36,
-    detail: {
-      category: 'PEERS',
-      title: 'Social Media & Comms',
-      meta: 'Medium · due Jun 8',
-      body: 'Brief comms on advocacy messaging for the June 10 hearing and develop the campaign collateral.',
-    },
-  },
-  {
-    id: 'programs',
-    team: 'Programs',
-    initials: 'PG',
+    id: 'bronx-food',
+    team: 'Bronx Food Collective',
+    initials: 'BFC',
     initialsBg: '#DCFCE7',
     initialsText: '#15803D',
-    lead: 'Suggest · Aisha Park',
-    body: 'Map current Provide Food NYC service areas against new eligibility zones in Brownsville, East New York, and South Bronx; flag coverage gaps and capacity needs.',
-    priority: 'HIGH',
-    due: 'MAY 22',
-    suggestedAssigneeId: 'aisha-park',
-    x: 50, y: 62,
+    lead: 'Bronx, NY · 35 staff',
+    body: 'Co-signed the coalition letter and is running a parallel advocacy push. Their emergency-aid creative is outperforming sector by 230%.',
+    priority: 'PARTNER',
+    due: 'CO-SIGNED LETTER',
+    x: 22, y: 30,
     detail: {
       category: 'PEERS',
-      title: 'Programs',
-      meta: 'High · due May 22',
-      body: 'Map current service areas against new eligibility zones; flag coverage gaps and capacity needs.',
-      action: 'Unblocks Volunteer Coordinator recruitment.',
+      title: 'Bronx Food Collective',
+      meta: 'Coalition partner · Bronx, NY',
+      body: 'Already co-signed the coalition letter backing the bill. Coordinating joint testimony and amplifying messaging across overlapping service areas.',
+      opportunity: 'Borrow their winning emergency-aid creative for our own advocacy posts.',
     },
   },
   {
-    id: 'volunteer',
-    team: 'Volunteer Coordinator',
-    initials: 'VC',
-    initialsBg: '#EBEAED',
-    initialsText: '#4A4A55',
-    lead: 'Suggest · Priya Singh',
-    body: 'Recruit additional food-distribution volunteers across Brownsville, East New York, and South Bronx once the bill advances.',
-    priority: 'LOW',
-    due: 'JUL 15',
-    suggestedAssigneeId: 'priya-singh',
-    x: 80, y: 80,
+    id: 'food-policy-alliance',
+    team: 'NYC Food Policy Alliance',
+    initials: 'FPA',
+    initialsBg: '#DCFCE7',
+    initialsText: '#15803D',
+    lead: 'Citywide · 40+ member orgs',
+    body: 'Coalition of 40+ food access organizations across NYC. Coordinating joint testimony and grassroots mobilization for the June 10 hearing.',
+    priority: 'PARTNER',
+    due: 'JOINT TESTIMONY',
+    x: 65, y: 22,
     detail: {
       category: 'PEERS',
-      title: 'Volunteer Coordinator',
-      meta: 'Low · due Jul 15',
-      body: 'Recruit additional food-distribution volunteers in newly eligible zones once the bill advances.',
+      title: 'NYC Food Policy Alliance',
+      meta: 'Coalition partner · Citywide',
+      body: 'The hub coalition aligning food-access orgs around the bill. They are the primary channel for coordinating shared talking points and testimony slots.',
+      opportunity: 'Share Provide Food NYC service-area data so the coalition\'s testimony cites our footprint.',
     },
   },
-];
-
-const ACTION_DEPS: Array<[string, string]> = [
-  ['ed', 'donor'],
-  ['ed', 'programs'],
-  ['donor', 'comms'],
-  ['programs', 'volunteer'],
+  {
+    id: 'queens-food',
+    team: 'Queens Food Resource Center',
+    initials: 'QFR',
+    initialsBg: '#E6E7F2',
+    initialsText: '#02066F',
+    lead: 'Queens, NY · 18 staff',
+    body: 'Runs SNAP enrollment navigation in Queens. Hasn\'t weighed in on the bill yet — adding their voice would strengthen the coalition\'s Queens coverage.',
+    priority: 'OPPORTUNITY',
+    due: 'NOT ENGAGED',
+    x: 30, y: 70,
+    detail: {
+      category: 'PEERS',
+      title: 'Queens Food Resource Center',
+      meta: 'Worth reaching out · Queens, NY',
+      body: 'Mission-aligned org with deep Queens reach but no public stance on the bill yet. A short outreach call could bring them into the coalition before the floor vote.',
+      opportunity: 'Send a one-page bill brief and propose joint Queens-focused testimony.',
+    },
+  },
+  {
+    id: 'east-river',
+    team: 'East River Food Collaborative',
+    initials: 'ERF',
+    initialsBg: '#E6E7F2',
+    initialsText: '#02066F',
+    lead: 'Lower East Side · 40 staff',
+    body: 'Operates community kitchens in newly-eligible LES corridors. A natural ally on the expansion — currently focused on the food-hub zoning proposal.',
+    priority: 'OPPORTUNITY',
+    due: 'POTENTIAL ALLY',
+    x: 72, y: 70,
+    detail: {
+      category: 'PEERS',
+      title: 'East River Food Collaborative',
+      meta: 'Worth reaching out · Lower East Side',
+      body: 'Their LES kitchen footprint sits inside the bill\'s newly-eligible zones. Coalition reinforcement is straightforward — same neighborhoods, same population.',
+      opportunity: 'Invite to co-sign a joint testimony letter centered on LES coverage.',
+    },
+  },
 ];
 
 function PeersBoard({
@@ -1929,70 +1918,21 @@ function PeersBoard({
     const c = indexed[id];
     return { x: (c.x / 100) * size.w, y: (c.y / 100) * size.h };
   };
-  const linked = (id: string) =>
-    ACTION_DEPS.some(([a, b]) => (a === hoverId && b === id) || (b === hoverId && a === id));
 
   return (
     <div className="relative rounded-md bg-page border border-border-subtle overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle bg-surface">
-        <div className="flex items-center gap-3">
-          <p className="text-[10px] font-mono tracking-[0.18em] text-muted uppercase">Internal Action Map</p>
-          <span className="text-muted/40 text-[10px]">·</span>
-          <p className="text-[10px] font-mono tracking-[0.12em] text-muted">board 03 / 03</p>
-        </div>
-        <p className="text-[10px] font-mono tracking-[0.12em] text-muted">5 TEAMS · 1 CRITICAL · 2 HIGH · 1 MEDIUM · 1 LOW</p>
-      </div>
-      <div className="px-4 py-2 border-b border-border-subtle bg-surface">
-        <p className="text-[10px] font-mono tracking-[0.14em] text-muted uppercase">
-          Dependency map · arrows = "must complete before"
-        </p>
-      </div>
-
       <div
         ref={boardRef}
-        className="relative w-full h-[640px]"
+        className="relative w-full h-[620px]"
         style={{
           backgroundImage: 'radial-gradient(circle, #D6D6DC 1px, transparent 1px)',
           backgroundSize: '16px 16px',
         }}
       >
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
-          <defs>
-            <marker id="cc-dep-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M0 0 L10 5 L0 10z" fill="#ED4B00" />
-            </marker>
-            <filter id="cc-glow-dep" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2" result="b" />
-              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-          </defs>
-          {ACTION_DEPS.map(([from, to], i) => {
-            const A = pos(from);
-            const B = pos(to);
-            const focused = hoverId === from || hoverId === to;
-            const dimmed = !!hoverId && !focused;
-            const d = curvedPath(A.x, A.y, B.x, B.y, 0.10, ((i * 5) % 10) - 5);
-            return (
-              <g key={i} style={{ opacity: dimmed ? 0.2 : 1, transition: 'opacity .25s' }}>
-                <path d={d} fill="none" stroke="#ED4B00" strokeOpacity={0.20} strokeWidth={2.5} />
-                <path
-                  d={d}
-                  fill="none"
-                  stroke="#ED4B00"
-                  strokeWidth={focused ? 1.6 : 1.2}
-                  className={focused ? 'cc-string' : 'cc-string-slow'}
-                  filter="url(#cc-glow-dep)"
-                  markerEnd="url(#cc-dep-arrow)"
-                />
-              </g>
-            );
-          })}
-        </svg>
-
         <div className="absolute inset-0" style={{ zIndex: 2 }}>
           {ACTION_CARDS.map((c) => {
             const focused = hoverId === c.id;
-            const dim = !!hoverId && !focused && !linked(c.id);
+            const dim = !!hoverId && !focused;
             const { x, y } = pos(c.id);
             return (
               <ActionCardNode
@@ -2024,7 +1964,6 @@ function ActionCardNode({
 }) {
   const p = PRIORITY_STYLES[card.priority];
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [assignedId, setAssignedId] = useState<string | null>(null);
 
   const handleEnter = () => {
     const el = wrapRef.current;
@@ -2074,178 +2013,11 @@ function ActionCardNode({
           </span>
         </div>
         <p className="text-[12px] text-primary/85 leading-snug mb-3">{card.body}</p>
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-border-subtle">
-          <p className="text-[10px] font-mono tracking-[0.12em] text-muted">DUE · {card.due}</p>
-          <AssignDropdown
-            assignedId={assignedId}
-            onAssign={(m) => setAssignedId(m.id)}
-            placement="top"
-            align="right"
-          />
+        <div className="pt-3 border-t border-border-subtle">
+          <p className="text-[10px] font-mono tracking-[0.12em] text-muted">{card.due}</p>
         </div>
       </div>
     </div>
   );
 }
 
-// ── RIGHT SIDEBAR ────────────────────────────────────────────────────────
-
-function SidebarHint() {
-  return (
-    <div className="rounded-md bg-surface border border-border-subtle shadow-card p-4">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-mono tracking-[0.18em] text-muted uppercase">Detail</p>
-        <p className="text-[10px] font-mono tracking-[0.18em] text-muted/70 uppercase">Hover any node</p>
-      </div>
-      <h3 className="text-[15px] font-bold text-primary">Read in place</h3>
-      <p className="mt-2 text-[12px] text-muted leading-relaxed">
-        Hover a stakeholder, radar item, or team card to see what this policy means for them — and the suggested action for our org. Click to open the full profile.
-      </p>
-    </div>
-  );
-}
-
-function SidebarLegend() {
-  return (
-    <div className="rounded-md bg-surface border border-border-subtle shadow-card p-4">
-      <p className="text-[10px] font-mono tracking-[0.18em] text-muted uppercase mb-3">Legend</p>
-
-      <p className="text-[10px] font-mono tracking-[0.14em] text-primary uppercase mb-2">Stance</p>
-      <div className="space-y-1.5 mb-4">
-        <LegendStanceRow color="#16A34A" label="Supportive" sub="Aligned with our position" />
-        <LegendStanceRow color="#EF4444" label="Opposed"    sub="Active resistance" />
-        <LegendStanceRow color="#F59E0B" label="Uncertain"  sub="Awaiting data / position" />
-      </div>
-
-      <p className="text-[10px] font-mono tracking-[0.14em] text-primary uppercase mb-2">Connections</p>
-      <div className="space-y-1.5 mb-4">
-        <LegendDashRow color="#16A34A" label="Advocacy alignment" />
-        <LegendDashRow color="#EF4444" label="Opposition" />
-        <LegendDashRow color="#ED4B00" label="Funding flow" />
-        <LegendDashRow color="#02066F" label="Information flow" />
-      </div>
-
-      <p className="text-[10px] font-mono tracking-[0.14em] text-primary uppercase mb-2">Influence</p>
-      <div className="flex items-center gap-3 text-[10px] font-mono text-muted">
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-muted/60" />LOW</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full border border-muted/60" />MED</span>
-        <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full border border-muted/60" />HIGH</span>
-      </div>
-    </div>
-  );
-}
-
-function LegendStanceRow({ color, label, sub }: { color: string; label: string; sub: string }) {
-  return (
-    <div className="flex items-center gap-2 text-[11px]">
-      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
-      <span className="text-primary font-semibold">{label}</span>
-      <span className="text-muted truncate">{sub}</span>
-    </div>
-  );
-}
-
-function LegendDashRow({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2.5 text-[11px]">
-      <svg width="28" height="6" className="shrink-0">
-        <line x1="0" y1="3" x2="28" y2="3" stroke={color} strokeWidth="1.5" strokeDasharray="3 3" />
-      </svg>
-      <span className="text-primary/85">{label}</span>
-    </div>
-  );
-}
-
-function SidebarCaseFile() {
-  return (
-    <div className="rounded-md bg-surface border border-border-subtle shadow-card p-4">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-mono tracking-[0.18em] text-muted uppercase">Case File</p>
-        <p className="text-[10px] font-mono tracking-[0.12em] text-muted/70">2026-FEA-047</p>
-      </div>
-      <dl className="space-y-2 text-[11px]">
-        <CaseRow label="Council committee status" value="Passed" valueClass="text-success" />
-        <CaseRow label="Public comment period"    value="closed" valueClass="text-muted" />
-        <CaseRow label="Coalition partners"       value="4 confirmed" valueClass="text-primary" />
-        <CaseRow label="Floor vote ETA"           value="Jun 10" valueClass="text-accent" />
-      </dl>
-      <button
-        type="button"
-        className="mt-4 w-full inline-flex items-center justify-center gap-1.5 h-9 rounded-md bg-brand text-white text-[12px] font-medium hover:bg-brand-hover transition-colors"
-      >
-        Open full brief <ChevronRight size={13} />
-      </button>
-    </div>
-  );
-}
-
-function CaseRow({ label, value, valueClass }: { label: string; value: string; valueClass: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="text-muted">{label}</dt>
-      <dd className={`font-mono font-medium ${valueClass}`}>{value}</dd>
-    </div>
-  );
-}
-
-function RelatedPolicyCard({
-  title,
-  relevance,
-  blurb,
-  status,
-  href,
-}: {
-  title: string;
-  relevance: number;
-  blurb: string;
-  status: string;
-  href?: string;
-}) {
-  const inner = (
-    <>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[14px] font-semibold text-primary leading-tight">{title}</p>
-        <span className="inline-flex items-center px-2 h-5 rounded-full bg-brand/10 text-brand text-[10px] font-semibold shrink-0">
-          {relevance}% relevance
-        </span>
-      </div>
-      <p className="text-[13px] text-muted mt-2 leading-relaxed">{blurb}</p>
-      <p className="text-[12px] text-primary/80 mt-3">
-        Status: <span className="font-medium">{status}</span>
-      </p>
-    </>
-  );
-  const className =
-    'block rounded-md border border-border-subtle bg-surface p-4 hover:border-brand/40 transition-colors no-underline';
-  return href ? (
-    <Link to={href} className={className}>{inner}</Link>
-  ) : (
-    <div className={className}>{inner}</div>
-  );
-}
-
-function DiscussionNote({
-  author,
-  role,
-  date,
-  body,
-}: {
-  author: string;
-  role: string;
-  date: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-md border border-border-subtle bg-page/40 p-4">
-      <div className="flex items-center justify-between gap-3 mb-1.5">
-        <div className="flex items-center gap-2">
-          <span className="text-[13px] font-semibold text-primary">{author}</span>
-          <span className="text-[11px] text-muted">·</span>
-          <span className="text-[12px] text-muted">{role}</span>
-        </div>
-        <span className="text-[11px] text-muted">{date}</span>
-      </div>
-      <p className="text-[13px] text-primary/85 leading-relaxed">{body}</p>
-    </div>
-  );
-}

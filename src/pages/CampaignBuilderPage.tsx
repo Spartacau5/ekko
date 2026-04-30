@@ -6,10 +6,8 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Sparkles,
   RefreshCw,
-  Eye,
   Heart,
   MessageCircle,
   Send,
@@ -18,10 +16,8 @@ import {
   Calendar,
   Clock,
   ChevronDown,
-  Check,
   Plus,
   Lightbulb,
-  Globe,
   Pencil,
   Image as ImageIcon,
   MessageSquare,
@@ -57,13 +53,6 @@ const CONTENT_TYPES: Array<{
   { id: 'brief',    label: 'Policy Brief',  short: 'Brief',   icon: FileText, isNew: true },
 ];
 
-const PLATFORMS = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'facebook',  label: 'Facebook' },
-  { value: 'linkedin',  label: 'LinkedIn' },
-  { value: 'x',         label: 'X' },
-];
-
 const TONES: Array<{ id: Tone; label: string }> = [
   { id: 'friendly', label: 'Friendly' },
   { id: 'informal', label: 'Informal' },
@@ -81,14 +70,12 @@ const DEFAULT_CAPTION = `Big news for food justice in NYC.
 
 The NYC Food Expansion Act is heading to a City Council vote on June 10 — and if it passes, 85,000 more New Yorkers in Brooklyn, Queens, and the Bronx will gain access to emergency food assistance.
 
-At Provide Food NYC, we've been serving these communities through our kitchen partnerships in Brownsville and East New York. This bill would mean we can reach even more families who need support.
-
 Here's how you can help:
 — Share this post to spread the word
 — Submit written testimony at council.nyc.gov/testimony
 — Attend the public hearing: June 10, City Hall
 
-Every voice matters. Let's make sure no New Yorker goes hungry because of where they live.
+Show up and vote! Every voice matters. Let's make sure no New Yorker goes hungry because of where they live.
 
 #FoodJusticeNYC #NYCFoodExpansionAct #ProvideFoodNYC #FoodAccess #CommunityAction`;
 
@@ -108,7 +95,6 @@ export function CampaignBuilderPage() {
 
   const [contentType, setContentType] = useState<ContentType>('post');
   const [campaignName, setCampaignName] = useState('Voices for Food Access: NYC Expansion Act');
-  const [platform, setPlatform] = useState<string>('instagram');
   const [title, setTitle] = useState("Your zip code shouldn't decide if you eat tonight.");
   const [caption, setCaption] = useState(DEFAULT_CAPTION);
   const [location, setLocation] = useState('New York City');
@@ -117,18 +103,8 @@ export function CampaignBuilderPage() {
   const [tone, setTone] = useState<Tone>('friendly');
   const [length, setLength] = useState<Length>('medium');
 
-  const [scheduleMode, setScheduleMode] = useState<'now' | 'scheduled'>('scheduled');
   const [scheduleDate, setScheduleDate] = useState('2026-04-30');
   const [scheduleTime, setScheduleTime] = useState('19:00');
-
-  const [shareFacebook, setShareFacebook] = useState(true);
-  const [shareLinkedin, setShareLinkedin] = useState(false);
-  const [shareX, setShareX] = useState(false);
-
-  const platformLabel = useMemo(
-    () => PLATFORMS.find((p) => p.value === platform)?.label ?? 'Instagram',
-    [platform],
-  );
 
   const handleInsertTalkingPoint = (point: string) => {
     setCaption((prev) => `${point}\n\n${prev}`.trim());
@@ -148,7 +124,7 @@ export function CampaignBuilderPage() {
   };
 
   const handleSchedule = () => {
-    if (scheduleMode === 'scheduled' && (!scheduleDate || !scheduleTime)) {
+    if (!scheduleDate || !scheduleTime) {
       toast.show({
         type: 'warning',
         title: 'Pick a date and time',
@@ -158,31 +134,29 @@ export function CampaignBuilderPage() {
     }
     toast.show({
       type: 'success',
-      title: scheduleMode === 'now' ? 'Sent' : 'Scheduled',
-      description:
-        scheduleMode === 'now'
-          ? `${campaignName} is live on ${platformLabel}.`
-          : `${campaignName} will publish ${scheduleDate} at ${scheduleTime}.`,
+      title: 'Scheduled',
+      description: `${campaignName} will publish ${scheduleDate} at ${scheduleTime}.`,
     });
     navigate('/campaigns/voices-food-access/analytics');
   };
 
   return (
     <>
-      <Link
-        to="/dashboard"
-        className="inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-primary mb-4 no-underline"
-      >
-        <ArrowLeft size={14} /> Back to home
-      </Link>
+      {/* Breadcrumb — replaces the standalone "Back to home" link + the
+          "CAMPAIGN BUILDER" eyebrow so the page header takes one row. */}
+      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-[13px] text-muted">
+        <Link to="/dashboard" className="hover:text-primary no-underline">Home</Link>
+        <span className="text-muted/50">›</span>
+        <Link to="/campaigns" className="hover:text-primary no-underline">Campaigns</Link>
+        <span className="text-muted/50">›</span>
+        <span className="text-primary font-medium">Create campaign</span>
+      </nav>
 
       {/* Header */}
       <header className="mb-6 pb-5 border-b border-border-subtle">
-        <p className="eyebrow mb-2.5">Campaign builder</p>
         <h1 className="page-title mb-1.5">Create campaign</h1>
-        <p className="text-[14px] leading-[22px] text-secondary max-w-2xl">
-          Translate <span className="text-primary font-medium">{linkedPolicy?.title}</span> into a campaign that moves
-          your community to act. Pick a format, draft the messaging, and preview as you go.
+        <p className="text-[14px] leading-[22px] text-secondary">
+          Translate <span className="text-primary font-medium">{linkedPolicy?.title}</span> into a campaign that moves your community to act.
         </p>
       </header>
 
@@ -204,6 +178,23 @@ export function CampaignBuilderPage() {
               />
               <Pencil size={13} className="text-muted shrink-0" aria-hidden="true" />
             </div>
+          </div>
+
+          {/* Format switcher — moved out of the preview column so the right
+              side stays "preview only" and the user picks the format once at
+              the top of the form. */}
+          <div className="px-6 pt-4 pb-4 border-b border-border-subtle">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Format</p>
+              <span className="text-[10.5px] text-muted">
+                {CONTENT_TYPES.findIndex((c) => c.id === contentType) + 1} of {CONTENT_TYPES.length}
+              </span>
+            </div>
+            <FormatSwitcher
+              options={CONTENT_TYPES}
+              value={contentType}
+              onChange={(v) => setContentType(v as ContentType)}
+            />
           </div>
 
           {/* Policy context — slim band with click-to-insert chips */}
@@ -238,9 +229,6 @@ export function CampaignBuilderPage() {
                       title="Insert into caption"
                       className="group inline-flex items-start gap-1.5 max-w-full px-2 py-1 rounded-sm bg-surface border border-border-subtle text-[11.5px] text-primary text-left leading-snug hover:border-brand hover:bg-brand-soft/40 transition-colors"
                     >
-                      <span className="mt-px inline-flex items-center justify-center w-[14px] h-[14px] rounded-full bg-brand text-white text-[9px] font-semibold tabular-nums shrink-0 group-hover:bg-brand-hover">
-                        {idx + 1}
-                      </span>
                       <span className="truncate">{point}</span>
                       <Plus size={10} className="text-muted group-hover:text-brand mt-[3px] shrink-0" />
                     </button>
@@ -253,49 +241,47 @@ export function CampaignBuilderPage() {
           {/* Body sections */}
           <div className="px-6 py-5 space-y-6">
             {/* Section 1 — Messaging */}
-            <FormSection
-              icon={<MessageCircle size={13} />}
-              eyebrow="Messaging"
-              hint="Where it posts and what it says"
-            >
-              {/* Platform + title row */}
-              <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3">
-                <CompactField label="Platform">
-                  <div className="relative">
-                    <select
-                      value={platform}
-                      onChange={(e) => setPlatform(e.target.value)}
-                      className="w-full pl-3 pr-8 py-2 text-[13px] bg-surface border border-border-subtle rounded-sm outline-none appearance-none cursor-pointer focus:border-border-default"
-                    >
-                      {PLATFORMS.map((p) => (
-                        <option key={p.value} value={p.value}>{p.label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                  </div>
-                </CompactField>
-                <CompactField label="Title">
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="A short, attention-grabbing headline"
-                    className="w-full px-3 py-2 text-[13px] bg-surface border border-border-subtle rounded-sm outline-none transition-colors focus:border-border-default placeholder:text-muted/80"
-                  />
-                </CompactField>
-              </div>
+            <FormSection eyebrow="Messaging">
+              {/* Title — full width since the platform field is gone */}
+              <CompactField label="Title">
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="A short, attention-grabbing headline"
+                  className="w-full px-3 py-2 text-[13px] bg-surface border border-border-subtle rounded-sm outline-none transition-colors focus:border-border-default placeholder:text-muted/80"
+                />
+              </CompactField>
 
-              {/* Caption editor with embedded toolbar */}
+              {/* Caption editor — toolbar carries AI/Regular toggle plus
+                  Tone/Length pills inline so all caption controls sit at the
+                  editor head instead of spilling below the textarea. */}
               <CompactField label="Caption">
                 <div
                   className={`rounded-sm border bg-surface overflow-hidden transition-colors
                     ${aiMode === 'ai' ? 'border-accent/40' : 'border-border-subtle'}`}
                 >
-                  {/* Slim toolbar */}
-                  <div className={`flex items-center justify-between gap-2 px-2.5 py-1.5 border-b text-[11.5px]
+                  <div className={`flex items-center justify-between gap-3 px-2.5 py-1.5 border-b text-[11.5px] flex-wrap
                     ${aiMode === 'ai' ? 'bg-accent-soft/40 border-accent/25' : 'bg-surface-muted/40 border-border-subtle'}`}>
                     <AIModeToggle value={aiMode} onChange={setAiMode} />
-                    <span className="text-[10.5px] tabular-nums text-muted">
+                    {aiMode === 'ai' && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-accent">Tone</span>
+                        <ChipPills
+                          options={TONES}
+                          value={tone}
+                          onChange={(v) => setTone(v as Tone)}
+                        />
+                        <span className="w-px h-4 bg-accent/30" />
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-accent">Length</span>
+                        <ChipPills
+                          options={LENGTHS}
+                          value={length}
+                          onChange={(v) => setLength(v as Length)}
+                        />
+                      </div>
+                    )}
+                    <span className="text-[10.5px] tabular-nums text-muted ml-auto">
                       {caption.length} chars
                     </span>
                   </div>
@@ -305,26 +291,12 @@ export function CampaignBuilderPage() {
                     rows={8}
                     className="w-full px-3 py-2.5 text-[13px] leading-[1.55] bg-transparent border-none outline-none resize-none placeholder:text-muted/80"
                   />
-                  {/* Inline AI controls */}
                   {aiMode === 'ai' && (
-                    <div className="px-2.5 py-2 border-t border-accent/25 bg-accent-soft/30 flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-accent">Tone</span>
-                      <ChipPills
-                        options={TONES}
-                        value={tone}
-                        onChange={(v) => setTone(v as Tone)}
-                      />
-                      <span className="w-px h-4 bg-accent/30 mx-1" />
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-accent">Length</span>
-                      <ChipPills
-                        options={LENGTHS}
-                        value={length}
-                        onChange={(v) => setLength(v as Length)}
-                      />
+                    <div className="px-2.5 py-2 border-t border-accent/25 bg-accent-soft/30 flex items-center justify-end">
                       <button
                         type="button"
                         onClick={handleRegenerate}
-                        className="ml-auto inline-flex items-center gap-1 h-7 px-2.5 rounded-sm bg-accent text-white text-[11.5px] font-semibold hover:bg-accent-hover transition-colors"
+                        className="inline-flex items-center gap-1 h-7 px-2.5 rounded-sm bg-accent text-white text-[11.5px] font-semibold hover:bg-accent-hover transition-colors"
                       >
                         <RefreshCw size={11} /> Regenerate
                       </button>
@@ -334,38 +306,15 @@ export function CampaignBuilderPage() {
               </CompactField>
             </FormSection>
 
-            {/* Section 2 — Distribution */}
-            <FormSection
-              icon={<Globe size={13} />}
-              eyebrow="Distribution"
-              hint="Where, when, and which channels"
-            >
-              {/* Location + schedule mode in one row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Section 2 — Distribution. Location, Date, and Time all on
+                one row. The Send-now / Schedule toggle is gone — campaigns
+                always schedule, with the date/time inline. */}
+            <FormSection eyebrow="Distribution">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <CompactField label="Location">
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g. New York City"
-                    className="w-full px-3 py-2 text-[13px] bg-surface border border-border-subtle rounded-sm outline-none focus:border-border-default placeholder:text-muted/80"
-                  />
+                  <LocationPicker value={location} onChange={setLocation} />
                 </CompactField>
-                <CompactField label="Publish">
-                  <SegmentedToggle
-                    options={[
-                      { id: 'now',       label: 'Send now' },
-                      { id: 'scheduled', label: 'Schedule' },
-                    ]}
-                    value={scheduleMode}
-                    onChange={(v) => setScheduleMode(v as 'now' | 'scheduled')}
-                  />
-                </CompactField>
-              </div>
-
-              {/* Date+time inline (only when scheduled) */}
-              {scheduleMode === 'scheduled' && (
-                <div className="grid grid-cols-[1fr_140px] gap-2">
+                <CompactField label="Date">
                   <DateTimeInput
                     icon={<Calendar size={13} />}
                     type="date"
@@ -373,6 +322,8 @@ export function CampaignBuilderPage() {
                     onChange={setScheduleDate}
                     placeholder="Date"
                   />
+                </CompactField>
+                <CompactField label="Time">
                   <DateTimeInput
                     icon={<Clock size={13} />}
                     type="time"
@@ -380,88 +331,35 @@ export function CampaignBuilderPage() {
                     onChange={setScheduleTime}
                     placeholder="Time"
                   />
-                </div>
-              )}
-
-              {/* Cross-post toggles as inline chips */}
-              <CompactField label="Cross-post">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <CrossPostChip
-                    label="Facebook"
-                    logo={<FacebookLogo />}
-                    checked={shareFacebook}
-                    onChange={setShareFacebook}
-                  />
-                  <CrossPostChip
-                    label="LinkedIn"
-                    logo={<LinkedInLogo />}
-                    checked={shareLinkedin}
-                    onChange={setShareLinkedin}
-                  />
-                  <CrossPostChip
-                    label=""
-                    logo={<XLogo />}
-                    checked={shareX}
-                    onChange={setShareX}
-                  />
-                </div>
-              </CompactField>
+                </CompactField>
+              </div>
             </FormSection>
           </div>
 
           {/* Sticky action bar */}
-          <div className="sticky bottom-0 px-6 py-3.5 bg-surface/95 backdrop-blur border-t border-border-subtle flex items-center justify-between gap-3">
-            <p className="text-[11.5px] text-muted">
-              {scheduleMode === 'now'
-                ? 'Will publish immediately on save.'
-                : scheduleDate && scheduleTime
-                  ? `Scheduled for ${scheduleDate} · ${scheduleTime}`
-                  : 'Pick a date and time to schedule.'}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" size="md" onClick={handleSaveDraft}>Save Draft</Button>
-              <button
-                type="button"
-                onClick={handleSchedule}
-                className="inline-flex items-center gap-1.5 h-9 px-5 rounded-sm bg-brand text-white text-[13px] font-semibold hover:bg-brand-hover transition-colors"
-              >
-                {scheduleMode === 'now' ? 'Send now' : 'Schedule'}
-              </button>
-            </div>
+          <div className="sticky bottom-0 px-6 py-3.5 bg-surface/95 backdrop-blur border-t border-border-subtle flex items-center justify-end gap-2">
+            <Button variant="secondary" size="md" onClick={handleSaveDraft}>Save Draft</Button>
+            <button
+              type="button"
+              onClick={handleSchedule}
+              className="inline-flex items-center gap-1.5 h-9 px-5 rounded-sm bg-brand text-white text-[13px] font-semibold hover:bg-brand-hover transition-colors"
+            >
+              Save &amp; schedule
+            </button>
           </div>
         </div>
 
         {/* RIGHT — Live preview (matches left's height) */}
         <div className="bg-surface border border-border-subtle rounded-lg shadow-card overflow-hidden flex flex-col h-full">
-          {/* Format switcher — fixed */}
-          <div className="shrink-0 px-4 pt-4 pb-3 border-b border-border-subtle">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Format</p>
-              <span className="text-[10.5px] text-muted">
-                {CONTENT_TYPES.findIndex((c) => c.id === contentType) + 1} of {CONTENT_TYPES.length}
-              </span>
-            </div>
-            <FormatSwitcher
-              options={CONTENT_TYPES}
-              value={contentType}
-              onChange={(v) => setContentType(v as ContentType)}
-            />
+          {/* Preview header */}
+          <div className="shrink-0 px-6 pt-5 pb-4 border-b border-border-subtle">
+            <h2 className="text-[18px] font-semibold text-primary tracking-tight">Live preview</h2>
           </div>
-
-          {/* Preview header — fixed */}
-          <div className="shrink-0 px-5 pt-4 pb-3 flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Eye size={13} className="text-muted" />
-              <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted">Live preview</p>
-            </div>
-            <span className="text-[11px] text-muted">{previewSurfaceLabel(contentType, platformLabel)}</span>
-          </div>
-
           {/* Preview canvas — flexes to fill, scrolls if needed.
               Subtle dot-grid background gives the empty space a "design canvas" feel
               when the preview is shorter than the column. */}
           <div
-            className="flex-1 min-h-0 overflow-y-auto border-t border-border-subtle bg-surface-muted/30"
+            className="flex-1 min-h-0 overflow-y-auto bg-surface-muted/30"
             style={{
               backgroundImage:
                 'radial-gradient(circle, rgba(2, 0, 53, 0.06) 1px, transparent 1px)',
@@ -481,10 +379,6 @@ export function CampaignBuilderPage() {
             </div>
           </div>
 
-          {/* Footer hint — fixed */}
-          <div className="shrink-0 px-5 py-2 border-t border-border-subtle bg-surface text-[10.5px] text-muted text-center">
-            Updates live as you edit
-          </div>
         </div>
       </div>
     </>
@@ -546,6 +440,43 @@ function FormatSwitcher({
   );
 }
 
+// NYC-area location options. Renders the current city as a dropdown so the
+// post can be quickly retargeted to a different borough/neighborhood.
+const LOCATION_OPTIONS = [
+  'New York City',
+  'Brooklyn, NY',
+  'Queens, NY',
+  'Bronx, NY',
+  'Manhattan, NY',
+  'Staten Island, NY',
+];
+
+function LocationPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-3 pr-8 py-2.5 text-[14px] bg-surface border border-border-subtle rounded-sm outline-none appearance-none cursor-pointer focus:border-border-default text-primary"
+      >
+        {LOCATION_OPTIONS.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+      <ChevronDown
+        size={14}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
+      />
+    </div>
+  );
+}
+
 function CompactField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
@@ -556,12 +487,10 @@ function CompactField({ label, children }: { label: string; children: React.Reac
 }
 
 function FormSection({
-  icon,
   eyebrow,
   hint,
   children,
 }: {
-  icon: React.ReactNode;
   eyebrow: string;
   hint?: string;
   children: React.ReactNode;
@@ -569,9 +498,6 @@ function FormSection({
   return (
     <section className="space-y-3">
       <div className="flex items-baseline gap-2">
-        <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-sm bg-brand/10 text-brand">
-          {icon}
-        </span>
         <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-primary">{eyebrow}</h3>
         {hint && <span className="text-[11.5px] text-muted">— {hint}</span>}
       </div>
@@ -608,103 +534,6 @@ function ChipPills<T extends string>({
         );
       })}
     </div>
-  );
-}
-
-function SegmentedToggle({
-  options,
-  value,
-  onChange,
-}: {
-  options: Array<{ id: string; label: string }>;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="inline-flex items-center bg-surface-muted/80 border border-border-subtle rounded-sm p-0.5 w-fit">
-      {options.map((opt) => {
-        const active = value === opt.id;
-        return (
-          <button
-            key={opt.id}
-            type="button"
-            onClick={() => onChange(opt.id)}
-            aria-pressed={active}
-            className={`h-7 px-3 text-[12px] font-medium rounded-sm transition-colors
-              ${active
-                ? 'bg-surface text-primary border border-border-default shadow-[0_1px_0_rgba(17,17,17,0.06)]'
-                : 'text-muted hover:text-primary border border-transparent'}`}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function CrossPostChip({
-  label,
-  logo,
-  checked,
-  onChange,
-}: {
-  label: string;
-  logo: React.ReactNode;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      aria-pressed={checked}
-      className={`inline-flex items-center gap-1.5 h-7 pl-1.5 pr-2 rounded-sm border text-[12px] font-medium transition-colors
-        ${checked
-          ? 'bg-brand-soft text-brand border-brand/40'
-          : 'bg-surface text-secondary border-border-subtle hover:border-border-default/60'}`}
-    >
-      <span className="flex items-center justify-center w-4 h-4 shrink-0" aria-label={label}>{logo}</span>
-      {label && <span>{label}</span>}
-      {checked && (
-        <Check size={11} strokeWidth={3} className="text-brand -mr-0.5" aria-hidden="true" />
-      )}
-    </button>
-  );
-}
-
-// ─── Brand logos (inline SVG) ───────────────────────────────────────────────
-
-function FacebookLogo() {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-      <path
-        fill="#1877F2"
-        d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.017 1.792-4.683 4.533-4.683 1.312 0 2.686.235 2.686.235v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.262h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
-      />
-    </svg>
-  );
-}
-
-function LinkedInLogo() {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-      <path
-        fill="#0A66C2"
-        d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
-      />
-    </svg>
-  );
-}
-
-function XLogo() {
-  return (
-    <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
-      <path
-        fill="#0F1419"
-        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"
-      />
-    </svg>
   );
 }
 
@@ -775,16 +604,6 @@ const ORG_NAME = 'Provide Food NYC';
 const POSTER_IMAGE = 'https://images.unsplash.com/photo-1522083165195-3424ed129620?w=800&h=800&fit=crop&q=80';
 const POLICY_LABEL = 'NYC Food Expansion Act';
 const VOTE_DATE = 'June 10';
-
-function previewSurfaceLabel(contentType: ContentType, platformLabel: string): string {
-  switch (contentType) {
-    case 'post':     return platformLabel;
-    case 'poster':   return 'Print · 11×17';
-    case 'rsvp':     return 'Event page';
-    case 'donation': return 'Donation page';
-    case 'brief':    return 'PDF · 1-pager';
-  }
-}
 
 interface PreviewProps {
   contentType: ContentType;

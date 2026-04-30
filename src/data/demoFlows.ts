@@ -117,7 +117,7 @@ export const demoFlows: DemoFlow[] = [
       {
         id: 'fr-3',
         title: 'Use the suggested next step',
-        body: 'Ekko proposes a re-engagement email tied to a tenant-rights story Jordan has clicked on before. One click prefills the follow-up composer.',
+        body: 'Ekko proposes a re-engagement email tied to a food-access story Jordan has clicked on before. One click prefills the follow-up composer.',
         route: '/people/donors/jordan-rivera',
         focus: 'Suggested next step',
       },
@@ -132,22 +132,22 @@ export const demoFlows: DemoFlow[] = [
   },
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 3. Policy — Right-to-Counsel hearing
+  // 3. Policy — Food Expansion Act hearing
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: 'policy-rtc',
-    name: 'Policy · Right-to-Counsel hearing',
+    name: 'Policy · Food Expansion Act hearing',
     audience: 'Policy lead',
     duration: '~2 min',
     rationale:
-      'A high-opportunity housing bill is heading to a hearing. Ekko shows the stakeholder map, the testimony deadline, and the recommended next move.',
+      'A high-opportunity food access bill is heading to a hearing. Ekko shows the stakeholder map, the testimony deadline, and the recommended next move.',
     recommendedRole: 'policy',
     recommendedMaturity: 'dayX',
     steps: [
       {
         id: 'pl-1',
         title: 'Catch the policy alert',
-        body: 'The Policy dashboard column highlights NYC Right-to-Counsel — "Hearing in 12 days, testimony deadline April 15."',
+        body: 'The Policy dashboard column highlights NYC Food Expansion Act — "Floor vote June 10, testimony deadline May 30."',
         route: '/dashboard',
         focus: 'Policy column',
       },
@@ -155,43 +155,43 @@ export const demoFlows: DemoFlow[] = [
         id: 'pl-2',
         title: 'Open the policy detail',
         body: 'Summary, jurisdiction, stakeholder alignment bar (supporters / mixed / opposed), and the live timeline of bill movement.',
-        route: '/policy/right-to-counsel',
+        route: '/policy/nyc-food-expansion',
         focus: 'Stakeholders + timeline',
       },
       {
         id: 'pl-3',
         title: 'See the cross-link to fundraising',
-        body: 'Three Rivergate donors — including Jordan Rivera — care about tenant rights. This is where People, Policy, and Peers connect.',
-        route: '/policy/right-to-counsel',
+        body: 'Three Provide Food NYC donors — including Jordan Rivera — care about food access. This is where People, Policy, and Peers connect.',
+        route: '/policy/nyc-food-expansion',
         focus: 'Linked donors',
       },
       {
         id: 'pl-4',
         title: 'Assign the testimony task',
-        body: 'Recommended action: "Submit testimony for Right-to-Counsel hearing." Assign to Noah Stein with a due date inside the deadline.',
-        route: '/policy/right-to-counsel',
+        body: 'Recommended action: "Submit testimony for the Food Expansion Act hearing." Assign to Noah Stein with a due date inside the deadline.',
+        route: '/policy/nyc-food-expansion',
         focus: 'Recommended action',
       },
     ],
   },
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 4. Peer — Bronx Housing Justice Network
+  // 4. Peer — Bronx Food Collective
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: 'peer-bronx',
-    name: 'Peer · Learn from Bronx Housing',
+    name: 'Peer · Learn from Bronx Food Collective',
     audience: 'Fundraising or program lead',
     duration: '~2 min',
     rationale:
-      'A peer org\u2019s emergency-aid campaign is outperforming sector averages by 230%. Ekko shows what they\u2019re doing differently and how to borrow it.',
+      'A peer org\u2019s emergency food-aid campaign is outperforming sector averages by 230%. Ekko shows what they\u2019re doing differently and how to borrow it.',
     recommendedRole: 'fundraising',
     recommendedMaturity: 'dayX',
     steps: [
       {
         id: 'pe-1',
         title: 'See the peer signal',
-        body: 'On the dashboard, the Peers column flags "Bronx Housing Justice — 230% above sector average on emergency-aid creative."',
+        body: 'On the dashboard, the Peers column flags "Bronx Food Collective — 230% above sector average on emergency food-aid creative."',
         route: '/dashboard',
         focus: 'Peers column',
       },
@@ -249,8 +249,8 @@ export const demoFlows: DemoFlow[] = [
       {
         id: 'ex-3',
         title: 'Drill into a priority',
-        body: 'Click into the Right-to-Counsel hearing. As an executive, you can see the stakeholder map and reassign the testimony if needed.',
-        route: '/policy/right-to-counsel',
+        body: 'Click into the Food Expansion Act hearing. As an executive, you can see the stakeholder map and reassign the testimony if needed.',
+        route: '/policy/nyc-food-expansion',
         focus: 'Stakeholders',
       },
       {
@@ -290,42 +290,42 @@ export interface LinkedInsight {
   suggestedAction?: string;
 }
 
-// The narrative spine: Jordan Rivera ↔ Right-to-Counsel ↔ Bronx Housing.
+// The narrative spine: Jordan Rivera ↔ Food Expansion Act ↔ Bronx Food Collective.
 // These cross-links are what make the prototype feel like one product instead
 // of three disconnected modules.
 export const linkedInsights: LinkedInsight[] = [
-  // Jordan ↔ RTC
+  // Jordan ↔ Food Expansion
   {
     fromType: 'donor', fromId: 'jordan-rivera',
-    toType: 'policy',  toId: 'right-to-counsel',
-    toLabel: 'NYC Right-to-Counsel Expansion',
-    toRoute: '/policy/right-to-counsel',
-    reason: 'Jordan has clicked on three tenant-rights updates this quarter and gave $250 after the last RTC vote.',
-    badge: 'Hearing in 12 days',
+    toType: 'policy',  toId: 'nyc-food-expansion',
+    toLabel: 'NYC Food Expansion Act',
+    toRoute: '/policy/nyc-food-expansion',
+    reason: 'Jordan has clicked on three food-access updates this quarter and gave $250 after the last food policy vote.',
+    badge: 'Floor vote in 12 days',
     suggestedAction: 'Brief Jordan before hearing',
   },
   // Jordan ↔ Bronx campaign
   {
     fromType: 'donor', fromId: 'jordan-rivera',
     toType: 'peer',    toId: 'bronx-housing',
-    toLabel: 'Bronx Housing Justice — Emergency aid creative',
+    toLabel: 'Bronx Food Collective — Emergency aid creative',
     toRoute: '/peers/bronx-housing',
-    reason: 'Bronx Housing\u2019s outperforming campaign messaging is the recommended hook for Jordan\u2019s re-engagement email.',
+    reason: 'Bronx Food Collective\u2019s outperforming campaign messaging is the recommended hook for Jordan\u2019s re-engagement email.',
     badge: '230% vs sector',
     suggestedAction: 'Borrow messaging for re-engagement email',
   },
-  // RTC ↔ donors who care
+  // Food Expansion ↔ donors who care
   {
-    fromType: 'policy', fromId: 'right-to-counsel',
+    fromType: 'policy', fromId: 'nyc-food-expansion',
     toType: 'donor',   toId: 'jordan-rivera',
     toLabel: 'Jordan Rivera',
     toRoute: '/people/donors/jordan-rivera',
-    reason: 'Recurring donor, tenant-rights interest. At risk — re-engagement is overdue.',
+    reason: 'Recurring donor, food-access interest. At risk — re-engagement is overdue.',
     badge: 'At risk',
     suggestedAction: 'Draft re-engagement email',
   },
   {
-    fromType: 'policy', fromId: 'right-to-counsel',
+    fromType: 'policy', fromId: 'nyc-food-expansion',
     toType: 'donor',   toId: 'maya-patel',
     toLabel: 'Maya Patel',
     toRoute: '/people/donors/maya-patel',
@@ -333,21 +333,21 @@ export const linkedInsights: LinkedInsight[] = [
     badge: 'Major donor',
     suggestedAction: 'Schedule policy briefing call',
   },
-  // RTC ↔ Bronx (coalition partner)
+  // Food Expansion ↔ Bronx (coalition partner)
   {
-    fromType: 'policy', fromId: 'right-to-counsel',
+    fromType: 'policy', fromId: 'nyc-food-expansion',
     toType: 'peer',    toId: 'bronx-housing',
     toLabel: 'Bronx Housing Justice Network',
     toRoute: '/peers/bronx-housing',
     reason: 'Coalition partner on the right-to-counsel coalition letter. Their advocacy push is running in parallel.',
     suggestedAction: 'Coordinate joint statement',
   },
-  // Bronx ↔ RTC
+  // Bronx ↔ Food Expansion
   {
     fromType: 'peer', fromId: 'bronx-housing',
-    toType: 'policy', toId: 'right-to-counsel',
-    toLabel: 'NYC Right-to-Counsel Expansion',
-    toRoute: '/policy/right-to-counsel',
+    toType: 'policy', toId: 'nyc-food-expansion',
+    toLabel: 'NYC Food Expansion Act',
+    toRoute: '/policy/nyc-food-expansion',
     reason: 'Bronx Housing\u2019s right-to-counsel campaign aligns with our advocacy moment. Hearing April 22.',
     badge: 'Campaign inspiration',
     suggestedAction: 'Add to advocacy brief',
@@ -373,7 +373,7 @@ export function linksFor(type: LinkedInsightSurface, id: string): LinkedInsight[
 // check membership here.
 export const NARRATIVE_SPINE_IDS = new Set<string>([
   'jordan-rivera',
-  'right-to-counsel',
+  'nyc-food-expansion',
   'bronx-housing',
 ]);
 

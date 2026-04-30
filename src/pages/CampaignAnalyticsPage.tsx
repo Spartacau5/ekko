@@ -341,7 +341,7 @@ export function CampaignAnalyticsPage() {
                   <span className="text-[13px] font-semibold text-primary">Provide Food NYC</span>
                   <BadgeCheck size={13} className="text-brand" />
                 </div>
-                <span className="text-[11.5px] text-muted">Hannah Win · Communications Director</span>
+                <span className="text-[11.5px] text-muted">Hannah Win · Fundraising Director</span>
               </div>
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted mb-2">Linked policy</p>

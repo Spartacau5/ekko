@@ -27,7 +27,7 @@ export function DashboardDay0Page() {
   const toast = useToast();
 
   const firstName = activeMember.name.split(' ')[0];
-  const greetingSubtitle = `${roleMeta[activeRole].label}, Rivergate Community Alliance`;
+  const greetingSubtitle = `${roleMeta[activeRole].label}, Provide Food NYC`;
   const dateLine = TODAY.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   // Day 0 "at a glance" leans on zeros-with-intent: the numbers are technically
